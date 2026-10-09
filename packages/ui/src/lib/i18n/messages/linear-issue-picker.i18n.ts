@@ -91,4 +91,11 @@ export const linearIssuePickerI18n = {
     'chat.workStatus.linkedIssues.openLinear': "{identifier} issue'unu Linear'da aç",
     'session.newWorktree.actions.startFromLinearIssue': "Linear Issue'dan başla",
   },
+  ar: {
+    'chat.chatInput.actions.linkLinearIssue': 'ربط مهمة Linear',
+    'chat.chatInput.linked.linearIssue.openInBrowserAria': 'فتح المهمة في Linear',
+    'chat.chatInput.linked.linearIssue.removeAria': 'إزالة مهمة Linear المرتبطة',
+    'chat.workStatus.linkedIssues.openLinear': 'فتح {identifier} في Linear',
+    'session.newWorktree.actions.startFromLinearIssue': 'مهمة Linear',
+  },
 } as const;

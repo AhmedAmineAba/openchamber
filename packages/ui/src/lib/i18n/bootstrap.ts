@@ -266,6 +266,25 @@ const TR_MESSAGES: BootstrapMessages = {
   loadingData: (providersText, agentsText) => `Veriler yükleniyor (${providersText}, ${agentsText})…`,
 };
 
+const AR_MESSAGES: BootstrapMessages = {
+  startingApi: 'جارٍ تشغيل OpenCode API…',
+  initializing: 'جارٍ التهيئة…',
+  connecting: 'جارٍ الاتصال…',
+  connected: 'تم الاتصال!',
+  connectionError: 'خطأ في الاتصال',
+  disconnected: 'انقطع الاتصال',
+  reconnecting: 'جارٍ إعادة الاتصال…',
+  initialDataLoadFailed: 'تم الاتصال بـ OpenCode، لكن تعذّر تحميل البيانات الأولية.',
+  cliNotFound: 'لم يتم العثور على OpenCode CLI. ثبّته أولًا.',
+  providersReady: '✓ الموفرون',
+  providersLoading: '… الموفرون',
+  agentsReady: '✓ الوكلاء',
+  agentsLoading: '… الوكلاء',
+  startingDevServer: (hostLabel) => `جارٍ تشغيل خادم تطوير webview (${hostLabel})...`,
+  waitingDevServer: (hostLabel, attempt) => `بانتظار خادم تطوير webview (${hostLabel})... المحاولة ${attempt}`,
+  loadingData: (providersText, agentsText) => `جارٍ تحميل البيانات (${providersText}، ${agentsText})…`,
+};
+
 export const getBootstrapMessages = (locale: Locale): BootstrapMessages => {
   return BOOTSTRAP_MESSAGES[locale];
 };
@@ -284,6 +303,7 @@ const BOOTSTRAP_MESSAGES: Record<Locale, BootstrapMessages> = {
   pl: PL_MESSAGES,
   ja: JA_MESSAGES,
   tr: TR_MESSAGES,
+  ar: AR_MESSAGES,
 };
 
 export const readStoredLocaleForBootstrap = (): Locale => {

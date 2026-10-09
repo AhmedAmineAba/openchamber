@@ -1,10 +1,19 @@
-export type Locale = 'en' | 'de' | 'fr' | 'nl' | 'zh-CN' | 'zh-TW' | 'uk' | 'es' | 'pt-BR' | 'ko' | 'pl' | 'ja' | 'tr';
+export type Locale = 'en' | 'de' | 'fr' | 'nl' | 'zh-CN' | 'zh-TW' | 'uk' | 'es' | 'pt-BR' | 'ko' | 'pl' | 'ja' | 'tr' | 'ar';
 
-export const LOCALES = ['en', 'de', 'fr', 'nl', 'zh-CN', 'zh-TW', 'uk', 'es', 'pt-BR', 'ko', 'pl', 'ja', 'tr'] as const satisfies readonly Locale[];
+export const LOCALES = ['en', 'de', 'fr', 'nl', 'zh-CN', 'zh-TW', 'uk', 'es', 'pt-BR', 'ko', 'pl', 'ja', 'tr', 'ar'] as const satisfies readonly Locale[];
 
 export const DEFAULT_LOCALE: Locale = 'en';
 
-export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish'> = {
+export type LayoutDirection = 'ltr' | 'rtl';
+
+const RTL_LOCALES: ReadonlySet<Locale> = new Set<Locale>(['ar']);
+
+/** The one rule for the app's layout direction: right-to-left locales mirror the UI, every other locale stays left to right. */
+export function getLocaleDirection(locale: Locale): LayoutDirection {
+  return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
+}
+
+export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish' | 'common.language.arabic'> = {
   en: 'common.language.english',
   fr: 'common.language.french',
   nl: 'common.language.dutch',
@@ -18,6 +27,7 @@ export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'comm
   de: 'common.language.german',
   ja: 'common.language.japanese',
   tr: 'common.language.turkish',
+  ar: 'common.language.arabic',
 };
 
 export const LOCALE_STORAGE_KEY = 'openchamber.i18n.v1';
@@ -73,6 +83,9 @@ export function normalizeLocale(value: string | undefined | null): Locale {
   }
   if (normalized === 'tr' || normalized.startsWith('tr-')) {
     return 'tr';
+  }
+  if (normalized === 'ar' || normalized.startsWith('ar-')) {
+    return 'ar';
   }
   return DEFAULT_LOCALE;
 }

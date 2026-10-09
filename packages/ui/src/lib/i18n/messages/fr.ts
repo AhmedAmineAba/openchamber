@@ -185,6 +185,7 @@ export const dict = {
   'common.language.polish': 'Polonais',
   'common.language.japanese': 'Japonais',
   'common.language.turkish': 'Turc',
+  'common.language.arabic': 'Arabe',
   'common.language.dutch': 'Néerlandais',
   'common.revealPath.finder': 'Révéler dans le Finder',
   'common.revealPath.fileExplorer': 'Ouvrir dans l\'explorateur de fichiers',
