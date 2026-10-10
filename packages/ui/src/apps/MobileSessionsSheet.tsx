@@ -2634,6 +2634,7 @@ const MobileSessionsDrawerContainer: React.FC<{
   ariaLabel: string;
   children: React.ReactNode;
 }> = ({ open, onClose, onSwipeClose, ariaLabel, children }) => {
+  const { direction } = useI18n();
   const rootRef = React.useRef<HTMLElement | null>(null);
   const drawerRef = React.useRef<HTMLElement>(null);
   const [entered, setEntered] = React.useState(false);
@@ -2648,12 +2649,13 @@ const MobileSessionsDrawerContainer: React.FC<{
     onSwipeCloseRef.current = onSwipeClose;
   }, [onSwipeClose]);
 
-  // Swipe from the drawer's right edge back toward the left = close, the
-  // reverse of the left-edge swipe that opened it from the chat. Rows inside
+  // Swipe from the drawer's end edge back toward its start = close, the
+  // reverse of the start-edge swipe that opened it from the chat. Rows inside
   // reveal their actions in the opposite direction, so the two never fight.
+  const closeFromEdge = () => (onSwipeCloseRef.current ?? onCloseRef.current)();
   useEdgeSwipe(drawerRef, {
     enabled: open,
-    onRightEdgeSwipe: () => (onSwipeCloseRef.current ?? onCloseRef.current)(),
+    ...(direction === 'rtl' ? { onLeftEdgeSwipe: closeFromEdge } : { onRightEdgeSwipe: closeFromEdge }),
   });
 
   if (typeof document !== 'undefined' && !rootRef.current) {
@@ -2705,7 +2707,7 @@ const MobileSessionsDrawerContainer: React.FC<{
         paddingTop: 'var(--oc-safe-area-top, 0px)',
         // Settled state drops the transform entirely so the drawer isn't kept
         // on a compositing layer (iOS clips those to the safe-area viewport).
-        transform: entered ? 'none' : 'translateX(-100%)',
+        transform: entered ? 'none' : direction === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)',
         transition: `transform ${DRAWER_ENTER_DURATION_MS}ms ${DRAWER_EASING}`,
         visibility: visible ? 'visible' : 'hidden',
         pointerEvents: open ? 'auto' : 'none',

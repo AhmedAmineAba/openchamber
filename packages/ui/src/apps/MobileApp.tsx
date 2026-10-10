@@ -132,7 +132,7 @@ const NATIVE_RESUME_SYNC_EVENT_THROTTLE_MS = 1_000;
 type MobileSurface = 'archive' | 'board' | 'instances' | 'scheduled' | 'settings' | 'update' | 'usage';
 
 const MobileShell: React.FC<{ onActiveConnectionDeleted: () => void }> = ({ onActiveConnectionDeleted }) => {
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
   // The mobile root does not mount MainLayout, so it owns its own terminal
   // keepalive: without it, background PTYs (running project actions included)
   // are idle-reaped by the server while the workspace drawer is closed.
@@ -332,15 +332,19 @@ const MobileShell: React.FC<{ onActiveConnectionDeleted: () => void }> = ({ onAc
   );
   useDeepLinkHandlers(deepLinkHandlers);
 
-  // Edge swipes on the chat: left edge opens the sessions drawer (the
-  // persistent sidebar on a tablet), right edge the workspace drawer.
+  // Edge swipes on the chat: the start edge opens the sessions drawer (the
+  // persistent sidebar on a tablet), the end edge the workspace drawer. Each
+  // drawer slides in from the side of its header button: left and right in
+  // LTR, mirrored in RTL.
   const chatMainRef = React.useRef<HTMLElement>(null);
+  const openSessionsFromEdge = () => {
+    if (isTabletLayout) setSidebarOpen(true);
+    else setSessionsSheetOpen(true);
+  };
+  const openWorkspaceFromEdge = () => setWorkspaceOpen(true);
   useEdgeSwipe(chatMainRef, {
-    onLeftEdgeSwipe: () => {
-      if (isTabletLayout) setSidebarOpen(true);
-      else setSessionsSheetOpen(true);
-    },
-    onRightEdgeSwipe: () => setWorkspaceOpen(true),
+    onLeftEdgeSwipe: direction === 'rtl' ? openWorkspaceFromEdge : openSessionsFromEdge,
+    onRightEdgeSwipe: direction === 'rtl' ? openSessionsFromEdge : openWorkspaceFromEdge,
   });
 
   // Settings owns a drill-down of its own (nav → page list → item), so the
