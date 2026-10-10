@@ -4546,7 +4546,11 @@ const handleInvoke = async (browserWindow, command, args = {}) => {
         }
       }
       await target.debugger.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true });
-      focusEmulatedPanelContents.add(target);
+      if (!focusEmulatedPanelContents.has(target)) {
+        focusEmulatedPanelContents.add(target);
+        // DevTools taking the session ends the emulation with it.
+        target.debugger.once('detach', () => focusEmulatedPanelContents.delete(target));
+      }
       return { focused: true };
     }
 

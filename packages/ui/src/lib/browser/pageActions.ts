@@ -270,7 +270,7 @@ export const buildClickScript = ({ selector, text }: { selector?: string; text?:
   // Focus moves on mousedown unless the page prevented it, to the nearest
   // focusable element under the pointer; with none, the old focus is lost.
   if (mouseDown) {
-    var focusable = hit.closest('a[href], button, input, select, textarea, summary, [tabindex], [contenteditable="true"]');
+    var focusable = hit.closest('a[href], button, input, select, textarea, summary, [tabindex], [contenteditable]:not([contenteditable="false"])');
     if (focusable && focusable.disabled !== true) focusable.focus({ preventScroll: true });
     else if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   }
