@@ -30,12 +30,13 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const t = (key: I18nKey, params?: I18nParams) => formatMessage(dictionary, key, params);
     return {
       locale,
+      direction,
       locales: LOCALES,
       setLocale,
       label: (targetLocale) => t(LOCALE_LABEL_KEYS[targetLocale]),
       t,
     };
-  }, [dictionary, locale, setLocale]);
+  }, [dictionary, direction, locale, setLocale]);
 
   // Base UI menus, popovers and sliders read the direction from this provider, not from the document.
   return (

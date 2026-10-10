@@ -816,7 +816,7 @@ describe('worktreeManager fork remote payload wiring', () => {
     const args = {
       mode: 'existing' as const,
       branchName: 'feature/login',
-      worktreeName: 'pr-42',
+      worktreeName: 'pe-42',
       existingBranch: 'remotes/pr-alice/feature/login',
       changeRequestSource: {
         context: { provider: 'github' as const, instance: 'github.com', directory: '/repo', repositoryId: 'repo_one', accountId: 'account_one', bindingRevision: 2, primaryRemote: 'origin' },

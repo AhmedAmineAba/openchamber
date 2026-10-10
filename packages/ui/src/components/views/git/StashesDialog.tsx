@@ -150,8 +150,8 @@ export const StashesDialog: React.FC<StashesDialogProps> = ({
         </div>
 
         <div className="relative mt-2">
-          <Icon name="search" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('gitView.stashes.searchPlaceholder')} className="pl-9" />
+          <Icon name="search" className="absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('gitView.stashes.searchPlaceholder')} className="ps-9" />
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -161,7 +161,7 @@ export const StashesDialog: React.FC<StashesDialogProps> = ({
             <div className="py-8 text-center text-muted-foreground">{query ? t('gitView.stashes.empty.search') : t('gitView.stashes.empty.list')}</div>
           ) : filtered.map((stash, index) => (
             <div key={stash.ref} className="group flex items-center gap-2 rounded py-1.5 transition-colors hover:bg-interactive-hover/30">
-              <div className="min-w-0 flex-1 pl-2">
+              <div className="min-w-0 flex-1 ps-2">
                 <p className="typography-small truncate text-foreground">{stash.message || t('gitView.stashes.untitled')}</p>
                 <p className="typography-meta truncate text-muted-foreground">
                   <Tooltip>
@@ -173,7 +173,7 @@ export const StashesDialog: React.FC<StashesDialogProps> = ({
                   {' · '}{stash.relativeTime} · {typeof fileCounts[stash.ref] === 'number' ? t('gitView.stashes.fileCount', { count: fileCounts[stash.ref] }) : t('gitView.stashes.fileCountLoading')}
                 </p>
               </div>
-              <div className="mr-2 flex shrink-0 items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+              <div className="me-2 flex shrink-0 items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
                 <StashIconButton label={t('gitView.stashes.actions.apply')} loading={operation === `apply:${stash.ref}`} onClick={() => runStashAction(stash, 'apply')} disabled={isOperating}><Icon name="inbox-unarchive" className="size-4" /></StashIconButton>
                 <StashIconButton label={t('gitView.stashes.actions.pop')} loading={operation === `pop:${stash.ref}`} onClick={() => runStashAction(stash, 'pop')} disabled={isOperating}><Icon name="inbox-unarchive-fill" className="size-4" /></StashIconButton>
                 <StashIconButton label={t('gitView.stashes.actions.drop')} loading={operation === `drop:${stash.ref}`} onClick={() => runStashAction(stash, 'drop')} disabled={isOperating} destructive><Icon name="delete-bin" className="size-4" /></StashIconButton>

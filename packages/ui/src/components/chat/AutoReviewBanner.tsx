@@ -43,7 +43,7 @@ export const AutoReviewBanner = memo(() => {
           in composer/DOCUMENTATION.md. */}
       <div className="rounded-xl shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.12)]">
       <div className="oc-glass-popover w-full min-w-0 overflow-hidden rounded-xl border border-[var(--interactive-border)]">
-        <div className="flex w-full items-center gap-2 px-3 py-2 text-left">
+        <div className="flex w-full items-center gap-2 px-3 py-2 text-start">
           <Icon name="loader-4" className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <span className="typography-ui-label font-medium text-foreground">

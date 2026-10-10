@@ -705,8 +705,8 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
     <div
       className={cn(
         'oc-glass-popover relative flex items-end gap-2 rounded-3xl border border-[var(--interactive-border)]',
-        'pl-4 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.12)]',
-        'py-1 pr-1',
+        'ps-4 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.12)]',
+        'py-1 pe-1',
         'transition-[opacity,transform] duration-200 ease-out',
         isOpening ? 'opacity-0 translate-y-[4px]' : 'opacity-100 translate-y-0'
       )}
@@ -752,7 +752,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
       <div
         ref={menuRef}
         className={cn(
-          'fixed left-3 right-3 bottom-0 z-50 mx-auto max-w-[420px]',
+          'fixed inset-s-3 inset-e-3 bottom-0 z-50 mx-auto max-w-[420px]',
           'oc-glass-popover rounded-2xl border border-[var(--interactive-border)]',
           'p-2 shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.12)]',
           'safe-area-bottom',
@@ -771,7 +771,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
             <button
               onClick={handleOpenMobileComment}
               className={cn(
-                'flex flex-auto items-center gap-2 rounded-xl px-3 py-2.5 text-left',
+                'flex flex-auto items-center gap-2 rounded-xl px-3 py-2.5 text-start',
                 'text-sm font-medium leading-tight',
                 'bg-foreground/[0.04] text-foreground',
                 'active:opacity-80',
@@ -787,7 +787,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
             <button
               onClick={handleAddToChat}
               className={cn(
-                'flex flex-[1_0_auto] items-center gap-2 rounded-xl px-3 py-2.5 text-left',
+                'flex flex-[1_0_auto] items-center gap-2 rounded-xl px-3 py-2.5 text-start',
                 'text-sm font-medium leading-tight',
                 'bg-[var(--primary-base)] text-[var(--primary-foreground)]',
                 'active:opacity-80',
@@ -804,7 +804,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
               <button
                 onClick={handleReadAloud}
                 className={cn(
-                  'flex flex-[1_0_auto] items-center gap-2 rounded-xl px-3 py-2.5 text-left',
+                  'flex flex-[1_0_auto] items-center gap-2 rounded-xl px-3 py-2.5 text-start',
                   'text-sm font-medium leading-tight',
                   'bg-foreground/[0.04] text-foreground',
                   'active:opacity-80',
@@ -826,7 +826,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
               <button
                 onClick={handleAskOpenChamber}
                 className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-left',
+                  'flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-start',
                   'text-sm font-medium leading-tight',
                   'bg-foreground/[0.04] text-foreground',
                   'active:opacity-80',
@@ -845,7 +845,7 @@ export const TextSelectionMenu: React.FC<TextSelectionMenuProps> = ({ containerR
                 onClick={handleAddToNotes}
                 disabled={isAddingToNotes}
                 className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-left',
+                  'flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-start',
                   'text-sm font-medium leading-tight',
                   'bg-foreground/[0.04] text-foreground',
                   'active:opacity-80 disabled:opacity-60 disabled:cursor-not-allowed',

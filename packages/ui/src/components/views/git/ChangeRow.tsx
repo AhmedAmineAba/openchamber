@@ -142,8 +142,8 @@ export const ChangeRow = React.memo<ChangeRowProps>(function ChangeRow({
           if (lastSlash === -1 || nameOnly) {
             return (
               <span
-                className="flex-1 min-w-0 truncate typography-ui-label text-foreground"
-                style={{ direction: 'rtl', textAlign: 'left', unicodeBidi: 'plaintext' }}
+                className="oc-ui-start-align flex-1 min-w-0 truncate typography-ui-label text-foreground"
+                style={{ direction: 'rtl', unicodeBidi: 'plaintext' }}
                 title={file.path}
               >
                 {file.path.slice(lastSlash + 1)}
@@ -153,10 +153,10 @@ export const ChangeRow = React.memo<ChangeRowProps>(function ChangeRow({
           const dir = file.path.slice(0, lastSlash);
           const name = file.path.slice(lastSlash);
           return (
-            <span className="flex-1 min-w-0 flex items-baseline overflow-hidden" title={file.path}>
+            <span dir="ltr" className="flex-1 min-w-0 flex items-baseline overflow-hidden" title={file.path}>
               <span
-                className="min-w-0 truncate typography-ui-label text-muted-foreground"
-                  style={{ direction: 'rtl', textAlign: 'left', unicodeBidi: 'plaintext' }}
+                className="oc-ui-start-align min-w-0 truncate typography-ui-label text-muted-foreground"
+                  style={{ direction: 'rtl', unicodeBidi: 'plaintext' }}
               >
                 {dir}
               </span>

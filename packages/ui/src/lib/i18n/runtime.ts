@@ -13,6 +13,14 @@ export function getLocaleDirection(locale: Locale): LayoutDirection {
   return RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
 }
 
+/**
+ * The window edge where a line of the layout starts. OS window controls stay on
+ * their physical edge in every language, so window chrome maps them through this.
+ */
+export function getInlineStartSide(direction: LayoutDirection): 'left' | 'right' {
+  return direction === 'rtl' ? 'right' : 'left';
+}
+
 export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish' | 'common.language.arabic'> = {
   en: 'common.language.english',
   fr: 'common.language.french',

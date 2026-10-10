@@ -4473,7 +4473,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
                 <div className="flex flex-col px-3 pb-4 pt-1">
                     <button
                         type="button"
-                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-left typography-ui-label hover:bg-[var(--interactive-hover)]"
+                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-start typography-ui-label hover:bg-[var(--interactive-hover)]"
                         onClick={() => {
                             // The native file/photo picker takes over next — restoring
                             // the keyboard in between would flash it open and shut.
@@ -4487,7 +4487,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
                     </button>
                     <button
                         type="button"
-                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-left typography-ui-label hover:bg-[var(--interactive-hover)]"
+                        className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-start typography-ui-label hover:bg-[var(--interactive-hover)]"
                         onClick={() => {
                             // Hand-off to the picker: don't sync-restore the
                             // keyboard under the overlay that opens next frame.
@@ -4502,7 +4502,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
                     {showLinearPicker ? (
                         <button
                             type="button"
-                            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-left typography-ui-label hover:bg-[var(--interactive-hover)]"
+                            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-3 text-start typography-ui-label hover:bg-[var(--interactive-hover)]"
                             onClick={() => {
                                 mobileShell.skipNextOverlayCloseRestore();
                                 setMobileAttachMenuOpen(false);

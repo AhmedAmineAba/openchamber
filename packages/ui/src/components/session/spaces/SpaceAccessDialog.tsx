@@ -114,7 +114,7 @@ const ModelRow: React.FC<{ entry: SpaceEntry; provider: ReturnType<typeof useSpa
         ) : null}
       </div>
       {open ? (
-        <div className="space-y-2 pl-3">
+        <div className="space-y-2 ps-3">
           <ModelKeySource providerName={provider.name} choice={choice} onChange={(change) => setChoice((current) => ({ ...current, ...change }))} />
           {error ? <p className="typography-meta text-status-error">{error}</p> : null}
           <div className="flex gap-2">
@@ -257,7 +257,7 @@ const SpaceAccessBody: React.FC<{ entry: SpaceEntry; focusProviderId: string | n
   const journal = useSpaceJournal(entry.id, running);
   const domains = useOpenSpaceDomain(entry.id);
   return (
-    <div className="space-y-5 pr-3">
+    <div className="space-y-5 pe-3">
       <p className="typography-meta text-muted-foreground">{t('spaces.access.intro')}</p>
       {!running ? <StoppedNotice spaceId={entry.id} /> : null}
       <Section title={t('spaces.access.models.label')}>

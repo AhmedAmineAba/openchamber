@@ -20,7 +20,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, children, className, topBar }) => {
-    const { t } = useI18n();
+    const { t, direction } = useI18n();
     const sidebarWidth = useUIStore((state) => state.sidebarWidth);
     const setSidebarWidth = useUIStore((state) => state.setSidebarWidth);
     const [isResizing, setIsResizing] = React.useState(false);
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, children, cl
 
     // The titlebar overlay that floats above the sidebar is a sibling of it, not
     // a child, so it cannot read the width published on <aside>. Publish it on
-    // the root as well, the way --oc-header-height and --oc-titlebar-left-inset
+    // the root as well, the way --oc-header-height and --oc-titlebar-start-inset
     // already are, so the overlay can cap itself to the sidebar.
     React.useEffect(() => {
         document.documentElement.style.setProperty(
@@ -110,7 +110,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, children, cl
             return;
         }
 
-        const delta = event.clientX - startXRef.current;
+        // The handle is on the sidebar's end edge: in RTL dragging left widens it.
+        const delta = (event.clientX - startXRef.current) * (direction === 'rtl' ? -1 : 1);
         const nextWidth = clampSidebarWidth(startWidthRef.current + delta);
         if (resizingWidthRef.current === nextWidth) {
             return;
@@ -142,9 +143,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, children, cl
         <aside
             ref={sidebarRef}
             className={cn(
-                'relative flex h-full overflow-hidden border-r border-border will-change-[width] motion-reduce:transition-none',
+                'relative flex h-full overflow-hidden border-e border-border will-change-[width] motion-reduce:transition-none',
                 'bg-sidebar',
-                !isOpen && 'border-r-0',
+                !isOpen && 'border-e-0',
                 className,
             )}
             style={{
@@ -161,14 +162,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, children, cl
         >
             {isOpen && (
                 <div
-                    className="pointer-events-none absolute inset-0 z-30 shadow-[inset_-2px_0_10px_-2px_rgb(0_0_0_/_0.06)]"
+                    className="pointer-events-none absolute inset-0 z-30 shadow-[inset_-2px_0_10px_-2px_rgb(0_0_0_/_0.06)] rtl:shadow-[inset_2px_0_10px_-2px_rgb(0_0_0_/_0.06)]"
                     aria-hidden="true"
                 />
             )}
             {isOpen && (
                 <div
                     className={cn(
-                        'absolute right-0 top-0 z-20 h-full w-[3px] cursor-col-resize hover:bg-[var(--interactive-border)]/80 transition-colors',
+                        'absolute inset-e-0 top-0 z-20 h-full w-[3px] cursor-col-resize hover:bg-[var(--interactive-border)]/80 transition-colors',
                         isResizing && 'bg-[var(--interactive-border)]'
                     )}
                     onPointerDown={handlePointerDown}

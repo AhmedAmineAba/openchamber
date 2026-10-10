@@ -201,7 +201,7 @@ export const IdentityDropdown: React.FC<IdentityDropdownProps> = ({
                 />
               )}
               {!iconOnly && (
-                <span className="git-identity-label min-w-0 flex-1 truncate text-left">
+                <span className="git-identity-label min-w-0 flex-1 truncate text-start">
                   {activeProfile ? identityDisplayName(activeProfile, t) : t('gitView.header.noIdentity')}
                 </span>
               )}
@@ -248,7 +248,7 @@ export const IdentityDropdown: React.FC<IdentityDropdownProps> = ({
                     </span>
                   </span>
                   {isSelected ? (
-                    <Icon name="check" className="ml-auto size-4 text-foreground" />
+                    <Icon name="check" className="ms-auto size-4 text-foreground" />
                   ) : null}
                 </span>
               </DropdownMenuItem>

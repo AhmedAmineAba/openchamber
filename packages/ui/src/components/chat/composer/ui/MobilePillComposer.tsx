@@ -121,11 +121,11 @@ export function MobilePillComposer(props: MobilePillComposerProps) {
             >
             {topRow}
             {attachments}
-            {/* pl-1 puts the attach icon at the same inset the expanded
+            {/* ps-1 puts the attach icon at the same inset the expanded
                 footer gives it, and h-12 is the expanded footer's height
                 (its buttons sit on the mobile 36px touch floor), so the icons
                 do not shift across the swap. */}
-            <div className="flex h-12 min-w-0 items-center gap-x-0.5 pl-1 pr-1">
+            <div className="flex h-12 min-w-0 items-center gap-x-0.5 ps-1 pe-1">
                 <ComposerAttachmentControls
                     isVSCode={isVSCode}
                     footerIconButtonClass={footerIconButtonClass}
@@ -141,7 +141,7 @@ export function MobilePillComposer(props: MobilePillComposerProps) {
                     type="button"
                     // The morph moves the editor block to and from this line.
                     data-composer-morph-prompt="true"
-                    className="flex h-full min-w-0 flex-1 cursor-text items-center px-1.5 text-left"
+                    className="flex h-full min-w-0 flex-1 cursor-text items-center px-1.5 text-start"
                     onClick={onExpand}
                 >
                     <span
@@ -221,7 +221,7 @@ export function MobilePillComposer(props: MobilePillComposerProps) {
                     'flex-shrink-0 transition-all duration-200 ease-out',
                     // The gap lives on the slot, so a collapsed slot leaves
                     // the pill exactly as wide as the expanded box.
-                    showTrailingSendAction ? 'ml-2 w-11 opacity-100' : 'w-0 opacity-0 overflow-hidden',
+                    showTrailingSendAction ? 'ms-2 w-11 opacity-100' : 'w-0 opacity-0 overflow-hidden',
                     // The glass button's shadow, kept off its backdrop-filter.
                     'rounded-full shadow-[0_4px_16px_-4px_rgb(0_0_0_/_0.12)]',
                 )}
@@ -235,7 +235,7 @@ export function MobilePillComposer(props: MobilePillComposerProps) {
                     title={t('chat.chatInput.actions.queueMessageAria')}
                     aria-label={t('chat.chatInput.actions.queueMessageAria')}
                 >
-                    <Icon name="send-plane-2" className={cn(sendIconSizeClass, '-rotate-90', 'text-current')} />
+                    <Icon name="send-plane-2" className={cn(sendIconSizeClass, '-rotate-90 rtl:rotate-90', 'text-current')} />
                 </button>
             </div>
         </div>

@@ -160,7 +160,7 @@ export const OpenInAppButton = ({ directory, className }: OpenInAppButtonProps) 
             type="button"
             className={cn(
               'inline-flex h-full w-7 items-center justify-center',
-              'border-l border-[var(--interactive-border)] text-muted-foreground',
+              'border-s border-[var(--interactive-border)] text-muted-foreground',
               'hover:bg-interactive-hover hover:text-foreground transition-colors'
             )}
             aria-label={t('openInApp.actions.chooseAppAria')}
@@ -192,7 +192,7 @@ export const OpenInAppButton = ({ directory, className }: OpenInAppButtonProps) 
                 />
                 <span className="typography-ui-label text-foreground">{app.label}</span>
                 {selectedApp.id === app.id ? (
-                  <Icon name="check" className="ml-auto h-4 w-4 text-primary" />
+                  <Icon name="check" className="ms-auto h-4 w-4 text-primary" />
                 ) : null}
               </DropdownMenuItem>
             );

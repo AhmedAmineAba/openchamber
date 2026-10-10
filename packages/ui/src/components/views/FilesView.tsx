@@ -462,7 +462,7 @@ const FileRow: React.FC<FileRowProps> = ({
     <>
       {canRename && (
         <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('rename', node); }}>
-          <Icon name="edit" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.rename')}
+          <Icon name="edit" className="me-2 size-4" /> {t('sidebarFilesTree.menu.rename')}
         </Item>
       )}
       <Item onClick={(e: React.MouseEvent) => {
@@ -475,7 +475,7 @@ const FileRow: React.FC<FileRowProps> = ({
           toast.error(t('sidebarFilesTree.toast.copyFailed'));
         });
       }}>
-        <Icon name="file-copy" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.copyPath')}
+        <Icon name="file-copy" className="me-2 size-4" /> {t('sidebarFilesTree.menu.copyPath')}
       </Item>
       <Item onClick={(e: React.MouseEvent) => {
         e.stopPropagation();
@@ -488,7 +488,7 @@ const FileRow: React.FC<FileRowProps> = ({
           toast.error(t('sidebarFilesTree.toast.copyFailed'));
         });
       }}>
-        <Icon name="file-copy-2" className="mr-2 size-4" /> {t('filesView.tree.menu.copyRelativePath')}
+        <Icon name="file-copy-2" className="me-2 size-4" /> {t('filesView.tree.menu.copyRelativePath')}
       </Item>
       {!isDir && downloadFile && (
         <Item onClick={(e: React.MouseEvent) => {
@@ -498,12 +498,12 @@ const FileRow: React.FC<FileRowProps> = ({
             toast.error(t('sidebarFilesTree.toast.operationFailed'));
           });
         }}>
-          <Icon name="download" className="mr-2 size-4" /> {t(isBrowserClient ? 'sidebarFilesTree.menu.download' : 'sidebarFilesTree.menu.save')}
+          <Icon name="download" className="me-2 size-4" /> {t(isBrowserClient ? 'sidebarFilesTree.menu.download' : 'sidebarFilesTree.menu.save')}
         </Item>
       )}
       {canRevealPath && (
         <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRevealPath(node.path); }}>
-          <Icon name="folder-received" className="mr-2 size-4" /> {t(getRevealLabelKey())}
+          <Icon name="folder-received" className="me-2 size-4" /> {t(getRevealLabelKey())}
         </Item>
       )}
       {/* The OS opens it with whatever app owns the type: Word for a .docx, Typora for a .md. */}
@@ -514,7 +514,7 @@ const FileRow: React.FC<FileRowProps> = ({
             if (!opened) toast.error(t('sidebarFilesTree.toast.operationFailed'));
           });
         }}>
-          <Icon name="external-link" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.openInDefaultApp')}
+          <Icon name="external-link" className="me-2 size-4" /> {t('sidebarFilesTree.menu.openInDefaultApp')}
         </Item>
       )}
       {isDir && (canCreateFile || canCreateFolder || canUploadHere) && (
@@ -522,17 +522,17 @@ const FileRow: React.FC<FileRowProps> = ({
           <Separator />
           {canCreateFile && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('createFile', node); }}>
-              <Icon name="file-add" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.newFile')}
+              <Icon name="file-add" className="me-2 size-4" /> {t('sidebarFilesTree.menu.newFile')}
             </Item>
           )}
           {canCreateFolder && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('createFolder', node); }}>
-              <Icon name="folder-add" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.newFolder')}
+              <Icon name="folder-add" className="me-2 size-4" /> {t('sidebarFilesTree.menu.newFolder')}
             </Item>
           )}
           {canUploadHere && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onPickFiles(node.path); }}>
-              <Icon name="upload-2" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.uploadFiles')}
+              <Icon name="upload-2" className="me-2 size-4" /> {t('sidebarFilesTree.menu.uploadFiles')}
             </Item>
           )}
         </>
@@ -544,7 +544,7 @@ const FileRow: React.FC<FileRowProps> = ({
             onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('delete', node); }}
             className="text-destructive focus:text-destructive"
           >
-            <Icon name="delete-bin" className="mr-2 size-4" /> {t('sidebarFilesTree.menu.delete')}
+            <Icon name="delete-bin" className="me-2 size-4" /> {t('sidebarFilesTree.menu.delete')}
           </Item>
         </>
       )}
@@ -559,7 +559,7 @@ const FileRow: React.FC<FileRowProps> = ({
         onClick={handleInteraction}
         onContextMenu={!isMobile ? handleContextMenu : undefined}
         className={cn(
-          'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-foreground transition-colors pr-8 select-none',
+          'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-start text-foreground transition-colors pe-8 select-none',
           isActive ? 'bg-interactive-selection/70' : 'hover:bg-interactive-hover/40'
         )}
       >
@@ -580,7 +580,7 @@ const FileRow: React.FC<FileRowProps> = ({
         </span>
         {!isDir && status && <FileStatusDot status={status} />}
         {isDir && badge && (
-          <span className="text-xs flex items-center gap-1 ml-auto mr-1">
+          <span className="text-xs flex items-center gap-1 ms-auto me-1">
             {badge.modified > 0 && <span className="text-[var(--status-warning)]">M{badge.modified}</span>}
             {badge.added > 0 && <span className="text-[var(--status-success)]">+{badge.added}</span>}
           </span>
@@ -588,7 +588,7 @@ const FileRow: React.FC<FileRowProps> = ({
       </button>
       {hasMenuActions && (
         <div className={cn(
-          "absolute right-1 top-1/2 -translate-y-1/2",
+          "absolute inset-e-1 top-1/2 -translate-y-1/2",
           alwaysShowActions ? "opacity-100" : "opacity-0 focus-within:opacity-100 group-hover:opacity-100"
         )}>
           <DropdownMenu
@@ -988,13 +988,15 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
 
   // Editor tabs horizontal scroll fades
   const editorTabsScrollRef = React.useRef<HTMLDivElement>(null);
-  const [editorTabsOverflow, setEditorTabsOverflow] = React.useState<{ left: boolean; right: boolean }>({ left: false, right: false });
+  const [editorTabsOverflow, setEditorTabsOverflow] = React.useState<{ start: boolean; end: boolean }>({ start: false, end: false });
   const updateEditorTabsOverflow = React.useCallback(() => {
     const el = editorTabsScrollRef.current;
     if (!el) return;
+    // scrollLeft is negative in RTL; its magnitude is the distance from the start.
+    const fromStart = Math.abs(el.scrollLeft);
     setEditorTabsOverflow({
-      left: el.scrollLeft > 2,
-      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2,
+      start: fromStart > 2,
+      end: fromStart + el.clientWidth < el.scrollWidth - 2,
     });
   }, []);
   const updateEditorTabsOverflowRef = React.useRef(updateEditorTabsOverflow);
@@ -2606,9 +2608,9 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
         <li key={node.path} className="relative">
           {depth > 0 && (
             <>
-              <span className="absolute top-3.5 left-[-12px] w-3 h-px bg-border/40" />
+              <span className="absolute top-3.5 inset-s-[-12px] w-3 h-px bg-border/40" />
               {isLast && (
-                <span className="absolute top-3.5 bottom-0 left-[-13px] w-[2px] bg-background" />
+                <span className="absolute top-3.5 bottom-0 inset-s-[-13px] w-[2px] bg-background" />
               )}
             </>
           )}
@@ -2636,7 +2638,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
             onPickFiles={pickFiles}
           />
           {isDir && isExpanded && (
-            <ul className="flex flex-col gap-1 ml-3 pl-3 border-l border-border/40 relative">
+            <ul className="flex flex-col gap-1 ms-3 ps-3 border-s border-border/40 relative">
               {loadErrorsByDir[node.path] ? (
                 <li className="flex items-center gap-2 px-2 py-1 typography-meta text-muted-foreground">
                   <span className="min-w-0 flex-1 truncate text-[var(--status-error)]" title={loadErrorsByDir[node.path]}>{loadErrorsByDir[node.path]}</span>
@@ -3637,7 +3639,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
         });
       }}
     >
-      <Icon name="download" className="mr-2 size-4" />
+      <Icon name="download" className="me-2 size-4" />
       {t('filesView.editor.saveFile')}
     </Button>
   ) : null;
@@ -4535,7 +4537,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
               type="button"
               onClick={() => setShowMobilePageContent(false)}
               aria-label={t('filesView.editor.back')}
-              className="inline-flex size-7 flex-shrink-0 items-center justify-center mr-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex size-7 flex-shrink-0 items-center justify-center me-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Icon name="arrow-left-s" className="size-5" />
             </button>
@@ -4547,7 +4549,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex min-w-0 max-w-full items-center gap-1 text-left typography-ui-label font-medium"
+                    className="inline-flex min-w-0 max-w-full items-center gap-1 text-start typography-ui-label font-medium"
                     aria-label={t('filesView.editor.openFilesAria')}
                   >
                     <FileTypeIcon filePath={selectedFile.path} extension={selectedFile.extension} className="size-3.5 flex-shrink-0" />
@@ -4608,11 +4610,11 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
           ) : (
             openFiles.length > 0 ? (
               <div className="relative min-w-0 flex-1">
-                {editorTabsOverflow.left && (
-                  <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 z-10 bg-gradient-to-r from-background to-transparent" />
+                {editorTabsOverflow.start && (
+                  <div className="pointer-events-none absolute inset-s-0 top-0 bottom-0 w-6 z-10 bg-gradient-to-r rtl:bg-gradient-to-l from-background to-transparent" />
                 )}
-                {editorTabsOverflow.right && (
-                  <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 z-10 bg-gradient-to-l from-background to-transparent" />
+                {editorTabsOverflow.end && (
+                  <div className="pointer-events-none absolute inset-e-0 top-0 bottom-0 w-6 z-10 bg-gradient-to-l rtl:bg-gradient-to-r from-background to-transparent" />
                 )}
                 <div
                   ref={editorTabsScrollRef}
@@ -4640,7 +4642,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
                               void handleSelectFile(file);
                             }
                           }}
-                          className="max-w-[12rem] truncate text-left"
+                          className="max-w-[12rem] truncate text-start"
                         >
                           {file.name}
                         </button>
@@ -4683,7 +4685,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
                 {displaySelectedPath}
               </span>
             ) : null}
-            <div className="ml-auto min-w-0 shrink-0 overflow-x-auto">
+            <div className="ms-auto min-w-0 shrink-0 overflow-x-auto">
               {renderFloatingFileControls({ layout: 'docked' })}
             </div>
           </div>
@@ -4971,19 +4973,19 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
       <div className={cn("flex flex-col gap-2 py-2", isMobile ? "px-3" : "px-2")}>
         <div className="flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
-            <Icon name="search" className="pointer-events-none absolute left-2 top-2 size-4 text-muted-foreground" />
+            <Icon name="search" className="pointer-events-none absolute inset-s-2 top-2 size-4 text-muted-foreground" />
             <Input
               ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('filesView.tree.search.placeholder')}
-              className="h-8 pl-8 pr-8 typography-meta"
+              className="h-8 ps-8 pe-8 typography-meta"
             />
             {searchQuery.trim().length > 0 && (
               <button
                 type="button"
                 aria-label={t('filesView.tree.search.clearAria')}
-                className="absolute right-2 top-2 inline-flex size-4 items-center justify-center text-muted-foreground hover:text-foreground"
+                className="absolute inset-e-2 top-2 inline-flex size-4 items-center justify-center text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setSearchQuery('');
                   searchInputRef.current?.focus();
@@ -5077,14 +5079,14 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
                     type="button"
                     onClick={() => void handleSelectFile(node)}
                     className={cn(
-                      'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-foreground transition-colors',
+                      'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-start text-foreground transition-colors',
                       isActive ? 'bg-interactive-selection/70' : 'hover:bg-interactive-hover/40'
                     )}
                   >
                     {getFileIcon(node.path, node.extension)}
                     <span
-                      className="min-w-0 flex-1 truncate typography-meta"
-                      style={{ direction: 'rtl', textAlign: 'left' }}
+                      className="oc-ui-start-align min-w-0 flex-1 truncate typography-meta"
+                      style={{ direction: 'rtl' }}
                       title={node.path}
                     >
                       {node.relativePath ?? node.path}
@@ -5116,7 +5118,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
     <div className="absolute inset-0 z-50 flex flex-col bg-background">
       {/* Fullscreen content */}
       <div className="flex-1 min-h-0 min-w-0 relative">
-        <div className="absolute right-4 top-4 z-30">
+        <div className="absolute inset-e-4 top-4 z-30">
           {renderFloatingFileControls({ exitFullscreenOnly: true })}
         </div>
         <ScrollableOverlay ref={setFullscreenPreviewScroller} outerClassName="h-full min-w-0" className={cn('h-full min-w-0', isLargeFile && '[overflow-anchor:none]')}>
@@ -5184,7 +5186,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full', visible = t
                 open={mdPreviewFindOpen}
                 onOpenChange={setMdPreviewFindOpen}
                 focusNonce={mdPreviewFindFocusNonce}
-                className="right-4 top-16"
+                className="inset-e-4 top-16"
               />
             </div>
           ) : canUseShikiFileView && textViewMode === 'view' ? (

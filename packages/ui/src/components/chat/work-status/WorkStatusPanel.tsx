@@ -69,7 +69,7 @@ const PANEL_TRANSITION_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * say there is more to see.
  */
 export const WorkStatusPanel: React.FC<Props> = ({ sessionId, directory, visible, repositoryEnabled = true, overlay = false }) => {
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
   const setScrollTop = useUIStore((state) => state.setWorkStatusScrollTop);
   const setOverlayOpen = useUIStore((state) => state.setWorkStatusOverlayOpen);
   const hiddenSections = useUIStore((state) => state.workStatusHiddenSections);
@@ -206,13 +206,13 @@ export const WorkStatusPanel: React.FC<Props> = ({ sessionId, directory, visible
         // the card's own shadow had no room and was clipped down that edge.
         'relative my-4 flex shrink-0 flex-col self-start overflow-hidden',
         'max-h-[calc(100%-2rem)]',
-        interactive ? 'ml-2 mr-4' : 'ml-0 mr-0',
+        interactive ? 'ms-2 me-4' : 'ms-0 me-0',
         // Out of the flow entirely, anchored to the chat column's top-right so
         // it reads as a dropdown from the header button. As a flex child it
         // took part in the layout and pushed the transcript, which is the one
         // thing an overlay must not do. Stronger shadow: it sits on content now.
         overlay && [
-          'absolute right-3 top-3 z-30 mx-0 my-0',
+          'absolute inset-e-3 top-3 z-30 mx-0 my-0',
           'max-h-[calc(100%-1.5rem)]',
           'shadow-[0_8px_28px_-8px_rgb(0_0_0_/_0.28)]',
         ],
@@ -236,10 +236,10 @@ export const WorkStatusPanel: React.FC<Props> = ({ sessionId, directory, visible
           ? 'translateY(0) scale(1)'
           : overlay
             ? 'translateY(-6px) scale(0.98)'
-            // Inline: leaves to the right and arrives from it, so the card
-            // reads as sliding out past the window edge.
-            : `translateX(${WORK_STATUS_PANEL_WIDTH / 4}px)`,
-        transformOrigin: 'top right',
+            // Inline: leaves toward the end (right, or left in RTL) and arrives
+            // from it, so the card reads as sliding out past the window edge.
+            : `translateX(${(direction === 'rtl' ? -1 : 1) * WORK_STATUS_PANEL_WIDTH / 4}px)`,
+        transformOrigin: direction === 'rtl' ? 'top left' : 'top right',
         transitionProperty: 'width, opacity, transform, margin',
         transitionDuration: `${PANEL_TRANSITION_MS}ms`,
         transitionTimingFunction: PANEL_TRANSITION_EASING,
@@ -258,7 +258,7 @@ export const WorkStatusPanel: React.FC<Props> = ({ sessionId, directory, visible
         type="button"
         aria-label={t('chat.workStatus.sections.open')}
         onClick={() => setSectionsDialogOpen(true)}
-        className="absolute right-2 top-1.5 z-10 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+        className="absolute inset-e-2 top-1.5 z-10 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
       >
         <Icon name="equalizer-2" className="size-4" />
       </button>
@@ -271,7 +271,7 @@ export const WorkStatusPanel: React.FC<Props> = ({ sessionId, directory, visible
         size={24}
         // Sections returning null leave no DOM node, so this reserves room for
         // settings in the first rendered heading, regardless of saved order.
-        className="oc-hide-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 [&>section:first-child>[data-work-status-heading]]:pr-7"
+        className="oc-hide-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2 [&>section:first-child>[data-work-status-heading]]:pe-7"
       >
         <WorkStatusPrimaryGroup
           sessionId={sessionId}

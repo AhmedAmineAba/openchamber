@@ -3340,7 +3340,7 @@ export const dict = {
   'memoryDebugPanel.common.untitled': 'بلا عنوان',
   'directoryTree.field.newDirectoryPlaceholder': 'مجلد_جديد',
   'textarea.resizeHandleAria': 'تغيير حجم مربع النص',
-  'sidebar.resize.leftPanelAria': 'تغيير حجم اللوحة اليسرى',
+  'sidebar.resize.leftPanelAria': 'تغيير حجم الشريط الجانبي',
   'sidebar.resize.rightPanelAria': 'تغيير حجم اللوحة اليمنى',
   'mainLayout.mobile.closeDrawerAria': 'إغلاق الدرج',
   'sortableTabsStrip.aria.tabs': 'علامات التبويب',

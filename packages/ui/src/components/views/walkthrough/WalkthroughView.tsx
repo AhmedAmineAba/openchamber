@@ -135,11 +135,13 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
       event.preventDefault();
       const startX = event.clientX;
       const startWidth = tocWidth;
+      // The contents column is at the start; in RTL dragging left widens it.
+      const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
       const maxWidth = Math.max(TOC_MIN_WIDTH, (rootRef.current?.clientWidth ?? 0) * TOC_MAX_FRACTION);
       setDraggingToc(true);
 
       const onMove = (moveEvent: PointerEvent) => {
-        const next = Math.min(maxWidth, Math.max(TOC_MIN_WIDTH, startWidth + moveEvent.clientX - startX));
+        const next = Math.min(maxWidth, Math.max(TOC_MIN_WIDTH, startWidth + (moveEvent.clientX - startX) * sign));
         setStoredTocWidth(next);
       };
       const onUp = () => {
@@ -159,7 +161,8 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
   const handleTocResizeKey = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const step = event.shiftKey ? 40 : 10;
-      const delta = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+      const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+      const delta = (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0) * sign;
       if (delta === 0) return;
       event.preventDefault();
       const maxWidth = Math.max(TOC_MIN_WIDTH, (rootRef.current?.clientWidth ?? 0) * TOC_MAX_FRACTION);
@@ -710,7 +713,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
         )}
         {isPrScope && <PullRequestComparisonSelector key={JSON.stringify([directory, currentBranch])} comparison={prComparison} />}
 
-        <div className="ml-auto flex min-w-0 items-center gap-1">
+        <div className="ms-auto flex min-w-0 items-center gap-1">
           {isPrScope && selectedPr && <Button variant="ghost" size="sm"
             aria-label={t('contextPanel.mode.diff')} title={t('contextPanel.mode.diff')}
             onClick={() => openContextPanelTab(rootDirectory, { mode: 'diff', diffScope: 'pr' })}>
@@ -890,7 +893,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
             type="button"
             variant="ghost"
             size="xs"
-            className="ml-auto"
+            className="ms-auto"
             disabled={generateDisabled}
             // Not forced: if an entry for this exact request existed the banner
             // would not be here, and a forced run would refuse the cache it may
@@ -912,7 +915,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
             type="button"
             variant="ghost"
             size="xs"
-            className="ml-auto"
+            className="ms-auto"
             // Clicking this again mid-flight would abort the running generation
             // and start another — paying for the same answer twice.
             disabled={isGeneratingEntry}
@@ -989,7 +992,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
                   onKeyDown={handleTocResizeKey}
                   className={cn(
                     'group relative w-1 shrink-0 cursor-col-resize',
-                    'before:absolute before:inset-y-0 before:-left-1 before:-right-1 before:content-[\'\']',
+                    'before:absolute before:inset-y-0 before:-inset-s-1 before:-inset-e-1 before:content-[\'\']',
                     'hover:bg-interactive-selection focus-visible:bg-interactive-selection focus-visible:outline-none',
                     draggingToc && 'bg-interactive-selection'
                   )}

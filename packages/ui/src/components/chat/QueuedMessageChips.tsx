@@ -68,7 +68,7 @@ const QueuedMessageChip = memo(({ message, target, onEdit, onSend }: QueuedMessa
             <span className="min-w-0 flex-1 truncate typography-ui-label text-foreground">
                 {firstLine ? withAttachmentChips(firstLine, attachmentFilenames, `queued-${message.id}`) : t('chat.queuedMessage.empty')}
                 {attachmentCount > 0 && (
-                    <span className="ml-1 text-muted-foreground">{t('chat.queuedMessage.attachments', { count: attachmentCount })}</span>
+                    <span className="ms-1 text-muted-foreground">{t('chat.queuedMessage.attachments', { count: attachmentCount })}</span>
                 )}
             </span>
             {!message.scheduledTask ? (

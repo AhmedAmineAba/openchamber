@@ -101,7 +101,10 @@ export const MobileSwipeActionsRow: React.FC<{
       // Vertical panning stays native; horizontal moves reach the swipe handler.
       style={{ touchAction: 'pan-y' }}
     >
-      <div className="absolute inset-y-0 left-0 flex items-stretch" style={{ width: actionsWidth }} aria-hidden={!revealed}>
+      {/* The swipe is physical (a rightward drag reveals the left edge, matching the
+          drawer's own left-edge gesture), so the actions stay on the left with the
+          first one outermost in either direction. */}
+      <div className="absolute inset-y-0 left-0 flex items-stretch rtl:flex-row-reverse" style={{ width: actionsWidth }} aria-hidden={!revealed}>
         {actions}
       </div>
       <div ref={contentRef} className={contentClassName}>

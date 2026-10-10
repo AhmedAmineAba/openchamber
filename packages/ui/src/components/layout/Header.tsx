@@ -67,7 +67,7 @@ import {
   resolveCurrentDesktopHost,
 } from '@/lib/desktopCurrentHost';
 import { Icon } from "@/components/icon/Icon";
-import { useI18n } from '@/lib/i18n';
+import { getInlineStartSide, useI18n } from '@/lib/i18n';
 import { runtimeFetch } from '@/lib/runtime-fetch';
 import { getRuntimeBearerTokenSync } from '@/lib/runtime-auth';
 import { getRuntimeApiBaseUrl, subscribeRuntimeEndpointChanged } from '@/lib/runtime-switch';
@@ -280,7 +280,7 @@ type HeaderSessionSnapshot = {
 
 export const Header: React.FC = () => {
   streamPerfCount('ui.header.render');
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   const openContextOverview = useUIStore((state) => state.openContextOverview);
   const closeContextPanel = useUIStore((state) => state.closeContextPanel);
@@ -868,7 +868,7 @@ export const Header: React.FC = () => {
   }, [currentSession?.title, currentSessionId, loadSessionRecords, openDirectory, sessionDirectory, t]);
   const renderGuestSessionActionItems = React.useCallback((Item: React.ElementType) => guestSessionActionEntries.map((entry) => (
     <Item key={`${entry.guest.id}:${entry.action.id}`} onClick={() => runCurrentSessionGuestAction(entry)}>
-      <GuestIcon icon={entry.icon} iconSrc={entry.iconSrc} className="mr-1 size-4" />{entry.action.label}
+      <GuestIcon icon={entry.icon} iconSrc={entry.iconSrc} className="me-1 size-4" />{entry.action.label}
     </Item>
   )), [guestSessionActionEntries, runCurrentSessionGuestAction]);
 
@@ -1089,11 +1089,10 @@ export const Header: React.FC = () => {
 
 
   const desktopHeaderIconButtonClass = DESKTOP_HEADER_ICON_BUTTON_CLASS;
-  // Left padding the header needs to clear the OS window controls (macOS
-  // traffic lights / window-controls-overlay). When the sidebar is open this
-  // space is owned by the sidebar's top strip instead, so the header drops back
-  // to its normal content padding. The full value is published as
-  // `--oc-titlebar-left-inset` so the sidebar strip can mirror it.
+  // Clearance for the OS window controls (macOS traffic lights /
+  // window-controls-overlay) on each physical edge of the window. Those
+  // controls never mirror, while the layout does: in a right-to-left locale the
+  // sidebar sits on the right, so the left clearance moves to the header's end.
   const titlebarLeftInset = React.useMemo(() => {
     if (isDesktopApp && isMacPlatform && !isDesktopWindowFullscreen) {
       // Native traffic lights have a fixed physical footprint. Keep this
@@ -1108,22 +1107,35 @@ export const Header: React.FC = () => {
     }
     return '0.75rem';
   }, [isDesktopApp, isDesktopWindowFullscreen, isMacPlatform, isTabletStandalonePwa, isVSCode, usesFramelessChrome]);
+  const titlebarRightInset = (!isDesktopApp || usesFramelessChrome) && !isVSCode
+    ? 'calc(0.75rem + var(--oc-wco-right-inset, 0px))'
+    : '0.75rem';
+  const isRtl = direction === 'rtl';
+  // The edge the persistent TitlebarLeftControls overlay starts from. When the
+  // sidebar is open this space is owned by the sidebar's top strip, so the header
+  // drops back to its normal content padding there. Published as
+  // `--oc-titlebar-start-inset` so the overlay and the sidebar strip share it.
+  const titlebarStartInset = isRtl ? titlebarRightInset : titlebarLeftInset;
+  const titlebarEndInset = isRtl ? titlebarLeftInset : titlebarRightInset;
+  // Frameless in-window controls render on their physical side: in the overlay
+  // cluster when that side is where the line starts, at the header's end otherwise.
+  const endEdgeOwnedByInWindowControls = usesFramelessChrome && windowControlsSide !== getInlineStartSide(direction);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
-    document.documentElement.style.setProperty('--oc-titlebar-left-inset', titlebarLeftInset);
-  }, [titlebarLeftInset]);
+    document.documentElement.style.setProperty('--oc-titlebar-start-inset', titlebarStartInset);
+  }, [titlebarStartInset]);
 
-  // Space reserved on the header's left for the persistent overlay when the
+  // Space reserved at the header's start for the persistent overlay when the
   // sidebar is collapsed (the overlay sits over the header then). Split into two
   // spacers so the strip stays a window drag area while the buttons stay
   // clickable: a drag region for the window-controls inset (traffic lights) and
   // a no-drag carve under the control cluster. Both animate so the session title
   // slides in/out in lockstep with the sidebar. When the sidebar is open the
   // overlay is over the sidebar, so the header only keeps normal content padding.
-  const headerInsetSpacerWidth = isSidebarOpen ? '0.75rem' : 'var(--oc-titlebar-left-inset, 0.75rem)';
+  const headerInsetSpacerWidth = isSidebarOpen ? '0.75rem' : 'var(--oc-titlebar-start-inset, 0.75rem)';
   const headerControlsSpacerWidth = isSidebarOpen
     ? '0px'
     : 'calc(var(--oc-titlebar-controls-width, 5.5rem) + 0.5rem)';
@@ -1179,7 +1191,7 @@ export const Header: React.FC = () => {
   // must be expressed in pixels. The interface font-size setting scales the
   // root rem unit, so a rem-based height floor collapses with it and lets
   // sidebar content slide underneath the macOS traffic lights. Mirrors the
-  // pixel `--oc-titlebar-left-inset` above. macOS <= 15 uses the taller 56px
+  // pixel left inset above. macOS <= 15 uses the taller 56px
   // titlebar that `macosHeaderSizeClass` also encodes.
   const titlebarMinHeight = React.useMemo(() => {
     if (isDesktopApp && isMacPlatform && !isDesktopWindowFullscreen) {
@@ -1195,23 +1207,23 @@ export const Header: React.FC = () => {
     const height = `max(3rem, ${titlebarMinHeight}, var(--oc-wco-titlebar-height, 0px))`;
 
     // VS Code and non-frameless desktop size their own header, and frameless
-    // Electron with right-side controls keeps the pr-0 class and no inline
-    // padding so the close button sits flush with the window corner.
+    // Electron with controls at the header's end keeps the pe-0 class and no
+    // inline padding so the close button sits flush with the window corner.
     const sizesItsOwnHeader = (isDesktopApp && !usesFramelessChrome) || isVSCode;
-    const rightEdgeOwnedByInWindowControls = usesFramelessChrome && windowControlsSide === 'right';
 
     if (sizesItsOwnHeader && titlebarMinHeight === '0px') {
       return {};
     }
 
     const style: React.CSSProperties = { minHeight: height, height };
-    if (!sizesItsOwnHeader && !rightEdgeOwnedByInWindowControls) {
-      // Left inset is handled by the no-drag spacer (see renderDesktop); only
-      // the right inset is owned by the window-controls overlay.
-      style.paddingRight = 'calc(0.75rem + var(--oc-wco-right-inset, 0px))';
+    // The start inset is handled by the no-drag spacer (see renderDesktop). The
+    // end inset clears the window-controls overlay, and in a right-to-left
+    // layout also the macOS traffic lights, which stay on the left.
+    if (!endEdgeOwnedByInWindowControls && (!sizesItsOwnHeader || isRtl)) {
+      style.paddingInlineEnd = titlebarEndInset;
     }
     return style;
-  }, [isDesktopApp, isVSCode, titlebarMinHeight, usesFramelessChrome, windowControlsSide]);
+  }, [endEdgeOwnedByInWindowControls, isDesktopApp, isRtl, isVSCode, titlebarEndInset, titlebarMinHeight, usesFramelessChrome]);
 
   const updateHeaderHeight = React.useCallback(() => {
     if (typeof document === 'undefined') {
@@ -1315,12 +1327,12 @@ export const Header: React.FC = () => {
         <ProjectActionsButton
           projectRef={projectActionsContext.projectRef}
           directory={projectActionsContext.directory}
-          className="mr-2"
+          className="me-2"
         />
       ) : null}
-      <SpaceApplyButton directory={openDirectory} className={cn(DESKTOP_HEADER_ICON_BUTTON_CLASS, 'mr-1 text-muted-foreground hover:text-foreground')} iconClassName="h-[18px] w-[18px]" />
-      <SpaceAccessButton directory={openDirectory} className={cn(DESKTOP_HEADER_ICON_BUTTON_CLASS, 'mr-1 text-muted-foreground hover:text-foreground')} iconClassName="h-[18px] w-[18px]" />
-      <OpenInAppButton directory={actionDirectory} className="mr-1" />
+      <SpaceApplyButton directory={openDirectory} className={cn(DESKTOP_HEADER_ICON_BUTTON_CLASS, 'me-1 text-muted-foreground hover:text-foreground')} iconClassName="h-[18px] w-[18px]" />
+      <SpaceAccessButton directory={openDirectory} className={cn(DESKTOP_HEADER_ICON_BUTTON_CLASS, 'me-1 text-muted-foreground hover:text-foreground')} iconClassName="h-[18px] w-[18px]" />
+      <OpenInAppButton directory={actionDirectory} className="me-1" />
       {/* Instances only exist in the desktop app. On web the menu was left
           holding a single dev-only shutdown action, which is not a reason to
           keep a dropdown in the header. */}
@@ -1352,20 +1364,20 @@ export const Header: React.FC = () => {
       <>
         <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.rename')}>
           <Item onClick={() => { if (!isActive) select(); pendingHeaderRenameRef.current = session.id; }}>
-            <Icon name="pencil-ai" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.rename')}
+            <Icon name="pencil-ai" className="me-1 size-4" />{t('sessions.sidebar.session.menu.rename')}
           </Item>
         </SessionMenuItemHint>
         <SessionAiRenameMenuItem sessionID={session.id} directory={session.directory} open={open} Item={Item} />
         <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.copyId')}>
           <Item onClick={() => copySessionIdFor(session.id)}>
-            <Icon name="file-copy" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.copyId')}
+            <Icon name="file-copy" className="me-1 size-4" />{t('sessions.sidebar.session.menu.copyId')}
           </Item>
         </SessionMenuItemHint>
         <Separator />
         {isActive ? (
           <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.exportMarkdown')}>
             <Item onClick={() => void exportCurrentSession()}>
-              <Icon name="download" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.exportMarkdown')}
+              <Icon name="download" className="me-1 size-4" />{t('sessions.sidebar.session.menu.exportMarkdown')}
             </Item>
           </SessionMenuItemHint>
         ) : null}
@@ -1382,7 +1394,7 @@ export const Header: React.FC = () => {
                 onClick={moveCurrentSessionToWorktree}
                 className="w-full"
               >
-                <Icon name="folder-shared" className="mr-1 size-4" />
+                <Icon name="folder-shared" className="me-1 size-4" />
                 {t('sessions.sidebar.session.menu.moveToWorktree')}
               </Item>
             </span>
@@ -1398,7 +1410,7 @@ export const Header: React.FC = () => {
                 onClick={() => setMoveChatDialogOpen(true)}
                 className="w-full"
               >
-                <Icon name="folder-shared" className="mr-1 size-4" />
+                <Icon name="folder-shared" className="me-1 size-4" />
                 {t('sessions.moveChatToProject.menu')}
               </Item>
             </span>
@@ -1407,7 +1419,7 @@ export const Header: React.FC = () => {
         <Separator />
         <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.closeOtherTabs')}>
           <Item onClick={closeOtherTabs}>
-            <Icon name="close-circle" className="mr-1 size-4" />{t('header.sessionTabs.closeOtherTabs')}
+            <Icon name="close-circle" className="me-1 size-4" />{t('header.sessionTabs.closeOtherTabs')}
           </Item>
         </SessionMenuItemHint>
         <Separator />
@@ -1418,7 +1430,7 @@ export const Header: React.FC = () => {
         />
         <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.delete')}>
           <Item className="text-destructive focus:text-destructive" onClick={() => setPendingHeaderRetentionAction({ action: 'delete', sessionId: session.id })}>
-            <Icon name="delete-bin" className="mr-1 size-4" />{t('sessions.sidebar.bulkActions.delete')}
+            <Icon name="delete-bin" className="me-1 size-4" />{t('sessions.sidebar.bulkActions.delete')}
           </Item>
         </SessionMenuItemHint>
       </>
@@ -1430,15 +1442,15 @@ export const Header: React.FC = () => {
       onMouseDown={handleDragStart}
       className={cn(
         'app-region-drag relative flex h-12 select-none items-center',
-        usesFramelessChrome && windowControlsSide === 'right' ? 'pr-0' : 'pr-3',
+        endEdgeOwnedByInWindowControls ? 'pe-0' : 'pe-3',
         macosHeaderSizeClass
       )}
       style={headerChromeStyle}
       role="tablist"
       aria-label={t('header.navigation.mainAria')}
     >
-      {/* Drag region for the window-controls inset (traffic lights) to the left
-          of the overlay buttons — stays a window drag area. */}
+      {/* Drag region for the window-controls inset before the overlay buttons;
+          stays a window drag area. */}
       <div
         aria-hidden
         className="shrink-0 self-stretch transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
@@ -1463,7 +1475,7 @@ export const Header: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="app-region-no-drag mr-1 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                className="app-region-no-drag me-1 text-muted-foreground hover:bg-transparent hover:text-foreground"
                 aria-label={t('header.mainSurface.backToChat')}
                 onClick={() => useUIStore.getState().closeMainSurfaces()}
               >
@@ -1472,7 +1484,7 @@ export const Header: React.FC = () => {
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('header.mainSurface.backToChat')}</TooltipContent>
           </Tooltip>
-          <div className="mr-3 flex min-w-0 flex-col items-start px-1 py-0.5 -my-0.5 text-left">
+          <div className="me-3 flex min-w-0 flex-col items-start px-1 py-0.5 -my-0.5 text-start">
             <span className="truncate typography-ui-label text-[14px] font-normal leading-tight text-foreground max-w-full">
               {activeSurfaceHeader.title}
             </span>
@@ -1484,8 +1496,8 @@ export const Header: React.FC = () => {
           </div>
           </>
         ) : (isVSCode || !sessionTabsEnabled) ? (
-          <div className="app-region-no-drag mr-3 flex min-w-0 max-w-full items-center gap-0.5 py-0.5 -my-0.5 text-left">
-            {isCurrentSessionAiRenaming ? <Icon name="loader-4" className="mr-1 size-3 shrink-0 animate-spin text-primary" aria-label={t('sessions.aiRename.generating')} /> : null}
+          <div className="app-region-no-drag me-3 flex min-w-0 max-w-full items-center gap-0.5 py-0.5 -my-0.5 text-start">
+            {isCurrentSessionAiRenaming ? <Icon name="loader-4" className="me-1 size-3 shrink-0 animate-spin text-primary" aria-label={t('sessions.aiRename.generating')} /> : null}
             {!isSidebarOpen ? (
               <SessionSwitcherDropdown align="start">
                 <button
@@ -1535,7 +1547,7 @@ export const Header: React.FC = () => {
                   </button>
                 </form>
               ) : isNewSessionDraftOpen ? null : (
-                <span dir="auto" className="truncate typography-ui-label text-[14px] font-normal leading-tight text-foreground max-w-full">
+                <span dir="auto" className="oc-ui-start-align truncate typography-ui-label text-[14px] font-normal leading-tight text-foreground max-w-full">
                   {currentSessionTitle}
                 </span>
               )}
@@ -1590,11 +1602,11 @@ export const Header: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[190px]">
-                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.rename')}><DropdownMenuItem onClick={() => { pendingHeaderRenameRef.current = currentSessionId; }}><Icon name="pencil-ai" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.rename')}</DropdownMenuItem></SessionMenuItemHint>
+                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.rename')}><DropdownMenuItem onClick={() => { pendingHeaderRenameRef.current = currentSessionId; }}><Icon name="pencil-ai" className="me-1 size-4" />{t('sessions.sidebar.session.menu.rename')}</DropdownMenuItem></SessionMenuItemHint>
                     <SessionAiRenameMenuItem sessionID={currentSessionId} directory={sessionDirectory} open={isHeaderSessionMenuOpen} Item={DropdownMenuItem} />
-                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.copyId')}><DropdownMenuItem onClick={() => currentSessionId && copySessionIdFor(currentSessionId)}><Icon name="file-copy" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.copyId')}</DropdownMenuItem></SessionMenuItemHint>
+                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.copyId')}><DropdownMenuItem onClick={() => currentSessionId && copySessionIdFor(currentSessionId)}><Icon name="file-copy" className="me-1 size-4" />{t('sessions.sidebar.session.menu.copyId')}</DropdownMenuItem></SessionMenuItemHint>
                     <DropdownMenuSeparator />
-                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.exportMarkdown')}><DropdownMenuItem onClick={() => void exportCurrentSession()}><Icon name="download" className="mr-1 size-4" />{t('sessions.sidebar.session.menu.exportMarkdown')}</DropdownMenuItem></SessionMenuItemHint>
+                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.exportMarkdown')}><DropdownMenuItem onClick={() => void exportCurrentSession()}><Icon name="download" className="me-1 size-4" />{t('sessions.sidebar.session.menu.exportMarkdown')}</DropdownMenuItem></SessionMenuItemHint>
                     {renderGuestSessionActionItems(DropdownMenuItem)}
                     {!isVSCode && !isChatContext && currentSession && !currentSession.parentId ? (
                       <SessionMenuItemHint hint={isCurrentSessionMovingToWorktree
@@ -1608,7 +1620,7 @@ export const Header: React.FC = () => {
                             onClick={moveCurrentSessionToWorktree}
                             className="w-full"
                           >
-                            <Icon name="folder-shared" className="mr-1 size-4" />
+                            <Icon name="folder-shared" className="me-1 size-4" />
                             {t('sessions.sidebar.session.menu.moveToWorktree')}
                           </DropdownMenuItem>
                         </span>
@@ -1620,14 +1632,14 @@ export const Header: React.FC = () => {
                       Item={DropdownMenuItem}
                       onArchive={() => setPendingHeaderRetentionAction({ action: 'archive', sessionId: currentSessionId })}
                     />
-                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.delete')}><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (currentSessionId) setPendingHeaderRetentionAction({ action: 'delete', sessionId: currentSessionId }); }}><Icon name="delete-bin" className="mr-1 size-4" />{t('sessions.sidebar.bulkActions.delete')}</DropdownMenuItem></SessionMenuItemHint>
+                    <SessionMenuItemHint hint={t('sessions.sidebar.session.menuHint.delete')}><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => { if (currentSessionId) setPendingHeaderRetentionAction({ action: 'delete', sessionId: currentSessionId }); }}><Icon name="delete-bin" className="me-1 size-4" />{t('sessions.sidebar.bulkActions.delete')}</DropdownMenuItem></SessionMenuItemHint>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : null}
             </div>
           </div>
         ) : (
-          <div className="flex h-full min-w-0 flex-1 items-center gap-0.5 text-left">
+          <div className="flex h-full min-w-0 flex-1 items-center gap-0.5 text-start">
             {!isSidebarOpen ? (
               <SessionSwitcherDropdown align="start">
                 <button
@@ -1687,7 +1699,7 @@ export const Header: React.FC = () => {
                   </button>
                 </form>
               ) : (
-                <span dir="auto" className="block overflow-hidden whitespace-nowrap text-left text-[13px] font-medium leading-4 text-foreground max-w-full">
+                <span dir="auto" className="block overflow-hidden whitespace-nowrap oc-ui-start-align text-[13px] font-medium leading-4 text-foreground max-w-full">
                   {isNewSessionDraftOpen ? t('sessions.switcher.draftTitle') : currentSessionTitle}
                 </span>
               )}
@@ -1709,7 +1721,7 @@ export const Header: React.FC = () => {
               showPercentIcon
               onClick={handleOpenContextPanel}
               pressed={isContextPanelActive}
-              className={!showMiniChatHeaderAction ? 'mr-3.5' : ''}
+              className={!showMiniChatHeaderAction ? 'me-3.5' : ''}
               valueClassName="typography-ui-label font-medium leading-none text-foreground"
               percentIconClassName="h-4.5 w-4.5"
             />
@@ -1720,7 +1732,7 @@ export const Header: React.FC = () => {
             title={isNewSessionDraftOpen ? t('header.actions.newMiniChat') : t('header.actions.openSessionMiniChat')}
             ariaLabel={isNewSessionDraftOpen ? t('header.actions.newMiniChatAria') : t('header.actions.openSessionMiniChatAria')}
             onClick={handleOpenCurrentMiniChat}
-            className={cn(desktopHeaderIconButtonClass, 'mr-1')}
+            className={cn(desktopHeaderIconButtonClass, 'me-1')}
             Icon={'picture-in-picture-2'}
           />
           {!isVSCode ? (
@@ -1736,7 +1748,7 @@ export const Header: React.FC = () => {
                     DESKTOP_HEADER_ICON_BUTTON_CLASS,
                     // Trailing gap before the sidebar actions; it moved here
                     // with the button when this took the last position.
-                    'mr-1',
+                    'me-1',
                     // On is the resting state and carries no chrome; off is the
                     // one worth signalling, so it dims instead of filling.
                     workStatusToggleActive ? 'text-foreground' : 'text-muted-foreground/50',
@@ -1758,7 +1770,7 @@ export const Header: React.FC = () => {
           ) : null}
 
           {desktopSidebarActions}
-          <WindowsWindowControls visible={usesFramelessChrome && windowControlsSide === 'right'} position="right" />
+          <WindowsWindowControls visible={endEdgeOwnedByInWindowControls} position={windowControlsSide} />
         </div>
       </div>
     </div>

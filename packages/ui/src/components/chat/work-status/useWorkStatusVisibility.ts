@@ -15,7 +15,7 @@ export const WORK_STATUS_PANEL_WIDTH = 300;
  */
 const WORK_STATUS_MIN_CHAT_WIDTH = 560;
 
-/** The card's own horizontal margins (`ml-2` + `mr-4`). */
+/** The card's own horizontal margins (`ms-2` + `me-4`). */
 const WORK_STATUS_PANEL_GUTTER = 8 + 16;
 
 /** Row width below which the panel gives its space back to the transcript. */

@@ -226,7 +226,7 @@ export const MobileWorkspaceDrawer: React.FC<{
         </div>
         <button
           type="button"
-          className="-mr-1 flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-interactive-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="-me-1 flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-interactive-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={t('mobile.surface.closeAria')}
           onClick={onClose}
           style={{ touchAction: 'manipulation' }}

@@ -47,8 +47,8 @@ const PluginPane = React.lazy(() => import('./PluginPane').then((module) => ({ d
 const DOCK_LAYOUT = {
   top: { container: 'flex-col', page: 'border-b border-border', vertical: true },
   bottom: { container: 'flex-col-reverse', page: 'border-t border-border', vertical: true },
-  left: { container: 'flex-row', page: 'border-r border-border', vertical: false },
-  right: { container: 'flex-row-reverse', page: 'border-l border-border', vertical: false },
+  left: { container: 'flex-row', page: 'border-e border-border', vertical: false },
+  right: { container: 'flex-row-reverse', page: 'border-s border-border', vertical: false },
 } as const;
 
 /**
@@ -319,7 +319,9 @@ const browserFaviconFor = (url: string, faviconByOrigin: Record<string, string>)
 // its left edge, and animated open/closed like the app sidebars. In tree-only
 // mode (`fill`), the panel collapses around this fixed-width, right-aligned column.
 const EditorTreeColumn: React.FC<{ visible: boolean; active: boolean; fill?: boolean }> = ({ visible, active, fill = false }) => {
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
+  // The handle sits on the column's start edge: dragging toward the start widens it.
+  const dragSign = direction === 'rtl' ? -1 : 1;
   const width = useUIStore((state) => state.contextEditorTreeWidth);
   const setWidth = useUIStore((state) => state.setContextEditorTreeWidth);
   const [isResizing, setIsResizing] = React.useState(false);
@@ -359,7 +361,7 @@ const EditorTreeColumn: React.FC<{ visible: boolean; active: boolean; fill?: boo
     if (!isResizing || pointerIDRef.current !== event.pointerId) {
       return;
     }
-    const delta = startXRef.current - event.clientX;
+    const delta = (startXRef.current - event.clientX) * dragSign;
     const nextWidth = clampContextEditorTreeWidth(startWidthRef.current + delta);
     if (liveWidthRef.current === nextWidth) {
       return;
@@ -391,7 +393,7 @@ const EditorTreeColumn: React.FC<{ visible: boolean; active: boolean; fill?: boo
       ref={columnRef}
       className={cn(
         'relative h-full flex-shrink-0 overflow-hidden bg-background will-change-[width] motion-reduce:transition-none',
-        fill && 'ml-auto',
+        fill && 'ms-auto',
       )}
       style={{
         width: `${isResizing ? (liveWidthRef.current ?? appliedWidth) : appliedWidth}px`,
@@ -406,12 +408,12 @@ const EditorTreeColumn: React.FC<{ visible: boolean; active: boolean; fill?: boo
     >
       {/* Paint the divider without shifting tree content when the editor closes. */}
       {visible && !fill && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-20 w-px bg-border" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 inset-s-0 z-20 w-px bg-border" />
       )}
       {visible && !fill && (
         <div
           className={cn(
-            'absolute left-0 top-0 z-20 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
+            'absolute inset-s-0 top-0 z-20 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
             isResizing && 'bg-[var(--interactive-border)]'
           )}
           onPointerDown={handlePointerDown}
@@ -486,7 +488,8 @@ const truncateTabLabel = (value: string, maxChars: number): string => {
 
 
 export const ContextPanel: React.FC = () => {
-  const { t } = useI18n();
+  const { t, direction } = useI18n();
+  const isRtl = direction === 'rtl';
   const effectiveDirectory = useEffectiveDirectory() ?? '';
   const repositoryProvider = useRepositoryReferenceProvider(effectiveDirectory || null);
   // Tab names in this repository's words: a GitLab project's change request tab is a merge request.
@@ -719,7 +722,8 @@ export const ContextPanel: React.FC = () => {
       if (activeResizePointerIDRef.current !== event.pointerId) {
         return;
       }
-      const delta = startXRef.current - event.clientX;
+      // The panel's handle is on its start edge: dragging toward the start widens it.
+      const delta = (startXRef.current - event.clientX) * (isRtl ? -1 : 1);
       const nextWidth = clampWidthForDrag(startWidthRef.current + delta);
       if (resizingWidthRef.current === nextWidth) {
         return;
@@ -751,7 +755,7 @@ export const ContextPanel: React.FC = () => {
       window.removeEventListener('pointercancel', handleUp);
       window.removeEventListener('blur', handleWindowBlur);
     };
-  }, [applyFollowWidth, clampWidthForDrag, finishResize, isResizing]);
+  }, [applyFollowWidth, clampWidthForDrag, finishResize, isResizing, isRtl]);
 
   React.useEffect(() => {
     if (!isResizing) {
@@ -994,40 +998,43 @@ export const ContextPanel: React.FC = () => {
       }
       const { id, index, allIds, close } = args;
       const closeOthers = () => closeContextPanelTabs(directoryKey, allIds.filter((tabId) => tabId !== id));
-      const closeToLeft = () => closeContextPanelTabs(directoryKey, allIds.slice(0, index));
-      const closeToRight = () => closeContextPanelTabs(directoryKey, allIds.slice(index + 1));
+      // "Left" and "right" name the screen sides; in RTL the earlier tabs are on the right.
+      const before = allIds.slice(0, index);
+      const after = allIds.slice(index + 1);
+      const closeToLeft = () => closeContextPanelTabs(directoryKey, isRtl ? after : before);
+      const closeToRight = () => closeContextPanelTabs(directoryKey, isRtl ? before : after);
       const closeAll = () => closeContextPanelTabs(directoryKey, allIds);
       const hasOthers = allIds.length > 1;
-      const isFirst = index === 0;
-      const isLast = index === allIds.length - 1;
+      const nothingToLeft = isRtl ? index === allIds.length - 1 : index === 0;
+      const nothingToRight = isRtl ? index === 0 : index === allIds.length - 1;
       return (
         <>
           <ContextMenuItem onClick={close}>
-            <Icon name="close" className="mr-2 size-4" />
+            <Icon name="close" className="me-2 size-4" />
             {t('contextPanel.tab.menu.close')}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onClick={closeOthers} disabled={!hasOthers}>
-            <Icon name="expand-horizontal" className="mr-2 size-4" />
+            <Icon name="expand-horizontal" className="me-2 size-4" />
             {t('contextPanel.tab.menu.closeOthers')}
           </ContextMenuItem>
-          <ContextMenuItem onClick={closeToLeft} disabled={isFirst}>
-            <Icon name="expand-left" className="mr-2 size-4" />
+          <ContextMenuItem onClick={closeToLeft} disabled={nothingToLeft}>
+            <Icon name="expand-left" className="me-2 size-4" />
             {t('contextPanel.tab.menu.closeToLeft')}
           </ContextMenuItem>
-          <ContextMenuItem onClick={closeToRight} disabled={isLast}>
-            <Icon name="expand-right" className="mr-2 size-4" />
+          <ContextMenuItem onClick={closeToRight} disabled={nothingToRight}>
+            <Icon name="expand-right" className="me-2 size-4" />
             {t('contextPanel.tab.menu.closeToRight')}
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onClick={closeAll} disabled={!hasOthers}>
-            <Icon name="close-circle" className="mr-2 size-4" />
+            <Icon name="close-circle" className="me-2 size-4" />
             {t('contextPanel.tab.menu.closeAll')}
           </ContextMenuItem>
         </>
       );
     },
-    [closeContextPanelTabs, directoryKey, t],
+    [closeContextPanelTabs, directoryKey, isRtl, t],
   );
 
   const header = (
@@ -1183,7 +1190,7 @@ export const ContextPanel: React.FC = () => {
         // edge instantly (position does not transition), so only the width
         // animates and the panel grows leftwards from its docked position.
         isExpanded
-          ? 'absolute inset-y-0 right-0 z-20 min-w-0'
+          ? 'absolute inset-y-0 inset-e-0 z-20 min-w-0'
           : 'relative h-full flex-shrink-0',
         !isOpen && 'pointer-events-none',
         'will-change-[width] motion-reduce:transition-none',
@@ -1196,16 +1203,16 @@ export const ContextPanel: React.FC = () => {
           content box only while collapsed, shifting the header controls by
           1px between the collapsed and expanded states. */}
       {isOpen && !isExpanded && (
-        <div aria-hidden="true" className="absolute left-0 top-0 z-40 h-full w-px bg-border" />
+        <div aria-hidden="true" className="absolute inset-s-0 top-0 z-40 h-full w-px bg-border" />
       )}
       {/* Divider between the panel and the icon rail on its right. */}
       {isOpen && (
-        <div aria-hidden="true" className="absolute right-0 top-0 z-40 h-full w-px bg-border" />
+        <div aria-hidden="true" className="absolute inset-e-0 top-0 z-40 h-full w-px bg-border" />
       )}
       {!isExpanded && (
         <div
           className={cn(
-            'absolute left-0 top-0 z-50 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
+            'absolute inset-s-0 top-0 z-50 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
             isResizing && 'bg-[var(--interactive-border)]'
           )}
           onPointerDown={handleResizeStart}

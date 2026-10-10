@@ -17,7 +17,7 @@ const ScrollAction: React.FC<{ onClick: () => void; children?: React.ReactNode }
             type="button"
             onClick={onClick}
             aria-label={t('chat.scrollToBottom.aria')}
-            className="inline-flex h-8 min-w-0 max-w-full flex-1 items-center rounded-full [corner-shape:round] text-left"
+            className="inline-flex h-8 min-w-0 max-w-full flex-1 items-center rounded-full [corner-shape:round] text-start"
         >
             {/* flex-1 so the icon stays centred when the mobile
                 touch-target floor widens the bare button past 32px;
@@ -58,11 +58,11 @@ const WorkingPillBody: React.FC<{ onClick: () => void }> = ({ onClick }) => {
     return (
         <>
             <ScrollAction onClick={onClick}>
-                <span className={cn('-ml-px min-w-0 truncate text-sm text-muted-foreground', working.canBackground ? 'pr-1' : 'pr-3')}>
+                <span className={cn('-ms-px min-w-0 truncate text-sm text-muted-foreground', working.canBackground ? 'pe-1' : 'pe-3')}>
                     {label}
                 </span>
             </ScrollAction>
-            {working.canBackground ? <BackgroundWorkButton onClick={backgroundWork} className="mr-0.5 h-7 w-7" /> : null}
+            {working.canBackground ? <BackgroundWorkButton onClick={backgroundWork} className="me-0.5 h-7 w-7" /> : null}
         </>
     );
 };

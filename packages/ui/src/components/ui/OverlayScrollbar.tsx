@@ -63,6 +63,9 @@ function bindScrollbar(
   // Cached unit conversions let steady scrolling avoid layout-dependent size reads.
   let verticalThumbPixelsPerScrollPixel = 0;
   let horizontalThumbPixelsPerScrollPixel = 0;
+  // scrollLeft is 0 at the start of the content: the left in LTR, the right in
+  // RTL, where it runs negative. Adding this origin measures it from the left.
+  let horizontalScrollOrigin = 0;
 
   // A single moving deadline avoids clearing and recreating a timer on every scroll event.
   let hideTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -129,6 +132,7 @@ function bindScrollbar(
 
     if (horizontal) {
       horizontalThumbPixelsPerScrollPixel = horizontal.thumbPixelsPerScrollPixel;
+      horizontalScrollOrigin = container.matches(':dir(rtl)') ? scrollWidth - clientWidth : 0;
       horizontalThumb.hidden = false;
       horizontalThumb.style.width = `${horizontal.length}px`;
     } else {
@@ -143,7 +147,7 @@ function bindScrollbar(
       verticalThumb.style.transform = `translate3d(0, ${TRACK_INSET + options.verticalTrackStart + container.scrollTop * verticalThumbPixelsPerScrollPixel}px, 0)`;
     }
     if (!horizontalThumb.hidden) {
-      horizontalThumb.style.transform = `translate3d(${TRACK_INSET + container.scrollLeft * horizontalThumbPixelsPerScrollPixel}px, 0, 0)`;
+      horizontalThumb.style.transform = `translate3d(${TRACK_INSET + (horizontalScrollOrigin + container.scrollLeft) * horizontalThumbPixelsPerScrollPixel}px, 0, 0)`;
     }
   };
 
@@ -484,7 +488,7 @@ export const OverlayScrollbar: React.FC<OverlayScrollbarProps> = ({
         hidden
         className="overlay-scrollbar__thumb overlay-scrollbar__thumb--horizontal"
         data-overlay-scrollbar-thumb="horizontal"
-        style={{ bottom: `${TRACK_INSET / 2}px` }}
+        style={{ bottom: `${TRACK_INSET / 2}px`, left: 0 }}
       />
     </div>
   );

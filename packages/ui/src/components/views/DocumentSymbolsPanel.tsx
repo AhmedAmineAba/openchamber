@@ -81,7 +81,7 @@ export function DocumentSymbolsPanel({ open, onOpenChange, view }: DocumentSymbo
             data-editor-overlay
             // `Command` leaves the background to its container (a dialog or a
             // menu does it elsewhere), so the panel paints it here.
-            className="absolute left-3 top-3 z-40 w-[min(28rem,calc(100%-1.5rem))] overflow-hidden rounded-xl border border-[var(--interactive-border)] bg-[var(--surface-elevated)] shadow-lg"
+            className="absolute inset-s-3 top-3 z-40 w-[min(28rem,calc(100%-1.5rem))] overflow-hidden rounded-xl border border-[var(--interactive-border)] bg-[var(--surface-elevated)] shadow-lg"
             onKeyDown={(event) => {
                 if (event.key !== 'Escape') return;
                 event.preventDefault();

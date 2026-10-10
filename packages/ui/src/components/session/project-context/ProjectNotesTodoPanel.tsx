@@ -223,10 +223,14 @@ export const ProjectNotesTodoPanel: React.FC<ProjectNotesTodoPanelProps> = ({
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
       return;
     }
-    // The sidebar is on the right, so dragging its left edge leftwards widens
-    // it: the width is the distance from the pointer to the panel's edge.
-    const panelRight = event.currentTarget.closest('nav')?.getBoundingClientRect().right ?? 0;
-    setDraggedWidth(clampSidebarWidth(panelRight - event.clientX));
+    // The sidebar is at the end of the row (right, or left in RTL), so dragging
+    // its inner edge outward widens it: the width is the distance from the
+    // pointer to the panel's outer edge.
+    const panelRect = event.currentTarget.closest('nav')?.getBoundingClientRect();
+    const width = event.currentTarget.matches(':dir(rtl)')
+      ? event.clientX - (panelRect?.left ?? 0)
+      : (panelRect?.right ?? 0) - event.clientX;
+    setDraggedWidth(clampSidebarWidth(width));
   }, []);
 
   const handleResizeEnd = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
@@ -396,19 +400,19 @@ export const ProjectNotesTodoPanel: React.FC<ProjectNotesTodoPanelProps> = ({
         <div className="relative w-40 flex-shrink-0">
           <Icon
             name="search"
-            className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute inset-s-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
           />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('rightSidebar.contextNotesTodo.search.placeholder')}
-            className="h-8 pl-7 pr-7"
+            className="h-8 ps-7 pe-7"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-1.5 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-interactive-hover/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute inset-e-1.5 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-interactive-hover/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={t('rightSidebar.contextNotesTodo.search.clear')}
               title={t('rightSidebar.contextNotesTodo.search.clear')}
             >
@@ -516,13 +520,13 @@ export const ProjectNotesTodoPanel: React.FC<ProjectNotesTodoPanelProps> = ({
 
         {isMobile ? null : (
         <nav
-          className="relative flex flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-l border-[var(--interactive-border)] p-2"
+          className="relative flex flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-s border-[var(--interactive-border)] p-2"
           style={{ width: `${sidebarWidth}px` }}
           aria-label={t('rightSidebar.contextNotesTodo.sections.label')}
         >
           <div
             className={cn(
-              'absolute left-0 top-0 z-20 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
+              'absolute inset-s-0 top-0 z-20 h-full w-[3px] cursor-col-resize transition-colors hover:bg-[var(--interactive-border)]/80',
               isResizing && 'bg-[var(--interactive-border)]',
             )}
             onPointerDown={handleResizeStart}
@@ -542,7 +546,7 @@ export const ProjectNotesTodoPanel: React.FC<ProjectNotesTodoPanelProps> = ({
                 onClick={() => setStoredTab(section.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+                  'flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-start transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isActive
                     ? 'bg-interactive-active text-foreground'

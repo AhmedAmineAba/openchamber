@@ -316,7 +316,7 @@ const FileRow: React.FC<FileRowProps> = ({
     <>
       {canRename && (
         <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('rename', node); }}>
-          <Icon name="edit" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.rename')}
+          <Icon name="edit" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.rename')}
         </Item>
       )}
       <Item onClick={(e: React.MouseEvent) => {
@@ -329,7 +329,7 @@ const FileRow: React.FC<FileRowProps> = ({
           toast.error(t('sidebarFilesTree.toast.copyFailed'));
         });
       }}>
-        <Icon name="file-copy" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.copyPath')}
+        <Icon name="file-copy" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.copyPath')}
       </Item>
       {!isDir && downloadFile && (
         <Item onClick={(e: React.MouseEvent) => {
@@ -339,12 +339,12 @@ const FileRow: React.FC<FileRowProps> = ({
             toast.error(t('sidebarFilesTree.toast.operationFailed'));
           });
         }}>
-          <Icon name="download" className="mr-2 h-4 w-4" /> {t(isBrowserClient ? 'sidebarFilesTree.menu.download' : 'sidebarFilesTree.menu.save')}
+          <Icon name="download" className="me-2 h-4 w-4" /> {t(isBrowserClient ? 'sidebarFilesTree.menu.download' : 'sidebarFilesTree.menu.save')}
         </Item>
       )}
       {canRevealPath && (
         <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRevealPath(node.path); }}>
-          <Icon name="folder-received" className="mr-2 h-4 w-4" /> {t(getRevealLabelKey())}
+          <Icon name="folder-received" className="me-2 h-4 w-4" /> {t(getRevealLabelKey())}
         </Item>
       )}
       {/* The OS opens it with whatever app owns the type: Word for a .docx, Typora for a .md. */}
@@ -355,7 +355,7 @@ const FileRow: React.FC<FileRowProps> = ({
             if (!opened) toast.error(t('sidebarFilesTree.toast.operationFailed'));
           });
         }}>
-          <Icon name="external-link" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.openInDefaultApp')}
+          <Icon name="external-link" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.openInDefaultApp')}
         </Item>
       )}
       {isDir && (canCreateFile || canCreateFolder || canUploadHere) && (
@@ -363,17 +363,17 @@ const FileRow: React.FC<FileRowProps> = ({
           <Separator />
           {canCreateFile && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('createFile', node); }}>
-              <Icon name="file-add" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.newFile')}
+              <Icon name="file-add" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.newFile')}
             </Item>
           )}
           {canCreateFolder && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('createFolder', node); }}>
-              <Icon name="folder-add" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.newFolder')}
+              <Icon name="folder-add" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.newFolder')}
             </Item>
           )}
           {canUploadHere && (
             <Item onClick={(e: React.MouseEvent) => { e.stopPropagation(); onPickFiles(node.path); }}>
-              <Icon name="upload-2" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.uploadFiles')}
+              <Icon name="upload-2" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.uploadFiles')}
             </Item>
           )}
         </>
@@ -385,7 +385,7 @@ const FileRow: React.FC<FileRowProps> = ({
             onClick={(e: React.MouseEvent) => { e.stopPropagation(); onOpenDialog('delete', node); }}
             className="text-destructive focus:text-destructive"
           >
-            <Icon name="delete-bin" className="mr-2 h-4 w-4" /> {t('sidebarFilesTree.menu.delete')}
+            <Icon name="delete-bin" className="me-2 h-4 w-4" /> {t('sidebarFilesTree.menu.delete')}
           </Item>
         </>
       )}
@@ -456,7 +456,7 @@ const FileRow: React.FC<FileRowProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         className={cn(
-          'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-foreground transition-colors pr-8 select-none',
+          'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-start text-foreground transition-colors pe-8 select-none',
           isDropTarget
             ? 'bg-interactive-selection ring-2 ring-inset ring-primary'
             : (isActive ? 'bg-interactive-selection/70' : 'hover:bg-interactive-hover/40')
@@ -476,14 +476,14 @@ const FileRow: React.FC<FileRowProps> = ({
         </span>
         {!isDir && status && <FileStatusDot status={status} />}
         {isDir && badge && (
-          <span className="text-xs flex items-center gap-1 ml-auto mr-1">
+          <span className="text-xs flex items-center gap-1 ms-auto me-1">
             {badge.modified > 0 && <span className="text-[var(--status-warning)]">M{badge.modified}</span>}
             {badge.added > 0 && <span className="text-[var(--status-success)]">+{badge.added}</span>}
           </span>
         )}
       </button>
       {hasMenuActions && (
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 focus-within:opacity-100 group-hover:opacity-100">
+        <div className="absolute inset-e-1 top-1/2 -translate-y-1/2 opacity-0 focus-within:opacity-100 group-hover:opacity-100">
           <DropdownMenu
             open={contextMenuOpen}
             onOpenChange={setContextMenuOpen}
@@ -1260,9 +1260,9 @@ const SidebarFilesTreeContent: React.FC<{ visible: boolean }> = ({ visible }) =>
         <li key={node.path} className="relative" data-file-tree-path={isDir ? undefined : node.path}>
           {depth > 0 && (
             <>
-              <span className="absolute top-3.5 left-[-12px] w-3 h-px bg-border/40" />
+              <span className="absolute top-3.5 inset-s-[-12px] w-3 h-px bg-border/40" />
               {isLast && (
-                <span className="absolute top-3.5 bottom-0 left-[-13px] w-[2px] bg-sidebar/50" />
+                <span className="absolute top-3.5 bottom-0 inset-s-[-13px] w-[2px] bg-sidebar/50" />
               )}
             </>
           )}
@@ -1287,7 +1287,7 @@ const SidebarFilesTreeContent: React.FC<{ visible: boolean }> = ({ visible }) =>
             onPickFiles={pickFiles}
           />
           {isDir && isExpanded && (
-            <ul className="flex flex-col gap-1 ml-3 pl-3 border-l border-border/40 relative">
+            <ul className="flex flex-col gap-1 ms-3 ps-3 border-s border-border/40 relative">
               {loadErrorsByDir[node.path] ? (
                 <li className="flex items-center gap-2 px-2 py-1 typography-meta text-muted-foreground">
                   <span className="min-w-0 flex-1 truncate text-[var(--status-error)]" title={loadErrorsByDir[node.path]}>{loadErrorsByDir[node.path]}</span>
@@ -1414,19 +1414,19 @@ const SidebarFilesTreeContent: React.FC<{ visible: boolean }> = ({ visible }) =>
         </Tooltip>
         </div>
         <div className="relative min-w-0">
-          <Icon name="search" className="pointer-events-none absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
+          <Icon name="search" className="pointer-events-none absolute inset-s-2 top-2 h-4 w-4 text-muted-foreground" />
           <Input
             ref={searchInputRef}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder={t('sidebarFilesTree.search.placeholder')}
-            className="h-8 pl-8 pr-8 typography-meta"
+            className="h-8 ps-8 pe-8 typography-meta"
           />
           {searchQuery.trim().length > 0 ? (
             <button
               type="button"
               aria-label={t('sidebarFilesTree.search.clearAria')}
-              className="absolute right-2 top-2 inline-flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
+              className="absolute inset-e-2 top-2 inline-flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setSearchQuery('');
                 searchInputRef.current?.focus();
@@ -1477,15 +1477,15 @@ const SidebarFilesTreeContent: React.FC<{ visible: boolean }> = ({ visible }) =>
                       }
                     }}
                     className={cn(
-                      'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-foreground transition-colors',
+                      'flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-start text-foreground transition-colors',
                       isActive ? 'bg-interactive-selection/70' : 'hover:bg-interactive-hover/40'
                     )}
                     title={node.path}
                   >
                     {getFileIcon(node.path, node.extension)}
                     <span
-                      className="min-w-0 flex-1 truncate typography-meta"
-                      style={{ direction: 'rtl', textAlign: 'left' }}
+                      className="oc-ui-start-align min-w-0 flex-1 truncate typography-meta"
+                      style={{ direction: 'rtl' }}
                     >
                       {/* Left-to-right marks keep a leading "." in place inside the rtl box. */}
                       {`\u200E${node.relativePath ?? node.path}\u200E`}
@@ -1510,7 +1510,7 @@ const SidebarFilesTreeContent: React.FC<{ visible: boolean }> = ({ visible }) =>
         </ul>
         </ScrollableOverlay>
         {dropIndicatorTarget ? (
-          <div className="pointer-events-none absolute left-2 right-2 top-2 z-50 flex items-center gap-2 rounded-md border border-primary bg-background/95 px-2 py-1.5 shadow-sm">
+          <div className="pointer-events-none absolute inset-s-2 inset-e-2 top-2 z-50 flex items-center gap-2 rounded-md border border-primary bg-background/95 px-2 py-1.5 shadow-sm">
             <Icon name={isUploading ? 'loader-4' : 'folder-received'} className={cn('size-4 flex-shrink-0', isUploading && 'animate-spin')} />
             <span className="min-w-0 truncate typography-meta" title={dropTargetLabel}>
               {t(isUploading ? 'sidebarFilesTree.drop.uploading' : 'sidebarFilesTree.drop.target', { path: dropTargetLabel })}
