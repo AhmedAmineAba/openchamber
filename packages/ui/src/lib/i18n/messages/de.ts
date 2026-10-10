@@ -153,6 +153,7 @@ export const dict = {
   'common.language.japanese': 'Japanisch',
   'common.language.turkish': 'Türkisch',
   'common.language.arabic': 'Arabisch',
+  'common.language.hebrew': 'Hebräisch',
   'common.language.dutch': 'Niederländisch',
   'common.revealPath.finder': 'Im Finder anzeigen',
   'common.revealPath.fileExplorer': 'In Datei-Explorer öffnen',

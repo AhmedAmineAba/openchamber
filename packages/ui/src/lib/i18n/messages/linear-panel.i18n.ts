@@ -84,4 +84,10 @@ export const linearPanelI18n = {
     'contextPanel.linear.priority.medium': 'متوسطة',
     'contextPanel.linear.priority.low': 'منخفضة',
   },
+  he: {
+    'contextPanel.linear.priority.urgent': 'דחוף',
+    'contextPanel.linear.priority.high': 'גבוהה',
+    'contextPanel.linear.priority.medium': 'בינונית',
+    'contextPanel.linear.priority.low': 'נמוכה',
+  },
 } as const;

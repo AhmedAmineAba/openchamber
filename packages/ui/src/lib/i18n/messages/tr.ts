@@ -110,6 +110,7 @@ export const dict = {
   'common.language.japanese': 'Japonca',
   'common.language.turkish': 'Türkçe',
   'common.language.arabic': 'Arapça',
+  'common.language.hebrew': 'İbranice',
   'common.language.dutch': 'Felemenkçe',
   'common.revealPath.finder': 'Finder\'da göster',
   'common.revealPath.fileExplorer': 'Dosya Gezgini\'nde aç',

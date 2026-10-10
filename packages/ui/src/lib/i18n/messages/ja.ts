@@ -187,6 +187,7 @@ export const dict: Record<I18nKey, string> = {
   'common.language.japanese': '日本語',
   'common.language.turkish': 'トルコ語',
   'common.language.arabic': 'アラビア語',
+  'common.language.hebrew': 'ヘブライ語',
   'common.language.dutch': 'オランダ語',
   'common.revealPath.finder': 'Finderで表示',
   'common.revealPath.fileExplorer': 'エクスプローラーで開く',

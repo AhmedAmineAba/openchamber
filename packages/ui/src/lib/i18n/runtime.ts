@@ -1,12 +1,12 @@
-export type Locale = 'en' | 'de' | 'fr' | 'nl' | 'zh-CN' | 'zh-TW' | 'uk' | 'es' | 'pt-BR' | 'ko' | 'pl' | 'ja' | 'tr' | 'ar';
+export type Locale = 'en' | 'de' | 'fr' | 'nl' | 'zh-CN' | 'zh-TW' | 'uk' | 'es' | 'pt-BR' | 'ko' | 'pl' | 'ja' | 'tr' | 'ar' | 'he';
 
-export const LOCALES = ['en', 'de', 'fr', 'nl', 'zh-CN', 'zh-TW', 'uk', 'es', 'pt-BR', 'ko', 'pl', 'ja', 'tr', 'ar'] as const satisfies readonly Locale[];
+export const LOCALES = ['en', 'de', 'fr', 'nl', 'zh-CN', 'zh-TW', 'uk', 'es', 'pt-BR', 'ko', 'pl', 'ja', 'tr', 'ar', 'he'] as const satisfies readonly Locale[];
 
 export const DEFAULT_LOCALE: Locale = 'en';
 
 export type LayoutDirection = 'ltr' | 'rtl';
 
-const RTL_LOCALES: ReadonlySet<Locale> = new Set<Locale>(['ar']);
+const RTL_LOCALES: ReadonlySet<Locale> = new Set<Locale>(['ar', 'he']);
 
 /** The one rule for the app's layout direction: right-to-left locales mirror the UI, every other locale stays left to right. */
 export function getLocaleDirection(locale: Locale): LayoutDirection {
@@ -21,7 +21,7 @@ export function getInlineStartSide(direction: LayoutDirection): 'left' | 'right'
   return direction === 'rtl' ? 'right' : 'left';
 }
 
-export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish' | 'common.language.arabic'> = {
+export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish' | 'common.language.arabic' | 'common.language.hebrew'> = {
   en: 'common.language.english',
   fr: 'common.language.french',
   nl: 'common.language.dutch',
@@ -36,6 +36,7 @@ export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'comm
   ja: 'common.language.japanese',
   tr: 'common.language.turkish',
   ar: 'common.language.arabic',
+  he: 'common.language.hebrew',
 };
 
 export const LOCALE_STORAGE_KEY = 'openchamber.i18n.v1';
@@ -94,6 +95,10 @@ export function normalizeLocale(value: string | undefined | null): Locale {
   }
   if (normalized === 'ar' || normalized.startsWith('ar-')) {
     return 'ar';
+  }
+  // Java and Android still report Hebrew under its retired code `iw`.
+  if (normalized === 'he' || normalized.startsWith('he-') || normalized === 'iw' || normalized.startsWith('iw-')) {
+    return 'he';
   }
   return DEFAULT_LOCALE;
 }
