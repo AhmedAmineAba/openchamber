@@ -97,7 +97,7 @@ const MobileTimelineRunRow: React.FC<{
       <button
         type="button"
         className={cn(TIMELINE_ROW_LAYOUT_CLASS, 'w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring')}
-        style={{ paddingLeft: TIMELINE_ROW_INDENT, touchAction: 'manipulation' }}
+        style={{ paddingInlineStart: TIMELINE_ROW_INDENT, touchAction: 'manipulation' }}
         onClick={() => useUIStore.getState().setRunOverviewKey(run.key)}
         aria-label={t('sessions.sidebar.run.openOverviewAria', { title: run.title })}
       >
@@ -248,13 +248,13 @@ const MobileTimelineRow: React.FC<{
         );
         const layoutClassName = TIMELINE_ROW_LAYOUT_CLASS;
         if (renaming) {
-          return <div className={layoutClassName} style={{ paddingLeft: TIMELINE_ROW_INDENT }}>{lines}</div>;
+          return <div className={layoutClassName} style={{ paddingInlineStart: TIMELINE_ROW_INDENT }}>{lines}</div>;
         }
         return (
           <button
             type="button"
             className={cn(layoutClassName, 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring')}
-            style={{ paddingLeft: TIMELINE_ROW_INDENT, touchAction: 'manipulation' }}
+            style={{ paddingInlineStart: TIMELINE_ROW_INDENT, touchAction: 'manipulation' }}
             onClick={() => {
               // A tap while the actions are out just closes them.
               if (revealed) {

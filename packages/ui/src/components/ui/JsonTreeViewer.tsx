@@ -119,7 +119,7 @@ const JsonRow = React.memo(
     return (
       <div
         className="flex items-center py-0.5 px-2 rounded-sm cursor-default font-mono text-xs leading-5 whitespace-nowrap"
-        style={{ paddingLeft: `${indent + 8}px` }}
+        style={{ paddingInlineStart: `${indent + 8}px` }}
         onContextMenu={handleContextMenu}
       >
         {isCollapsible ? (

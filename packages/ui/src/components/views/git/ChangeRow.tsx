@@ -125,7 +125,7 @@ export const ChangeRow = React.memo<ChangeRowProps>(function ChangeRow({
       tabIndex={0}
       onClick={onViewDiff}
       onKeyDown={handleKeyDown}
-      style={indentPx > 0 ? { paddingLeft: `${indentPx}px` } : undefined}
+      style={indentPx > 0 ? { paddingInlineStart: `${indentPx}px` } : undefined}
     >
         {actionAtStart ? actionButton : null}
         <span

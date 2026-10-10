@@ -377,7 +377,7 @@ export const ChangesPanel: React.FC<ChangesPanelProps> = ({
       return (
         <div
           className={cn('group flex items-center gap-2 py-1.5 text-muted-foreground hover:text-foreground', ROW_PADDING_CLASSNAME)}
-          style={{ paddingLeft: `${depth * TREE_INDENT_PX}px` }}
+          style={{ paddingInlineStart: `${depth * TREE_INDENT_PX}px` }}
         >
           <button
             type="button"
@@ -507,7 +507,7 @@ export const ChangesPanel: React.FC<ChangesPanelProps> = ({
         key={level}
         aria-hidden
         className="pointer-events-none absolute inset-y-0 w-px bg-border/50"
-        style={{ left: `${level * TREE_INDENT_PX + 8}px` }}
+        style={{ insetInlineStart: `${level * TREE_INDENT_PX + 8}px` }}
       />
     ));
   };

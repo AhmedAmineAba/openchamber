@@ -50,7 +50,7 @@ export const MobileSessionRenameForm: React.FC<{
       // that specificity fight, so single-line rows resolve to 36px. Pin the
       // rename state to the same 36px.
       className={cn('flex h-9 min-w-0 flex-1 items-center gap-2 pe-2', className)}
-      style={{ paddingLeft: indent }}
+      style={{ paddingInlineStart: indent }}
       onSubmit={(event) => {
         event.preventDefault();
         commit();

@@ -59,6 +59,15 @@
 @utility oc-actions-mask {
   --oc-actions-edge: calc(100cqw - var(--oc-actions-inset, 0px) - var(--oc-actions-reserve, 0px));
   mask-image: linear-gradient(var(--oc-to-inline-end), #000 calc(var(--oc-actions-edge) - 14px), transparent calc(var(--oc-actions-edge) - 2px));
+
+  /* A title whose own direction differs from the interface (dir="auto") starts
+     on the side the actions cover, so fading there would hide its first
+     letters. It moves out of the way instead. */
+  &:where(:root[dir="rtl"] *):dir(ltr),
+  &:where(:root:not([dir="rtl"]) *):dir(rtl) {
+    mask-image: none;
+    padding-inline-start: var(--oc-actions-reserve, 0px);
+  }
 }
 
 /* A PR or issue reference coloured by its state (--oc-ref-tint). It is side
