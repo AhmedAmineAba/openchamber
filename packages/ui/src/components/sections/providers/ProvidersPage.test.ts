@@ -245,21 +245,28 @@ describe('getProviderCardStatus', () => {
 });
 
 describe('Vertex with Application Default Credentials', () => {
-  // What OpenCode 2.0.25 serves for Vertex signed in with
+  // What OpenCode serves for Vertex signed in with
   // `gcloud auth application-default login` and a project in config.
   const vertexIntegration = integration({
     id: 'google-vertex',
     name: 'Vertex',
     methods: [{ type: 'key' }, { type: 'env', names: ['GOOGLE_VERTEX_API_KEY'] }],
   });
-  const vertex = { id: 'google-vertex', settings: { project: 'my-project', location: 'global' } };
+  const vertexPackage = '@opencode/ai/providers/google-vertex';
+  const vertex = { id: 'google-vertex', package: vertexPackage, settings: { project: 'my-project', location: 'global' } };
 
   test('a project OpenCode resolved means credentials on the machine', () => {
     expect(usesMachineCredentials(vertex)).toBe(true);
-    expect(usesMachineCredentials({ id: 'google-vertex', settings: { location: 'global' } })).toBe(false);
-    expect(usesMachineCredentials({ id: 'google-vertex', settings: { project: '' } })).toBe(false);
-    expect(usesMachineCredentials({ id: 'anthropic', settings: { project: 'my-project' } })).toBe(false);
+    expect(usesMachineCredentials({ ...vertex, settings: { location: 'global' } })).toBe(false);
+    expect(usesMachineCredentials({ ...vertex, settings: { project: '' } })).toBe(false);
+    expect(usesMachineCredentials({ id: 'anthropic', package: '@opencode/ai/providers/anthropic', settings: { project: 'my-project' } })).toBe(false);
     expect(usesMachineCredentials(undefined)).toBe(false);
+  });
+
+  test('a config alias on the Vertex package counts like Vertex itself', () => {
+    expect(usesMachineCredentials({ ...vertex, id: 'vertex-eu' })).toBe(true);
+    expect(usesMachineCredentials({ ...vertex, package: '@opencode/ai/providers/openai-compatible' })).toBe(true);
+    expect(usesMachineCredentials({ ...vertex, id: 'other', package: '@opencode/ai/providers/openai-compatible' })).toBe(false);
   });
 
   test('shows From environment and the models section instead of a sign-in prompt', () => {

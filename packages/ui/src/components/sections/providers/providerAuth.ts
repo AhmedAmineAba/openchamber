@@ -36,11 +36,14 @@ export const readProviderApiKeySetting = (provider: Pick<Provider, 'settings'> |
  * machine, which OpenCode neither stores nor reports as a connection. OpenCode's
  * Vertex plugin switches the provider on once it resolves a project (from config
  * or `GOOGLE_CLOUD_PROJECT` and its aliases) and writes that project into the
- * provider's settings, so a resolved project is what makes Vertex usable.
+ * provider's settings, so a resolved project is what makes Vertex usable. The
+ * plugin matches Vertex by package, so a config alias on that package counts too.
  */
 const vertexProjectSetting = z.string().min(1);
-export const usesMachineCredentials = (provider: Pick<Provider, 'id' | 'settings'> | undefined): boolean =>
-  provider?.id === 'google-vertex' && vertexProjectSetting.safeParse(provider.settings?.project).success;
+export const usesMachineCredentials = (provider: Pick<Provider, 'id' | 'package' | 'settings'> | undefined): boolean =>
+  provider !== undefined
+  && (provider.id === 'google-vertex' || provider.package.startsWith('@opencode/ai/providers/google-vertex'))
+  && vertexProjectSetting.safeParse(provider.settings?.project).success;
 
 /** Integrations are keyed by their own id; a provider matches on the same id. */
 export const findIntegrationForProvider = (
