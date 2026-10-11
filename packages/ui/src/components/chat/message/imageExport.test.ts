@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 
 import { decorateMarkdown } from '../markdown/decorate';
-import { cloneMessageImageExportSource, MESSAGE_IMAGE_EXPORT_EXCLUDE_ATTRIBUTE } from './imageExport';
+import { buildTurnImageExportSource, cloneMessageImageExportSource, MESSAGE_IMAGE_EXPORT_EXCLUDE_ATTRIBUTE } from './imageExport';
 
 Object.assign(globalThis, { document: new Window().document });
 
@@ -56,5 +56,40 @@ describe('message image export', () => {
         expect(clone.textContent).toContain('Message content');
         expect(Boolean(clone.querySelector('img[alt="Message image"]'))).toBe(true);
         expect(Boolean(source.querySelector(`[${MESSAGE_IMAGE_EXPORT_EXCLUDE_ATTRIBUTE}="true"]`))).toBe(true);
+    });
+});
+
+describe('turn image export', () => {
+    test('puts the text of earlier steps before every text part of the last message, in order', async () => {
+        const messageSource = (text: string) => {
+            const element = document.createElement('div');
+            element.innerHTML = `<div class="markdown-content" data-markdown-content style="--md-syntax-string: red"><p>${text}</p></div>`;
+            return element;
+        };
+        const first = messageSource('Final answer, part one');
+        const second = messageSource('Final answer, part two');
+
+        // Stands in for the chat's Markdown pipeline, which needs the highlight worker.
+        const renderMarkdownHtml = async (text: string) => text.startsWith('```')
+            ? '<pre><code class="language-ts">const files = 2</code></pre>'
+            : `<p>${text}</p>`;
+
+        const source = await buildTurnImageExportSource(
+            ['Step one: checking the files.', '```ts\nconst files = 2\n```'],
+            [first, second],
+            renderMarkdownHtml,
+        );
+
+        expect(Array.from(source.children, (child) => child.textContent)).toEqual([
+            'Step one: checking the files.',
+            'tsconst files = 2',
+            'Final answer, part one',
+            'Final answer, part two',
+        ]);
+        // Earlier code gets the chat's code block frame and the colours of the message it precedes.
+        expect(source.querySelector('[data-component="markdown-code"]')?.textContent).toContain('const files = 2');
+        expect(source.querySelector('.markdown-content')?.getAttribute('style')).toBe('--md-syntax-string: red');
+        // The last message's parts are copies; the chat keeps its own nodes.
+        expect(first.parentElement).toBeNull();
     });
 });
