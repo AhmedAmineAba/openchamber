@@ -62,10 +62,10 @@ const archiveWith = ({ chats, failImportOf = null, dataDir = null, host = new Ma
 };
 
 /** Runs the guard on one request and says whether it passed or what it answered. */
-const through = (archive, method, requestPath) => {
+const through = (archive, method, requestPath, query = {}) => {
   let answer = 'passed';
   const res = { status: (code) => ({ json: (body) => { answer = { code, body }; } }) };
-  archive.guard({ method, path: requestPath }, res, () => {});
+  archive.guard({ method, path: requestPath, query }, res, () => {});
   return answer;
 };
 
@@ -181,6 +181,22 @@ describe('an archived chat is read-only', () => {
     expect(through(archive, 'GET', `/api/session/${PARENT}/message`)).toBe('passed');
     expect(through(archive, 'DELETE', `/api/session/${PARENT}`)).toBe('passed');
     expect(through(archive, 'POST', `/api/session/${OTHER}/prompt`)).toBe('passed');
+  });
+
+  it('refuses a new chat in the archive\'s directory, with or without archived chats', async () => {
+    const { archive, save, dataDir } = archiveWith({ chats: [{ info: infoOf(PARENT) }] });
+    const inside = path.join(dataDir, 'spaces', 'archive', SPACE);
+    const refused = { code: 409, body: expect.objectContaining({ code: 'archive_directory_read_only' }) };
+    // Before any chat is archived here, the folder is still the archive's.
+    expect(through(archive, 'POST', '/api/session', { directory: inside })).toEqual(refused);
+    await save();
+    expect(through(archive, 'POST', '/api/session', { directory: inside })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', { directory: path.join(inside, 'deeper') })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', { directory: path.join(dataDir, 'spaces', 'archive') })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', { directory: `${path.join(dataDir, 'spaces', 'archive')}-other` })).toBe('passed');
+    expect(through(archive, 'POST', '/api/session', { directory: '/home/me/project' })).toBe('passed');
+    expect(through(archive, 'POST', '/api/session')).toBe('passed');
+    expect(through(archive, 'GET', '/api/session', { directory: inside })).toBe('passed');
   });
 
   it('stays read-only after a restart, from the archive\'s file', async () => {

@@ -51,6 +51,8 @@ const CHAT_ROUTES = [
 ];
 const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const SESSION_DELETE = /^\/api\/session\/[^/]+$/i;
+const SESSION_CREATE = /^\/api\/session\/?$/i;
+const directorySchema = z.string().min(1);
 
 const listedTitleSchema = z.string().trim().min(1);
 /** A listed chat's title, from the space, cut to what names it; null when it has none. */
@@ -122,12 +124,28 @@ export function createSpaceArchive({ dataDir, hostOpenCode, logger = console, no
 
   const isArchivedChat = (id) => locked.has(id);
 
+  /** Whether a directory a request names lies in the archive, the root itself or any folder under it. */
+  const isUnderRoot = (directory) => {
+    const named = directorySchema.safeParse(directory);
+    if (!named.success) return false;
+    const resolved = path.resolve(named.data);
+    return resolved === root || resolved.startsWith(`${root}${path.sep}`);
+  };
+
   /**
    * Express middleware, before every route that acts on a session: an archived chat is read-only.
    * The id is compared decoded, as the route behind it decodes it, so `ses%5F...` is the same chat.
    */
   const guard = (req, res, next) => {
-    if (locked.size === 0 || READ_METHODS.has(req.method)) return next();
+    if (READ_METHODS.has(req.method)) return next();
+    // No new chat is made inside the archive: a client that opened an archived chat has the
+    // archive's directory as its current one, and a draft it did not re-root would otherwise make
+    // a live session beside the archived ones, in no project's list.
+    if (req.method === 'POST' && SESSION_CREATE.test(req.path) && isUnderRoot(req.query?.directory)) {
+      res.status(409).json({ code: 'archive_directory_read_only', message: 'This folder holds the chats of a deleted space. Start the chat in a project.' });
+      return undefined;
+    }
+    if (locked.size === 0) return next();
     if (req.method === 'DELETE' && SESSION_DELETE.test(req.path)) return next();
     for (const pattern of CHAT_ROUTES) {
       const match = pattern.exec(req.path);
