@@ -24,6 +24,8 @@ Policies written before the modes stored booleans. The first read converts them 
 
 `createPermissionAutoAcceptRuntime` loads and serializes policy writes, subscribes to the global OpenCode event hub, caches session lineage, retries transient replies, and reconciles pending permissions after startup, reconnect, and when a session moves to `safety` or `auto`. It keeps handling requests without a connected UI. Startup and reconnect ask the pending list of each running session's directory (`/api/session/active`, then each session's record), never a list without a directory: OpenCode 2 answers that one for its own working directory only and starts that location, MCP servers included.
 
+Lineage comes from session events and, when unknown, from the session record in OpenCode. Only `session.created` or a fetched record proves a session has no parent: a `session.updated` is partial (title, usage) and leaves the parent unknown, so the next lookup fetches the record. After a restart, a running subagent's first event is such an update. A failed lookup is retried like a failed reply and then leaves the request for the user.
+
 Unknown lineage and failed policy loads fail closed (`ask`). A failed pending-permission fetch is distinct from an empty successful response and never clears policy state.
 
 ## Safety net
@@ -49,4 +51,4 @@ VS Code retains its foreground-only responder because it does not run the web se
 
 ## Tests
 
-`runtime.test.js` covers restart persistence, on/off requests, the one-time conversion of pre-modes policies, the default mode on new sessions, nearest explicit subagent inheritance, missing-lineage lookup, retry/deduplication, reconnect reconciliation, the safety net's hold and accept, and which outcomes notifications may skip.
+`runtime.test.js` covers restart persistence, on/off requests, the one-time conversion of pre-modes policies, the default mode on new sessions, nearest explicit subagent inheritance, missing-lineage lookup (including a subagent first seen through a partial update, and a failed lookup), retry/deduplication, reconnect reconciliation, the safety net's hold and accept, and which outcomes notifications may skip.
