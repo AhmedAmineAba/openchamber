@@ -382,6 +382,8 @@ const MachineField: React.FC<{ machine: string | null; onChange: (place: SpacePl
         label={t('settings.openchamber.spaces.places.machine.label')}
         info={t('settings.openchamber.spaces.places.machine.info')}
         alignEnd={false}
+        // On a narrow pane the buttons go under the field rather than squeezing the name out of it.
+        controlClassName="flex-wrap"
       >
         <Input
           value={draft}
@@ -389,7 +391,7 @@ const MachineField: React.FC<{ machine: string | null; onChange: (place: SpacePl
           onKeyDown={(event) => { if (event.key === 'Enter' && !saving && !unchanged) { event.preventDefault(); void save(draft); } }}
           placeholder={t('settings.openchamber.spaces.places.machine.placeholder')}
           aria-label={t('settings.openchamber.spaces.places.machine.label')}
-          className="h-8 w-full max-w-[24rem] font-mono"
+          className="h-8 min-w-[14rem] flex-1 max-w-[24rem] font-mono"
           autoComplete="off"
           spellCheck={false}
           disabled={saving}
