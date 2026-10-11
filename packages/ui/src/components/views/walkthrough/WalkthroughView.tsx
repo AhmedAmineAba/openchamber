@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useI18n, type Locale } from '@/lib/i18n';
+import { isRightToLeft, type Locale, useI18n } from '@/lib/i18n';
 import { changeRequestCopy } from '@/lib/source-control/changeRequestCopy';
 import { openExternalUrl } from '@/lib/url';
 import { buildWalkthroughView } from '@/lib/walkthrough/model';
@@ -136,7 +136,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
       const startX = event.clientX;
       const startWidth = tocWidth;
       // The contents column is at the start; in RTL dragging left widens it.
-      const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+      const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
       const maxWidth = Math.max(TOC_MIN_WIDTH, (rootRef.current?.clientWidth ?? 0) * TOC_MAX_FRACTION);
       setDraggingToc(true);
 
@@ -161,7 +161,7 @@ export const WalkthroughView = ({ directory: rootDirectory, visible = true }: Wa
   const handleTocResizeKey = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const step = event.shiftKey ? 40 : 10;
-      const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+      const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
       const delta = (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0) * sign;
       if (delta === 0) return;
       event.preventDefault();

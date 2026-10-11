@@ -47,7 +47,7 @@ import { getContextFileOpenFailureMessage, validateContextFileOpen } from '@/lib
 import { toAbsoluteFilePath } from '@/lib/path-utils';
 import { sessionEvents } from '@/lib/sessionEvents';
 import { findDiffScrollAnchor, getRestoredDiffScrollTop, type DiffScrollAnchor } from './diffScrollAnchor';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { changeRequestCopy } from '@/lib/source-control/changeRequestCopy';
 import type { SourceControlProvider } from '@/lib/api/types';
@@ -2088,7 +2088,7 @@ export const DiffView: React.FC<DiffViewProps> = ({
         const startX = event.clientX;
         const startWidth = fileTreeWidth;
         // The tree sits at the start; in RTL that is the right, so dragging left widens it.
-        const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+        const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
         setDraggingFileTree(true);
 
         const onMove = (moveEvent: PointerEvent) => {
@@ -2108,7 +2108,7 @@ export const DiffView: React.FC<DiffViewProps> = ({
 
     const handleFileTreeResizeKey = React.useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
         const step = event.shiftKey ? 40 : 10;
-        const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+        const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
         const delta = (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0) * sign;
         if (delta === 0) return;
         event.preventDefault();

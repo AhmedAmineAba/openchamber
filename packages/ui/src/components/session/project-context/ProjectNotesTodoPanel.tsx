@@ -4,7 +4,7 @@ import { toast } from '@/components/ui';
 import { Icon } from '@/components/icon/Icon';
 import type { IconName } from '@/components/icon/icons';
 import { Input } from '@/components/ui/input';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { resolveProjectContextId, type ProjectRef, type ProjectTodoItem } from '@/lib/projectContextApi';
 import { observeProjectContext } from '@/lib/projectContextSync';
 import { cn } from '@/lib/utils';
@@ -227,7 +227,7 @@ export const ProjectNotesTodoPanel: React.FC<ProjectNotesTodoPanelProps> = ({
     // its inner edge outward widens it: the width is the distance from the
     // pointer to the panel's outer edge.
     const panelRect = event.currentTarget.closest('nav')?.getBoundingClientRect();
-    const width = event.currentTarget.matches(':dir(rtl)')
+    const width = isRightToLeft(event.currentTarget)
       ? event.clientX - (panelRect?.left ?? 0)
       : (panelRect?.right ?? 0) - event.clientX;
     setDraggedWidth(clampSidebarWidth(width));

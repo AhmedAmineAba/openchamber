@@ -44,7 +44,7 @@ import { useUIStore } from '@/stores/useUIStore';
 import { useModelLists } from '@/hooks/useModelLists';
 import { useIsTextTruncated } from '@/hooks/useIsTextTruncated';
 import { formatEffortLabel, getCycledPrimaryAgentName, isPrimaryMode, type MobileControlsPanel } from './mobileControlsUtils';
-import { getCurrentIntlLocale, useI18n } from '@/lib/i18n';
+import { getCurrentIntlLocale, isRightToLeft, useI18n } from '@/lib/i18n';
 import { useOpenCodeReadiness } from '@/hooks/useOpenCodeReadiness';
 import { eventMatchesShortcut, getEffectiveShortcutCombo, normalizeCombo } from '@/lib/shortcuts';
 import { markStartupTrace } from '@/lib/startupTrace';
@@ -2493,7 +2493,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             const currentVariantIndex = variantsWithDefault.indexOf(activeModelVariant);
             const safeCurrentIndex = currentVariantIndex >= 0 ? currentVariantIndex : 0;
             // The next level lies toward the end of the line: right in LTR, left in RTL.
-            const forwardKey = e.currentTarget.matches(':dir(rtl)') ? 'ArrowLeft' : 'ArrowRight';
+            const forwardKey = isRightToLeft(e.currentTarget) ? 'ArrowLeft' : 'ArrowRight';
             const direction = e.key === forwardKey ? 1 : -1;
             const nextVariantIndex = (safeCurrentIndex + direction + variantsWithDefault.length) % variantsWithDefault.length;
             const nextVariant = variantsWithDefault[nextVariantIndex];

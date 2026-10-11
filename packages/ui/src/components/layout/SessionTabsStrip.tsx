@@ -31,7 +31,7 @@ import {
 import { dropdownMenuItemClass, dropdownMenuPopupClass, dropdownMenuSeparatorClass } from '@/components/ui/dropdown-menu.styles';
 import { Icon } from '@/components/icon/Icon';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { useSessionTabsStore } from '@/stores/useSessionTabsStore';
 import { closeSessionTabAndActivateNeighbour } from '@/lib/sessionTabs';
 import { useGlobalSessionsStore, resolveGlobalSessionDirectory } from '@/stores/useGlobalSessionsStore';
@@ -55,7 +55,7 @@ const scrollTabsWithWheel = (event: React.WheelEvent<HTMLDivElement>) => {
   if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
   const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * WHEEL_LINE_PIXELS : event.deltaY;
   // Wheel down moves toward the later tabs, which lie to the left in RTL.
-  event.currentTarget.scrollLeft += event.currentTarget.matches(':dir(rtl)') ? -delta : delta;
+  event.currentTarget.scrollLeft += isRightToLeft(event.currentTarget) ? -delta : delta;
 };
 
 type SessionTab = { id: string; session: Session };
@@ -378,7 +378,7 @@ export const SessionTabsStrip: React.FC<{
     // The fade mask is physical, so measure from the physical left: in RTL
     // scrollLeft runs from 0 at the right end down to -max at the left end.
     const max = node.scrollWidth - node.clientWidth;
-    const fromLeft = node.matches(':dir(rtl)') ? max + node.scrollLeft : node.scrollLeft;
+    const fromLeft = isRightToLeft(node) ? max + node.scrollLeft : node.scrollLeft;
     const left = fromLeft > 2;
     const right = fromLeft < max - 2;
     setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));

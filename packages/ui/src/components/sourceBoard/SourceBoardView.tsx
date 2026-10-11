@@ -27,7 +27,7 @@ import { openExternalUrl } from '@/lib/url';
 import { useEffectiveDirectory } from '@/hooks/useEffectiveDirectory';
 import { useRuntimeAPIs } from '@/hooks/useRuntimeAPIs';
 import type { GitHubReferenceKind, LinearMappingResult, ProjectEntry, SourceControlReadContext } from '@/lib/api/types';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { resolveLinearMappedProjectPath } from '@/lib/linearProjectMapping';
 import { normalizeProjectPath, resolveProjectForSessionDirectory } from '@/lib/projectResolution';
@@ -529,7 +529,7 @@ const SourceBoardBody: React.FC<{
         const startX = event.clientX;
         const startWidth = listRef.current?.offsetWidth ?? LIST_MIN_WIDTH;
         // The list is at the start; in RTL dragging left widens it.
-        const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+        const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
         setResizing(true);
         const onMove = (move: PointerEvent) => useSourceBoardStore.getState().setListWidth(clampWidth(startWidth + (move.clientX - startX) * sign));
         const onUp = () => {
@@ -544,7 +544,7 @@ const SourceBoardBody: React.FC<{
     };
     const resizeWithKeys = (event: React.KeyboardEvent<HTMLDivElement>) => {
         const step = event.shiftKey ? 40 : 10;
-        const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+        const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
         const delta = (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0) * sign;
         if (delta === 0) return;
         event.preventDefault();

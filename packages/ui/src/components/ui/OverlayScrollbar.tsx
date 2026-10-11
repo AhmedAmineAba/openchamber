@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/useUIStore";
+import { isRightToLeft } from '@/lib/i18n';
 
 type OverlayScrollbarProps = {
   /** The scrolling element. Container replacement is picked up on the next React commit. */
@@ -132,7 +133,7 @@ function bindScrollbar(
 
     if (horizontal) {
       horizontalThumbPixelsPerScrollPixel = horizontal.thumbPixelsPerScrollPixel;
-      horizontalScrollOrigin = container.matches(':dir(rtl)') ? scrollWidth - clientWidth : 0;
+      horizontalScrollOrigin = isRightToLeft(container) ? scrollWidth - clientWidth : 0;
       horizontalThumb.hidden = false;
       horizontalThumb.style.width = `${horizontal.length}px`;
     } else {

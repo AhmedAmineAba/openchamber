@@ -1,4 +1,5 @@
 import React from 'react';
+import { isRightToLeft } from '@/lib/i18n';
 
 export const IPAD_LEFT_SIDEBAR_WIDTH = 320;
 export const IPAD_RIGHT_SIDEBAR_WIDTH = 380;
@@ -61,7 +62,7 @@ export function useIpadSidebarResize(
     if (pointerIdRef.current !== event.pointerId) return;
     // `side` is the panel's place in the layout; in RTL the layout mirrors, so the
     // start ("left") panel sits on the right and dragging left widens it.
-    const sign = (side === 'left' ? 1 : -1) * (event.currentTarget.matches(':dir(rtl)') ? -1 : 1);
+    const sign = (side === 'left' ? 1 : -1) * (isRightToLeft(event.currentTarget) ? -1 : 1);
     const next = clampWidth(startWidthRef.current + (event.clientX - startXRef.current) * sign);
     if (liveWidthRef.current === next) return;
     liveWidthRef.current = next;

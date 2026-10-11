@@ -21,6 +21,15 @@ export function getInlineStartSide(direction: LayoutDirection): 'left' | 'right'
   return direction === 'rtl' ? 'right' : 'left';
 }
 
+/**
+ * Whether an element lays out right to left: the nearest explicit `dir`
+ * decides (the document root carries the UI direction). Read from the
+ * attribute because `matches(':dir(rtl)')` throws on WebKit before 16.4.
+ */
+export function isRightToLeft(element: Element): boolean {
+  return element.closest('[dir="rtl"], [dir="ltr"]')?.getAttribute('dir') === 'rtl';
+}
+
 export const LOCALE_LABEL_KEYS: Record<Locale, 'common.language.english' | 'common.language.french' | 'common.language.dutch' | 'common.language.simplifiedChinese' | 'common.language.traditionalChinese' | 'common.language.ukrainian' | 'common.language.spanish' | 'common.language.brazilianPortuguese' | 'common.language.korean' | 'common.language.polish' | 'common.language.german' | 'common.language.japanese' | 'common.language.turkish' | 'common.language.arabic' | 'common.language.hebrew'> = {
   en: 'common.language.english',
   fr: 'common.language.french',

@@ -1,4 +1,5 @@
 import React from 'react';
+import { isRightToLeft } from '@/lib/i18n';
 
 const WIPE_MASK =
     'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 60%, rgba(0,0,0,0) 100%)';
@@ -63,7 +64,7 @@ export const ToolRevealOnMount: React.FC<ToolRevealOnMountProps> = ({
             (CSS.supports('mask-image', 'linear-gradient(to right, black, transparent)') ||
                 CSS.supports('-webkit-mask-image', 'linear-gradient(to right, black, transparent)'));
 
-        const isRtl = el.matches(':dir(rtl)');
+        const isRtl = isRightToLeft(el);
         const wipeFrom = isRtl ? 'translateX(0.06em)' : 'translateX(-0.06em)';
         const maskFrom = isRtl ? '0% 0%' : '100% 0%';
         const maskTo = isRtl ? '100% 0%' : '0% 0%';

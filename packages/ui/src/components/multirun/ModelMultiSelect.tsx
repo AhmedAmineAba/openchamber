@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useUIStore } from '@/stores/useUIStore';
 import { useModelLists } from '@/hooks/useModelLists';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { ModelPickerList, type ModelPickerEntry, type ModelPickerProvider } from '@/components/model-picker/ModelPickerList';
 import { listModelVariantIds, type ModelVariantSource } from '@/lib/modelVariants';
 
@@ -156,7 +156,7 @@ export const ModelMultiSelect: React.FC<ModelMultiSelectProps> = ({
       const viewportHeight = window.visualViewport?.height ?? document.documentElement.clientHeight ?? window.innerHeight;
       const popupWidth = Math.min(420, window.innerWidth - 32);
       // The popup hangs from the trigger's start edge: its right edge in RTL.
-      const anchorLeft = triggerRef.current.matches(':dir(rtl)') ? triggerRect.right - popupWidth : triggerRect.left;
+      const anchorLeft = isRightToLeft(triggerRef.current) ? triggerRect.right - popupWidth : triggerRect.left;
       const left = Math.max(16, Math.min(anchorLeft, window.innerWidth - popupWidth - 16));
       const opensUp = dropdownSide === 'top';
       const space = opensUp ? triggerRect.top - 16 : viewportHeight - triggerRect.bottom - 16;

@@ -33,7 +33,7 @@ import {
 import { useRuntimeAPIs } from '@/hooks/useRuntimeAPIs';
 import { useTerminalSessionKeepalive } from '@/hooks/useTerminalSessionKeepalive';
 import { useUpdatePolling } from '@/hooks/useUpdatePolling';
-import { useI18n } from '@/lib/i18n';
+import { isRightToLeft, useI18n } from '@/lib/i18n';
 import { toast } from '@/components/ui';
 import { ProviderLogo } from '@/components/ui/ProviderLogo';
 import { UsageProgressBar } from '@/components/sections/usage/UsageProgressBar';
@@ -531,7 +531,7 @@ export const VSCodeLayout: React.FC = () => {
       return;
     }
     // The handle is on the sidebar's end edge: in RTL dragging left widens it.
-    const sign = event.currentTarget.matches(':dir(rtl)') ? -1 : 1;
+    const sign = isRightToLeft(event.currentTarget) ? -1 : 1;
     const delta = (event.clientX - expandedSidebarResizeStartXRef.current) * sign;
     const nextWidth = clampExpandedSidebarWidth(expandedSidebarResizeStartWidthRef.current + delta);
     setExpandedSidebarWidth((current) => (current === nextWidth ? current : nextWidth));
