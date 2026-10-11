@@ -83,7 +83,16 @@ export const createSessionWorktreeMover = (dependencies) => {
     const message = `OpenChamber: session ${sessionId} moved to worktree ${name}`;
     const before = new Set((await listStashes(source)).map((entry) => entry.hash));
     await stashPush(source, { message });
-    const stash = await findStash(source, (entry) => !before.has(entry.hash) && entry.message.includes(message));
+    let stash;
+    try {
+      stash = await findStash(source, (entry) => !before.has(entry.hash) && entry.message.includes(message));
+    } catch (error) {
+      // The changes may already be in the stash; a failure here must still say where.
+      throw new OpenChamberControlError(
+        `The stash list could not be read after stashing the uncommitted changes: ${error instanceof Error ? error.message : String(error)}. If git stash list shows "${message}", the changes are there`,
+        500,
+      );
+    }
     if (!stash) return null;
     try {
       await stashApply(destination, { ref: stash.hash });

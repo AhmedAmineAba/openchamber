@@ -128,6 +128,24 @@ describe('moving a session into a new worktree', () => {
     expect(stashes).toHaveLength(1);
   });
 
+  it('names the stash message when the stash list cannot be read after the push', async () => {
+    let listings = 0;
+    const failingMover = createSessionWorktreeMover({
+      ...Object.fromEntries(['createWorktree', 'removeWorktree', 'waitForWorktreeReady', 'hydrateCheckout', 'stashApply', 'stashDrop', 'moveSession'].map((name) => [name, vi.fn(async () => (name === 'createWorktree' ? WORKTREE : undefined))])),
+      bootstrapStore: {},
+      stashPush: vi.fn(async () => ({})),
+      listStashes: vi.fn(async () => { listings += 1; if (listings > 1) throw new Error('index.lock exists'); return []; }),
+      getBranches: vi.fn(async () => ({ all: ['main'], defaultBranches: {} })),
+      resolvePrimaryWorktreeRoot: vi.fn(async () => ({ root: ROOT })),
+      warn: vi.fn(),
+    });
+
+    await expect(failingMover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' })).rejects.toMatchObject({
+      statusCode: 500,
+      message: 'The stash list could not be read after stashing the uncommitted changes: index.lock exists. If git stash list shows "OpenChamber: session ses_1 moved to worktree fix-login", the changes are there',
+    });
+  });
+
   it('still reports the move failure when the worktree cannot be removed', async () => {
     const { mover, calls } = createMover({ changes: false, moveFails: true, removeFails: true });
 
