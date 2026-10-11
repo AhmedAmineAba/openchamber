@@ -109,6 +109,7 @@ describe('composer host mouse down', () => {
         view.mouseDown(padding, 30, 150);
         expect(view.state.selection.main.head).toBe(14);
 
+        // Beside a line, in the side padding, the height is left alone.
         view.mouseDown(padding, 30, 125);
         expect(view.state.selection.main.head).toBe(14);
     });
