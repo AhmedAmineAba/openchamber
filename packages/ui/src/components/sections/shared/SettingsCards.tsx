@@ -215,7 +215,7 @@ export const SettingsCardSearch: React.FC<{
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       aria-label={placeholder}
-      className="h-9 ps-8"
+      className="ps-8"
     />
   </div>
 );
