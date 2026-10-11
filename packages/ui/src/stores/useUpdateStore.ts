@@ -140,7 +140,7 @@ function mapRuntimeParams(runtime: ClientRuntime): URLSearchParams {
   return params;
 }
 
-function parseUpdateCheckResponse(data: {
+export function parseUpdateCheckResponse(data: {
   available?: boolean;
   version?: string;
   currentVersion?: string;
