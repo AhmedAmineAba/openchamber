@@ -1,6 +1,6 @@
-// Whether the isolated-spaces feature is released to users. It is being built behind its
-// switch, and releases ship before it is whole, so the switch's row in Settings and its search
-// entry stay hidden until the first release of the feature (docs/isolated-spaces/STAGES.md,
-// "First release"); the `isolatedSpacesEnabled` key in settings.json still works for the people
-// building it. Flip this in that release; nothing else needs to change.
-export const ISOLATED_SPACES_RELEASED = false;
+// Whether the isolated-spaces feature is released to users: the switch's row in Settings, its
+// search entries and the "Isolated spaces" page show only while this is true. It stayed false
+// while the feature was built behind its switch, so releases that shipped meanwhile carried no
+// entry point (decision 17 in packages/web/server/lib/spaces/DOCUMENTATION.md); the
+// `isolatedSpacesEnabled` key in settings.json worked for the people building it all along.
+export const ISOLATED_SPACES_RELEASED = true;
