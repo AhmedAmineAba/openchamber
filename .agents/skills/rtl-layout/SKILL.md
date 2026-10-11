@@ -5,7 +5,7 @@ description: Use when creating or modifying OpenChamber UI layout, horizontal po
 
 # RTL Layout
 
-Arabic and Hebrew mirror the whole interface. `getLocaleDirection` in `packages/ui/src/lib/i18n/runtime.ts` derives the direction from the UI locale; the i18n provider puts it on `<html dir>` and hands it to Base UI's `DirectionProvider`. Components read it as `useI18n().direction`, or as `el.matches(':dir(rtl)')` in event handlers and code outside React. Adding a right-to-left locale follows `locale-ui-patterns` and also puts it in `RTL_LOCALES` there.
+Arabic and Hebrew mirror the whole interface. `getLocaleDirection` in `packages/ui/src/lib/i18n/runtime.ts` derives the direction from the UI locale; the i18n provider puts it on `<html dir>` and hands it to Base UI's `DirectionProvider`. Components read it as `useI18n().direction`, or as `isRightToLeft(el)` from `@/lib/i18n` in event handlers and code outside React. Do not call `el.matches(':dir(rtl)')`: it throws on WebKit before 16.4. Adding a right-to-left locale follows `locale-ui-patterns` and also puts it in `RTL_LOCALES` there.
 
 Every layout change works in both directions. The test: English stays pixel-identical, and Arabic is its mirror image.
 
