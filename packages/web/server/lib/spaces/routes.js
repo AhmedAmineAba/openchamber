@@ -160,9 +160,24 @@ export function createSwitchController({ getHost, setHost, buildHost, startHost,
     // The list is read for the machine's spaces; a list that fails refuses the change, since it cannot say they are none.
     const there = (await host.journey.listSpaces()).filter((space) => space.placeId === DOCKER_SSH_PLACE_ID);
     if (there.length > 0) throw new SpaceError('place_has_spaces', `Delete the ${there.length} space(s) on the other machine first.`, { count: there.length });
-    if (!host.journey.isIdle()) throw new SpaceError('space_busy', 'A space is being made or an action is still running. Wait for it to finish.');
+    const busy = () => new SpaceError('space_busy', 'A space is being made or an action is still running. Wait for it to finish.');
+    if (!host.journey.isIdle()) throw busy();
     await persistMachine(parsed.data);
-    const made = await buildHost();
+    let made;
+    try {
+      made = await buildHost();
+    } catch (error) {
+      // The file must not name a machine the running host does not have.
+      await persistMachine(current).catch(() => {});
+      throw error;
+    }
+    // A creation or an action that began while the new host was built lives in the old host's
+    // memory and would be orphaned by the swap: the new host goes, the old one stays.
+    if (!host.journey.isIdle()) {
+      made.close();
+      await persistMachine(current).catch(() => {});
+      throw busy();
+    }
     setHost(made);
     host.close();
     startHost(made);

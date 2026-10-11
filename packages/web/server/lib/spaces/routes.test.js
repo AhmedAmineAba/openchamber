@@ -291,6 +291,36 @@ describe('the switch controller', () => {
     const busy = controllerWith({ host: hostOf('on', { machine: 'box', idle: false }) });
     await expect(busy.controller.setMachine('other')).rejects.toMatchObject({ code: 'space_busy' });
     expect(busy.state.machines).toEqual([]);
+    // A creation that began while the new host was built: the new host is closed, the setting goes back, the old host stays.
+    const late = hostOf('on', { machine: 'box' });
+    let idle = true;
+    late.journey.isIdle = () => idle;
+    const lateState = { host: late, machines: [], started: [] };
+    const buildThenBusy = createSwitchController({
+      getHost: () => lateState.host,
+      setHost: (next) => { lateState.host = next; },
+      buildHost: () => { idle = false; return hostOf('built-late', { machine: 'other' }); },
+      startHost: (made) => { lateState.started.push(made.name); },
+      persist: async () => {},
+      persistMachine: async (machine) => { lateState.machines.push(machine); },
+    });
+    await expect(buildThenBusy.setMachine('other')).rejects.toMatchObject({ code: 'space_busy' });
+    expect(lateState.machines).toEqual(['other', 'box']);
+    expect(lateState.started).toEqual([]);
+    expect(lateState.host).toBe(late);
+    expect(late.closed).toBe(0);
+    // A build that fails leaves the file naming the machine the running host has.
+    const brokenState = { host: hostOf('on', { machine: 'box' }), machines: [] };
+    const broken = createSwitchController({
+      getHost: () => brokenState.host,
+      setHost: (next) => { brokenState.host = next; },
+      buildHost: async () => { throw new Error('docker gone'); },
+      startHost: () => {},
+      persist: async () => {},
+      persistMachine: async (machine) => { brokenState.machines.push(machine); },
+    });
+    await expect(broken.setMachine('other')).rejects.toThrow('docker gone');
+    expect(brokenState.machines).toEqual(['other', 'box']);
     const unlisted = controllerWith({ host: hostOf('on', { machine: 'box', listFails: true }) });
     await expect(unlisted.controller.setMachine('other')).rejects.toMatchObject({ code: 'docker_command_failed' });
     await expect(controllerWith().controller.setMachine('box')).rejects.toMatchObject({ code: 'isolated_spaces_off' });

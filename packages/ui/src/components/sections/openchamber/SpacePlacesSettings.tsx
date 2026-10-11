@@ -417,6 +417,7 @@ const MachineField: React.FC<{ machine: string | null; onChange: (place: SpacePl
 
 export const SpacePlacesSettings: React.FC = () => {
   const { t } = useI18n();
+  const isMobile = useUIStore((state) => state.isMobile);
   const [places, retryPlaces, replacePlaces] = useRead(listSpacePlaces);
   const { journey, error: journeyError } = useSpacesJourneyRead();
   const spaces = journey ? Array.from(journey.values()) : null;
@@ -444,6 +445,7 @@ export const SpacePlacesSettings: React.FC = () => {
   }
   const sshPlace = places.value.find((place) => place.id === SSH_PLACE_ID) ?? null;
   const field = <MachineField machine={sshPlace?.machine ?? null} onChange={machineChanged} />;
+  const leftBehind = sshPlace ? [] : spaces?.filter((entry) => entry.placeId === SSH_PLACE_ID) ?? [];
   const titleOf = (place: SpacePlace) => {
     const nameKey = PLACE_NAMES.get(place.id);
     return place.machine ?? (nameKey ? t(nameKey) : place.id);
@@ -464,7 +466,15 @@ export const SpacePlacesSettings: React.FC = () => {
       ))}
       {sshPlace ? null : (
         <SettingsControlGroup title={t('settings.openchamber.spaces.places.machine.title')}>
-          {field}
+          <div className="space-y-2">
+            {field}
+            {/* Spaces recorded on a machine the file no longer names: unreachable, with the delete that forgets them. */}
+            {leftBehind.length > 0 ? (
+              <div className="space-y-1 pt-1">
+                {leftBehind.map((entry) => <SpaceRow key={entry.id} entry={entry} actions={isMobile ? 'sheet' : 'menu'} showFolder />)}
+              </div>
+            ) : null}
+          </div>
         </SettingsControlGroup>
       )}
     </div>
