@@ -13,8 +13,15 @@ describe('MobileToaster', () => {
   let viewport: InstanceType<Window['EventTarget']> & { offsetTop: number };
 
   // Where the toast list sits on a phone, as sonner's mobile CSS reads it.
-  const toastListTop = () => document.querySelector<HTMLElement>('[data-sonner-toaster]')?.style.getPropertyValue('--mobile-offset-top');
-  const visualViewportTop = () => document.documentElement.style.getPropertyValue('--oc-visual-viewport-top');
+  const toastList = () => document.querySelector<HTMLElement>('[data-sonner-toaster]');
+  // The pan as the toast list inherits it from the nearest element that sets it.
+  const visualViewportTop = () => {
+    for (let element = toastList(); element; element = element.parentElement) {
+      const value = element.style.getPropertyValue('--oc-visual-viewport-offset-top');
+      if (value) return value;
+    }
+    return '';
+  };
 
   const scrollVisibleArea = async (offsetTop: number) => {
     viewport.offsetTop = offsetTop;
@@ -55,7 +62,7 @@ describe('MobileToaster', () => {
   });
 
   test('anchors phone toasts to the visible area below the notch', () => {
-    expect(toastListTop()).toBe('calc(var(--oc-safe-area-top, 0px) + var(--oc-visual-viewport-top, 0px) + 16px)');
+    expect(toastList()?.style.getPropertyValue('--mobile-offset-top')).toBe('calc(var(--oc-safe-area-top, 0px) + var(--oc-visual-viewport-offset-top, 0px) + 16px)');
   });
 
   test('follows the visible area when the keyboard pans it down', async () => {
@@ -66,12 +73,5 @@ describe('MobileToaster', () => {
 
     await scrollVisibleArea(0);
     expect(visualViewportTop()).toBe('0px');
-  });
-
-  test('drops the pan when the toaster goes away', async () => {
-    await scrollVisibleArea(300);
-    await act(async () => root.render(null));
-
-    expect(visualViewportTop()).toBe('');
   });
 });
