@@ -94,10 +94,11 @@ export const useChatTurnNavigation = ({
 }: UseChatTurnNavigationOptions): ChatTurnNavigation => {
     const turnIdsRef = React.useRef(turnIds);
     const activeTurnIdRef = React.useRef(activeTurnId);
-    // The hash this session has already scrolled to. The hash effect re-runs
-    // whenever the turn count changes so a link resolves once its turn loads;
-    // a target already reached must not be replayed when a send adds a turn.
-    const reachedHashRef = React.useRef<{ sessionId: string; hash: string } | null>(null);
+    // The hash this visit to the session has already scrolled to. The hash
+    // effect re-runs whenever the turn count changes so a link resolves once
+    // its turn loads; a target already reached must not be replayed when a
+    // send adds a turn. Opening a session again applies its hash once more.
+    const reachedHashRef = React.useRef<string | null>(null);
 
     React.useEffect(() => {
         turnIdsRef.current = turnIds;
@@ -107,10 +108,15 @@ export const useChatTurnNavigation = ({
         activeTurnIdRef.current = activeTurnId;
     }, [activeTurnId]);
 
+    // Declared before the hash effect so the reset lands first in the same commit.
+    React.useEffect(() => {
+        reachedHashRef.current = null;
+    }, [sessionId]);
+
     const writeReachedHash = React.useCallback((hash: string) => {
         setHash(hash);
-        reachedHashRef.current = sessionId ? { sessionId, hash: `#${hash}` } : null;
-    }, [sessionId]);
+        reachedHashRef.current = `#${hash}`;
+    }, []);
 
     const scrollToTurnId = React.useCallback(async (
         turnId: string,
@@ -184,8 +190,7 @@ export const useChatTurnNavigation = ({
                 return;
             }
 
-            const reached = reachedHashRef.current;
-            if (!hashChanged && reached?.sessionId === sessionId && reached.hash === hash) {
+            if (!hashChanged && reachedHashRef.current === hash) {
                 return;
             }
 
@@ -194,7 +199,7 @@ export const useChatTurnNavigation = ({
                 : scrollToMessageId(target.id, { behavior: 'auto', updateHash: false });
             void scroll.then((arrived) => {
                 if (arrived) {
-                    reachedHashRef.current = { sessionId, hash };
+                    reachedHashRef.current = hash;
                 }
             });
         };

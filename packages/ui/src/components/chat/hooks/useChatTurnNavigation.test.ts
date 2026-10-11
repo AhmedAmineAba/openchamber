@@ -31,11 +31,12 @@ const withDom = async (url: string, run: (dom: Window) => Promise<void>) => {
 const mountNavigation = async (initialTurnIds: string[]) => {
     const root = createRoot(document.createElement('div'));
     const scrolledTo: string[] = [];
+    let sessionId = 'session_1';
     let turnIds = initialTurnIds;
     let navigation: ReturnType<typeof useChatTurnNavigation> | null = null;
     const Harness = () => {
         navigation = useChatTurnNavigation({
-            sessionId: 'session',
+            sessionId,
             turnIds,
             activeTurnId: null,
             // Like the timeline controller: a turn that has not loaded yet cannot be reached.
@@ -55,6 +56,11 @@ const mountNavigation = async (initialTurnIds: string[]) => {
         jumpTo: (turnId: string) => act(async () => { await navigation?.scrollToTurnId(turnId, { behavior: 'auto' }); }),
         setTurnIds: (next: string[]) => {
             turnIds = next;
+            return render();
+        },
+        openSession: (nextSessionId: string, nextTurnIds: string[]) => {
+            sessionId = nextSessionId;
+            turnIds = nextTurnIds;
             return render();
         },
         unmount: () => act(async () => root.unmount()),
@@ -78,6 +84,16 @@ test('a link to a turn jumps once the turn loads, and only once', () => withDom(
     await harness.setTurnIds(['turn_a', 'turn_b', 'turn_c']);
 
     expect(harness.scrolledTo).toEqual(['turn_a', 'turn_a']);
+    await harness.unmount();
+}));
+
+test('coming back to a session with its hash still in the address jumps there again', () => withDom('http://localhost/', async () => {
+    const harness = await mountNavigation(['turn_a', 'turn_b']);
+    await harness.jumpTo('turn_a');
+    await harness.openSession('session_2', ['turn_x']);
+    await harness.openSession('session_1', ['turn_a', 'turn_b']);
+
+    expect(harness.scrolledTo).toEqual(['turn_a', 'turn_a', 'turn_a']);
     await harness.unmount();
 }));
 
