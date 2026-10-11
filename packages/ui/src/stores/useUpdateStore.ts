@@ -165,7 +165,9 @@ function parseUpdateCheckResponse(data: {
         : undefined,
     packageManager: data.packageManager,
     updateCommand: data.updateCommand,
-    installBlocked: data.installBlocked === 'service-manager' ? 'service-manager' : undefined,
+    installBlocked: data.installBlocked === 'service-manager' || data.installBlocked === 'manual-install'
+      ? data.installBlocked
+      : undefined,
   };
 }
 

@@ -850,6 +850,13 @@ within a ten-minute overall deadline.
 - `registerOpenChamberRoutes(app, dependencies)`: registers OpenChamber endpoints:
   - `GET /api/openchamber/update-check`
   - `POST /api/openchamber/update-install`
+    - A copy no package manager installed (detection reason `default-fallback`,
+      such as an unpacked tarball) answers 409 before any command runs: a
+      global install would add a second copy and leave the running one as it
+      is. The update check marks such an update `installBlocked:
+      'manual-install'`, and a foreground server without a service manager
+      `installBlocked: 'service-manager'`, so clients show manual steps in
+      place of an Update button.
     - Desktop-managed hosts delegate authenticated Web update requests to the Electron main process, which checks, downloads, and applies the update through `electron-updater` before restarting the host.
     - Foreground servers running under a systemd user unit queue installation in
       a separate transient unit and restart the configured service afterwards.

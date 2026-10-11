@@ -454,6 +454,40 @@ describe('OpenChamber foreground update route', () => {
   });
 });
 
+describe('OpenChamber update route for a copy no package manager installed', () => {
+  beforeEach(() => {
+    packageManager.detectPackageManagerDetails.mockReturnValue({
+      packageManager: 'npm',
+      reason: 'default-fallback',
+    });
+  });
+
+  it('marks an available update as blocked so clients show no Update button', async () => {
+    const { app } = createApp({ storedOptions: { launchMode: 'daemon' } });
+
+    const response = await request(app).get('/api/openchamber/update-check?appType=web').expect(200);
+
+    expect(response.body).toMatchObject({ available: true, installBlocked: 'manual-install' });
+  });
+
+  it('refuses the install instead of adding a global copy next to this one', async () => {
+    for (const environment of [{}, { CONTAINER: '1' }]) {
+      const { app } = createApp({ environment, storedOptions: { launchMode: 'daemon' } });
+
+      await request(app)
+        .post('/api/openchamber/update-install')
+        .expect(409, {
+          error: 'This copy can\'t update itself. Install the new version the way you installed it.',
+        });
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(packageManager.getUpdateCommand).not.toHaveBeenCalled();
+    expect(childProcess.spawn).not.toHaveBeenCalled();
+    expect(childProcess.spawnSync).not.toHaveBeenCalled();
+  });
+});
+
 describe('OpenChamber web update route on Windows', () => {
   it('runs the install-and-restart script from a batch file instead of a cmd.exe /c argument', async () => {
     const { app, dependencies } = createApp({

@@ -501,6 +501,25 @@ describe('executeUpdate', () => {
   });
 });
 
+describe('detectPackageManagerDetails', () => {
+  afterEach(() => {
+    spawnSync.mockReset();
+    vi.unstubAllEnvs();
+  });
+
+  it('keeps reporting a copy no package manager installed after the first detection', async () => {
+    vi.stubEnv('OPENCHAMBER_RUNTIME', '');
+    vi.stubEnv('OPENCHAMBER_PACKAGE_MANAGER', '');
+    // No package manager answers, as on a server where an unpacked tarball runs.
+    spawnSync.mockImplementation(() => ({ status: 1, stdout: '', stderr: '' }));
+    vi.resetModules();
+    const { detectPackageManagerDetails } = await import('./package-manager.js');
+
+    expect(detectPackageManagerDetails().reason).toBe('default-fallback');
+    expect(detectPackageManagerDetails().reason).toBe('default-fallback');
+  });
+});
+
 describe('CLI update exports', () => {
   it('exports package-manager helpers used by the update command', () => {
     expect(typeof detectPackageManager).toBe('function');
