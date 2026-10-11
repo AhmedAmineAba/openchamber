@@ -194,6 +194,29 @@ describe('permission auto-accept runtime', () => {
     expect(fetchImpl.mock.calls.some(([url, init]) => new URL(url).pathname === '/api/session/child/permission/perm/reply' && init.method === 'POST')).toBe(true);
   });
 
+  it('lets notifications wait for the retried reply when their own lineage lookup fails', async () => {
+    let replyLookups = 0;
+    const fetchImpl = vi.fn(async (url, init = {}) => {
+      const path = new URL(url).pathname;
+      if (path === '/api/session/child') {
+        // The notification asks with another directory; its lookup always fails.
+        if (directoryHeader(init) === '/notify') return new Response('', { status: 503 });
+        replyLookups += 1;
+        return replyLookups === 1 ? new Response('', { status: 503 }) : Response.json({ id: 'child', parentID: 'root' });
+      }
+      if (init.method === 'POST') return Response.json({});
+      return new Response('[]');
+    });
+    const { runtime } = createRuntime({
+      stored: { permissionAutoAccept: { sessions: { root: 'auto' } } },
+      fetchImpl,
+      retryDelaysMs: [0, 0],
+    });
+    const replied = runtime.processPermission({ id: 'perm', sessionID: 'child' }, '/project');
+    await expect(runtime.isPermissionAutoAnswered('child', '/notify', 'perm')).resolves.toBe(true);
+    await expect(replied).resolves.toBe(true);
+  });
+
   it('retries a transient reply failure and deduplicates concurrent events', async () => {
     let replyAttempts = 0;
     const fetchImpl = vi.fn(async (url, init = {}) => {

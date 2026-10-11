@@ -300,11 +300,20 @@ export function createPermissionAutoAcceptRuntime({
    * answered automatically. A held or unanswered request is not.
    */
   const isPermissionAutoAnswered = async (sessionId, directory, permissionId) => {
-    const mode = await resolveSessionMode(sessionId, directory);
+    const wasReplied = async () => {
+      const outcome = permissionId ? outcomes.get(permissionId) : undefined;
+      return outcome ? (await outcome) === 'replied' : false;
+    };
+    let mode;
+    try {
+      mode = await resolveLineageMode(sessionId, directory);
+    } catch {
+      // The reply path retries the lookup; its outcome is the answer.
+      return wasReplied();
+    }
     if (mode === 'auto') return true;
     if (mode === 'ask') return false;
-    const outcome = permissionId ? outcomes.get(permissionId) : undefined;
-    return outcome ? (await outcome) === 'replied' : false;
+    return wasReplied();
   };
 
   // A pending request belongs to a turn that is still running, so the
