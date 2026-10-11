@@ -62,10 +62,11 @@ const archiveWith = ({ chats, failImportOf = null, dataDir = null, host = new Ma
 };
 
 /** Runs the guard on one request and says whether it passed or what it answered. */
-const through = (archive, method, requestPath, query = {}) => {
+const through = (archive, method, requestPath, query = {}, headers = {}) => {
   let answer = 'passed';
   const res = { status: (code) => ({ json: (body) => { answer = { code, body }; } }) };
-  archive.guard({ method, path: requestPath, query }, res, () => {});
+  const search = new URLSearchParams(query).toString();
+  archive.guard({ method, path: requestPath, url: search ? `${requestPath}?${search}` : requestPath, headers }, res, () => {});
   return answer;
 };
 
@@ -192,6 +193,12 @@ describe('an archived chat is read-only', () => {
     await save();
     expect(through(archive, 'POST', '/api/session', { directory: inside })).toEqual(refused);
     expect(through(archive, 'POST', '/api/session', { directory: path.join(inside, 'deeper') })).toEqual(refused);
+    // The shared client names the directory in a header, URI-encoded, on every request; the
+    // other query spelling counts as well.
+    expect(through(archive, 'POST', '/api/session', {}, { 'x-opencode-directory': encodeURIComponent(inside), 'x-opencode-directory-encoding': 'uri' })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', {}, { 'x-opencode-directory': inside })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', { 'location[directory]': inside })).toEqual(refused);
+    expect(through(archive, 'POST', '/api/session', {}, { 'x-opencode-directory': '/home/me/project' })).toBe('passed');
     expect(through(archive, 'POST', '/api/session', { directory: path.join(dataDir, 'spaces', 'archive') })).toEqual(refused);
     expect(through(archive, 'POST', '/api/session', { directory: `${path.join(dataDir, 'spaces', 'archive')}-other` })).toBe('passed');
     expect(through(archive, 'POST', '/api/session', { directory: '/home/me/project' })).toBe('passed');

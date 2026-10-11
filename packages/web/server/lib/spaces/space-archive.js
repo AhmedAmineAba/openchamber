@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { z } from 'zod';
+import { requestedDirectories } from './dispatcher.js';
 
 import { SpaceError } from './errors.js';
 import { archivedChatOf, chatIdSchema } from './space-opencode.js';
@@ -124,6 +125,13 @@ export function createSpaceArchive({ dataDir, hostOpenCode, logger = console, no
 
   const isArchivedChat = (id) => locked.has(id);
 
+  /**
+   * Every directory a create names in the open, as the dispatcher's guards read them: the query,
+   * in both spellings, and the directory header the client sends on every request, URI-encoded.
+   * The body stays unread, as the proxy forwards it whole.
+   */
+  const namedDirectories = (req) => requestedDirectories(req, new URL(req.originalUrl ?? req.url ?? req.path ?? '/', 'http://archive'));
+
   /** Whether a directory a request names lies in the archive, the root itself or any folder under it. */
   const isUnderRoot = (directory) => {
     const named = directorySchema.safeParse(directory);
@@ -141,7 +149,7 @@ export function createSpaceArchive({ dataDir, hostOpenCode, logger = console, no
     // No new chat is made inside the archive: a client that opened an archived chat has the
     // archive's directory as its current one, and a draft it did not re-root would otherwise make
     // a live session beside the archived ones, in no project's list.
-    if (req.method === 'POST' && SESSION_CREATE.test(req.path) && isUnderRoot(req.query?.directory)) {
+    if (req.method === 'POST' && SESSION_CREATE.test(req.path) && namedDirectories(req).some(isUnderRoot)) {
       res.status(409).json({ code: 'archive_directory_read_only', message: 'This folder holds the chats of a deleted space. Start the chat in a project.' });
       return undefined;
     }
