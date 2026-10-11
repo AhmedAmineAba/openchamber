@@ -77,7 +77,15 @@ describe('dev server wait', () => {
     expect(shown).toEqual({ next: 'retry', delayMs: DEV_SERVER_FIRST_RETRY_MS, run: { url: DEAD_PORT, startedAt: 1_000, paused: false } });
   });
 
-  test('a tab shown again after the wait ran out retries once, then shows the error', () => {
+  test('a wait that ran out in view keeps its error when the tab is hidden and shown again', () => {
+    const run = { url: DEAD_PORT, startedAt: 1_000, paused: false };
+    const now = 2_000 + DEV_SERVER_WAIT_MS;
+    expect(planFailedLoadRetry(failure, { ...watching, run, now }).next).toBe('stop');
+    expect(planFailedLoadRetry(failure, { ...watching, watched: false, run, now: now + 5_000 }).next).toBe('stop');
+    expect(planFailedLoadRetry(failure, { ...watching, run, now: now + 10_000 }).next).toBe('stop');
+  });
+
+  test('a tab held back past the end of the wait retries once when shown, then shows the error', () => {
     const hidden = planFailedLoadRetry(failure, { ...watching, watched: false, run: null, now: 1_000 });
     const shown = planFailedLoadRetry(failure, { ...watching, run: hidden.run, now: 120_000 });
     expect(shown.next).toBe('retry');

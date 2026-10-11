@@ -122,8 +122,10 @@ type FailedLoadPlan =
  *
  * A tab nobody is watching does not retry: `watched` is false for a tab that
  * is not on screen, unless an agent is working it. The retry is held back
- * instead, and comes at once when the tab is watched again, even after the
- * wait has run out, since the server may well be up by then.
+ * instead, and comes as soon as the tab is watched again, even if the wait ran
+ * out meanwhile, since the server may well be up by then. A wait that ran out
+ * in view has shown its error, and that error stays when the tab is hidden and
+ * shown again.
  */
 export const planFailedLoadRetry = (
   failure: FailedLoad,
@@ -133,10 +135,10 @@ export const planFailedLoadRetry = (
     return { next: 'stop', run };
   }
   const current = run?.url === failure.url ? run : { url: failure.url, startedAt: now, paused: false };
+  const waited = now - current.startedAt;
+  if (!current.paused && waited > DEV_SERVER_WAIT_MS) return { next: 'stop', run: current };
   if (!watched) return { next: 'pause', run: { ...current, paused: true } };
   if (current.paused) return { next: 'retry', delayMs: DEV_SERVER_FIRST_RETRY_MS, run: { ...current, paused: false } };
-  const waited = now - current.startedAt;
-  if (waited > DEV_SERVER_WAIT_MS) return { next: 'stop', run: current };
   const delayMs = Math.min(DEV_SERVER_MAX_RETRY_MS, Math.max(DEV_SERVER_FIRST_RETRY_MS, waited / 2));
   return { next: 'retry', delayMs, run: current };
 };

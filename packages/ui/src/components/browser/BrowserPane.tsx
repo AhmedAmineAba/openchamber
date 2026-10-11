@@ -596,12 +596,15 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tab
 
   // The agent works this page while the user types elsewhere in the app.
   const guardAgentAction = useWebviewFocusGuard(webviewElement, stageRef);
-  const runControlAction = React.useCallback((action: string, parameters: Record<string, unknown>) => (
-    guardAgentAction(
+  /** Set once an agent has acted on this tab: from then on it waits for its server out of sight too. */
+  const [agentDriven, setAgentDriven] = React.useState(false);
+  const runControlAction = React.useCallback((action: string, parameters: Record<string, unknown>) => {
+    setAgentDriven(true);
+    return guardAgentAction(
       action === 'browser.click' || action === 'browser.type',
       () => performControlAction(action, parameters),
-    )
-  ), [guardAgentAction, performControlAction]);
+    );
+  }, [guardAgentAction, performControlAction]);
 
   const describeTab = React.useCallback(() => {
     const webview = webviewRef.current;
@@ -823,11 +826,11 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tab
   // behind it is still starting. Neither is an error the user can act on, and
   // both used to leave them pressing reload. Both are waited out here.
   const status = navigation.status;
-  // A tab the agent opened is watched by the agent even when the user is not
-  // looking: it opens its tabs in the background, often right after starting
-  // the server, and reads the page once that server is up.
+  // A tab the agent opened or works is watched by the agent even when the user
+  // is not looking: it opens pages in the background, often right after
+  // starting the server, and reads them once that server is up.
   const documentVisible = React.useSyncExternalStore(subscribeDocumentVisibility, isDocumentVisible);
-  const watched = (visible && documentVisible) || ownerSessionId !== null;
+  const watched = (visible && documentVisible) || ownerSessionId !== null || agentDriven;
   React.useEffect(() => {
     const reloadSoon = (delayMs: number): (() => void) => {
       setIsWaitingForServer(true);
