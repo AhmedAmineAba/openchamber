@@ -45,24 +45,21 @@ const renderAssistantMarkdownHtml = async (text: string): Promise<string> => {
 };
 
 /**
- * The image source for a whole turn: the text its earlier steps wrote, then
- * the rendered text parts of its last message. Earlier steps may be folded
- * away or not mounted, so their text is rendered here from Markdown with the
- * classes and decoration the chat uses.
+ * The image source for a whole turn: every text part its assistant messages
+ * wrote, in order. Earlier steps may be folded away or not mounted, and part of
+ * the last message can sit in Activity, so the text is rendered here from
+ * Markdown with the classes and decoration the chat uses. `syntaxStyle` carries
+ * the code colour variables the chat sets inline on its Markdown roots.
  */
 export const buildTurnImageExportSource = async (
-    earlierText: readonly string[],
-    messageSources: readonly HTMLElement[],
+    segments: readonly string[],
+    syntaxStyle: string | null,
     renderMarkdownHtml: (text: string) => Promise<string> = renderAssistantMarkdownHtml,
 ): Promise<HTMLElement> => {
     const { decorateMarkdown } = await import('../markdown/decorate');
     const source = document.createElement('div');
-    // The chat sets the code colours as inline variables on each Markdown root.
-    const syntaxStyle = messageSources
-        .map((element) => element.querySelector('[data-markdown-content]')?.getAttribute('style'))
-        .find((style) => Boolean(style));
 
-    for (const text of earlierText) {
+    for (const text of segments) {
         const html = await renderMarkdownHtml(text);
         const segment = document.createElement('div');
         segment.className = 'relative break-words my-1';
@@ -73,9 +70,6 @@ export const buildTurnImageExportSource = async (
         decorateMarkdown(markdown, IMAGE_DECORATE_CONTEXT);
         segment.appendChild(markdown);
         source.appendChild(segment);
-    }
-    for (const element of messageSources) {
-        source.appendChild(cloneMessageImageExportSource(element));
     }
     return source;
 };

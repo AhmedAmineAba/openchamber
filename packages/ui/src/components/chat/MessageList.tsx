@@ -5,7 +5,7 @@ import ChatMessage from './ChatMessage';
 import { TimelineNotice } from './message/TimelineNotice';
 import { useRunningSubagentRuns, withRunningSubagentRuns } from './lib/runningSubagentRuns';
 import { isSkippedTimelineMessage, isBackgroundReportEntry, isTimelineNoticeRole, isTurnOpeningNotice } from './lib/timelineRoles';
-import { assistantTextSegments } from '@/lib/messages/messageText';
+import { earlierAssistantText } from './lib/turns/earlierAssistantText';
 import { areOptionalRenderRelevantMessagesEqual, areRelevantTurnGroupingContextsEqual, areRenderRelevantMessagesEqual } from './message/renderCompare';
 import TurnItem from './components/TurnItem';
 import { LiveTurnActivity } from './components/LiveTurnActivity';
@@ -349,8 +349,8 @@ const TurnBlock = React.memo(({
         return firstAssistant ? [firstAssistant] : [];
     }, [chatRenderMode, streamingAssistantMessageId, turn.assistantMessages]);
 
-    const earlierAssistantText = React.useMemo(
-        () => visibleAssistantMessages.slice(0, -1).flatMap((assistant) => assistantTextSegments(assistant.parts)),
+    const turnEarlierAssistantText = React.useMemo(
+        () => earlierAssistantText(visibleAssistantMessages),
         [visibleAssistantMessages]
     );
 
@@ -492,7 +492,7 @@ const TurnBlock = React.memo(({
                     activityOwnerMessageId,
                     isFirstAssistantInTurn: isFirstAssistant,
                     isLastAssistantInTurn: isLastAssistant,
-                    earlierAssistantText: isLastAssistant && earlierAssistantText.length > 0 ? earlierAssistantText : undefined,
+                    earlierAssistantText: isLastAssistant && turnEarlierAssistantText.length > 0 ? turnEarlierAssistantText : undefined,
                     isLatestTurn: isLastTurn,
                     isWorking: isLastTurn && sessionIsWorking && (
                         chatRenderMode === 'sorted'
@@ -553,7 +553,7 @@ const TurnBlock = React.memo(({
             reviewTransferDirection,
             visibleAssistantMessages,
             visibleAssistantIds,
-            earlierAssistantText,
+            turnEarlierAssistantText,
             visibleActivitySegments,
             activityOwnerMessageId,
             shouldAnimateUserMessage,

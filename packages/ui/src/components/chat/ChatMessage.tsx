@@ -628,10 +628,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     // The turn footer copies the whole reply: what the earlier steps of the
     // turn wrote before their tool calls, then this message.
     const earlierAssistantText = isUser ? undefined : turnGroupingContext?.earlierAssistantText;
-    const turnTextContent = React.useMemo(
-        () => earlierAssistantText ? [...earlierAssistantText, messageTextContent].filter((text) => text.length > 0).join('\n\n') : undefined,
-        [earlierAssistantText, messageTextContent]
-    );
 
     const handleCopyMessage = React.useCallback(async () => {
         let result;
@@ -651,10 +647,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }, [isUser, messageTextContent]);
 
     const handleCopyTurn = React.useCallback(async () => {
-        if (turnTextContent === undefined) return false;
-        const result = await copyAssistantText(turnTextContent);
+        const turnText = [...(earlierAssistantText ?? []), messageTextContent].filter((text) => text.length > 0).join('\n\n');
+        const result = await copyAssistantText(turnText);
         return result.ok;
-    }, [turnTextContent]);
+    }, [earlierAssistantText, messageTextContent]);
 
     const handleRevert = React.useCallback(() => {
         if (!sessionId || !message.info.id) return;
@@ -923,7 +919,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                                 shouldShowHeader={shouldShowHeader}
                                 hasTextContent={hasTextContent}
                                 onCopyMessage={handleCopyMessage}
-                                onCopyTurn={turnTextContent === undefined ? undefined : handleCopyTurn}
+                                onCopyTurn={earlierAssistantText ? handleCopyTurn : undefined}
                                 onCopyLink={handleCopyLink}
                                 copiedMessage={copiedMessage}
                                 showReasoningTraces={showReasoningTraces}

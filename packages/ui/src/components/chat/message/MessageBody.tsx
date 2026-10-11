@@ -30,7 +30,7 @@ import type { Session } from '@/lib/opencode/model';
 import { getMultiRunIdentity } from '@/lib/multirun/identity';
 import { openParallelComposer } from '@/lib/multirun/openParallelComposer';
 import { AskOtherModelsDialog } from '@/components/multirun/AskOtherModelsDialog';
-import { flattenAssistantTextParts, suggestPlanTitleFromText } from '@/lib/messages/messageText';
+import { assistantTextSegments, flattenAssistantTextParts, suggestPlanTitleFromText } from '@/lib/messages/messageText';
 import { MULTIRUN_EXECUTION_FORK_PROMPT_META_TEXT } from '@/lib/messages/executionMeta';
 import { useMessageTTS } from '@/hooks/useMessageTTS';
 import { MobileOverlayPanel } from '@/components/ui/MobileOverlayPanel';
@@ -1662,20 +1662,20 @@ const AssistantMessageBody = React.memo(({
     );
 
     // The turn footer saves the whole reply: the text the turn's earlier steps
-    // wrote, then every text part of this message.
+    // wrote, then every text part of this message. A reply of one text part
+    // keeps the copy of what the chat rendered.
     const earlierAssistantText = turnGroupingContext?.earlierAssistantText;
     const shareTurnAsImage = React.useCallback(
         async (requestedSourceElement?: HTMLElement | null) => {
-            const messageSources = Array.from(
-                messageContentRef.current?.querySelectorAll<HTMLElement>('[data-message-text-export-source="true"]') ?? []
-            );
-            if (!earlierAssistantText && messageSources.length <= 1) {
+            const segments = [...(earlierAssistantText ?? []), ...assistantTextSegments(assistantTextParts)];
+            if (segments.length <= 1) {
                 await shareMessageAsImage(requestedSourceElement);
                 return;
             }
+            const syntaxStyle = messageContentRef.current?.querySelector('[data-markdown-content]')?.getAttribute('style') ?? null;
             let turnSource: HTMLElement;
             try {
-                turnSource = await buildTurnImageExportSource(earlierAssistantText ?? [], messageSources);
+                turnSource = await buildTurnImageExportSource(segments, syntaxStyle);
             } catch (error) {
                 console.error('Failed to generate image:', error);
                 toast.error(t('chat.messageBody.toast.generateImageFailed'));
@@ -1683,7 +1683,7 @@ const AssistantMessageBody = React.memo(({
             }
             await shareMessageAsImage(turnSource);
         },
-        [earlierAssistantText, shareMessageAsImage, t]
+        [assistantTextParts, earlierAssistantText, shareMessageAsImage, t]
     );
 
     const activityPartsForTurn = React.useMemo(() => {
