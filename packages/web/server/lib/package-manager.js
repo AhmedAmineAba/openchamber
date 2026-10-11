@@ -495,9 +495,15 @@ export function detectPackageManagerDetails() {
     }
   }
 
-  // No package manager installed this copy (an unpacked tarball, for one).
-  // npm is only a guess here, so callers must not run an update with it.
-  return rememberDetection('npm', 'default-fallback');
+  // npm is only a guess from here on. A copy outside any node_modules folder
+  // (an unpacked tarball, the Docker image, a source checkout) was installed
+  // by no package manager at all, so no install command updates it.
+  return rememberDetection('npm', installPathPm ? 'default-fallback' : 'unmanaged-install');
+}
+
+/** The running copy was installed by no package manager, so it cannot update itself. */
+export function isUnmanagedInstall() {
+  return (cachedDetection ?? detectPackageManagerDetails()).reason === 'unmanaged-install';
 }
 
 export function detectPackageManager() {

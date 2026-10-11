@@ -12,6 +12,7 @@ vi.mock('../package-manager.js', () => ({
   checkForUpdates: vi.fn(),
   getUpdateCommand: vi.fn(),
   detectPackageManagerDetails: vi.fn(),
+  isUnmanagedInstall: vi.fn(),
 }));
 
 const childProcess = await import('child_process');
@@ -84,6 +85,7 @@ beforeEach(() => {
     packageManager: 'npm',
   });
   packageManager.getUpdateCommand.mockReturnValue('npm install -g @openchamber/web@latest');
+  packageManager.isUnmanagedInstall.mockReturnValue(false);
 });
 
 afterEach(() => {
@@ -456,10 +458,7 @@ describe('OpenChamber foreground update route', () => {
 
 describe('OpenChamber update route for a copy no package manager installed', () => {
   beforeEach(() => {
-    packageManager.detectPackageManagerDetails.mockReturnValue({
-      packageManager: 'npm',
-      reason: 'default-fallback',
-    });
+    packageManager.isUnmanagedInstall.mockReturnValue(true);
   });
 
   it('marks an available update as blocked so clients show no Update button', async () => {
@@ -482,6 +481,7 @@ describe('OpenChamber update route for a copy no package manager installed', () 
     }
 
     await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(packageManager.detectPackageManagerDetails).not.toHaveBeenCalled();
     expect(packageManager.getUpdateCommand).not.toHaveBeenCalled();
     expect(childProcess.spawn).not.toHaveBeenCalled();
     expect(childProcess.spawnSync).not.toHaveBeenCalled();

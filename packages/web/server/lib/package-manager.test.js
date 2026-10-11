@@ -513,10 +513,11 @@ describe('detectPackageManagerDetails', () => {
     // No package manager answers, as on a server where an unpacked tarball runs.
     spawnSync.mockImplementation(() => ({ status: 1, stdout: '', stderr: '' }));
     vi.resetModules();
-    const { detectPackageManagerDetails } = await import('./package-manager.js');
+    const { detectPackageManagerDetails, isUnmanagedInstall } = await import('./package-manager.js');
 
-    expect(detectPackageManagerDetails().reason).toBe('default-fallback');
-    expect(detectPackageManagerDetails().reason).toBe('default-fallback');
+    expect(detectPackageManagerDetails().reason).toBe('unmanaged-install');
+    expect(detectPackageManagerDetails().reason).toBe('unmanaged-install');
+    expect(isUnmanagedInstall()).toBe(true);
   });
 });
 

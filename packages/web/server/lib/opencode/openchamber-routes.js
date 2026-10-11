@@ -20,13 +20,6 @@ function quotePosixShell(value) {
 
 const LAUNCHD_SERVICE_ID = 'dev.openchamber.web';
 
-/**
- * No package manager installed the running copy (an unpacked tarball, for
- * one). A global install would add a second copy and leave this one as it
- * is, so the server cannot update itself.
- */
-const isManualInstall = (packageManagerDetails) => packageManagerDetails.reason === 'default-fallback';
-
 const resolveLaunchdPlistPath = (pathModule, osModule) =>
   pathModule.join(osModule.homedir(), 'Library', 'LaunchAgents', `${LAUNCHD_SERVICE_ID}.plist`);
 
@@ -172,12 +165,12 @@ export const registerOpenChamberRoutes = (app, dependencies) => {
           updateOwner: 'electron-updater',
         };
       } else {
-        const { checkForUpdates, detectPackageManagerDetails } = await import('../package-manager.js');
+        const { checkForUpdates, isUnmanagedInstall } = await import('../package-manager.js');
         updateInfo = await checkForUpdates(updateRequest);
         // Tell clients up front that the install route will refuse, so they
-        // show the manual command instead of an Update button that fails.
+        // show manual steps instead of an Update button that fails.
         if (updateInfo?.available && updateRequest.appType === 'web') {
-          if (isManualInstall(detectPackageManagerDetails())) {
+          if (isUnmanagedInstall()) {
             updateInfo = { ...updateInfo, installBlocked: 'manual-install' };
           } else {
             const { isForegroundService, systemdServiceUnit, isLaunchdService } = await readLaunchState();
@@ -239,6 +232,7 @@ export const registerOpenChamberRoutes = (app, dependencies) => {
         checkForUpdates,
         getUpdateCommand,
         detectPackageManagerDetails,
+        isUnmanagedInstall,
       } = await import('../package-manager.js');
 
       const updateInfo = await checkForUpdates();
@@ -246,12 +240,14 @@ export const registerOpenChamberRoutes = (app, dependencies) => {
         return res.status(400).json({ error: 'No update available' });
       }
 
-      const pmDetails = detectPackageManagerDetails();
-      if (isManualInstall(pmDetails)) {
+      // A global install would add a second copy and leave this one as it is.
+      if (isUnmanagedInstall()) {
         return res.status(409).json({
           error: 'This copy can\'t update itself. Install the new version the way you installed it.',
         });
       }
+
+      const pmDetails = detectPackageManagerDetails();
       const pm = pmDetails.packageManager;
       const updateCmd = getUpdateCommand(pm, { targetVersion: updateInfo.version });
       const isContainer =
