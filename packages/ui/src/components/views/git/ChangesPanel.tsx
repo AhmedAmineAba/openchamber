@@ -359,7 +359,7 @@ export const ChangesPanel: React.FC<ChangesPanelProps> = ({
               name="arrow-down-s"
               className={cn(
                 'size-3.5 shrink-0 text-muted-foreground transition-transform',
-                collapsed && '-rotate-90'
+                collapsed && '-rotate-90 rtl:rotate-90'
               )}
             />
           </button>

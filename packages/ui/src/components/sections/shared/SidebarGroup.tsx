@@ -67,7 +67,7 @@ export const SidebarGroup: React.FC<SidebarGroupProps> = ({
         <Icon name="arrow-down-s"
           className={cn(
             'h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200',
-            !expanded && '-rotate-90',
+            !expanded && '-rotate-90 rtl:rotate-90',
           )}
         />
         <span className="flex-1 truncate">{label}</span>

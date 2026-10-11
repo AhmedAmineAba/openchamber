@@ -81,7 +81,7 @@ export const CustomProviderModelRow: React.FC<Props> = ({
         >
           <Icon
             name="arrow-right-s"
-            className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')}
+            className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90 rtl:-rotate-90')}
             aria-hidden
           />
           <span className="flex min-w-0 flex-1 flex-col">

@@ -3342,7 +3342,7 @@ export const dict = {
   'directoryTree.field.newDirectoryPlaceholder': 'مجلد_جديد',
   'textarea.resizeHandleAria': 'تغيير حجم مربع النص',
   'sidebar.resize.leftPanelAria': 'تغيير حجم الشريط الجانبي',
-  'sidebar.resize.rightPanelAria': 'تغيير حجم اللوحة اليمنى',
+  'sidebar.resize.rightPanelAria': 'تغيير حجم لوحة مساحة العمل',
   'mainLayout.mobile.closeDrawerAria': 'إغلاق الدرج',
   'sortableTabsStrip.aria.tabs': 'علامات التبويب',
   'openChamberLogo.aria.logo': 'شعار OpenChamber',
