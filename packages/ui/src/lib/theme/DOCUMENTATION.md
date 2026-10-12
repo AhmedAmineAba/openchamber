@@ -48,7 +48,7 @@ Built-in palettes place the sidebar below the chat canvas in luminance. Fields
 and elevated panels are lighter than the canvas in dark mode and darker in light
 mode. Mono and Mono Plus keep their pure-black dark canvas, so their sidebars are
 the exception. User-message backgrounds take on the primary's hue at their own
-lightness (`tintColor`: 16% of its chroma in dark, 10% in light), so the bubble
+lightness (`tintColor`: 16% of its chroma in dark, 6% in light), so the bubble
 reads as colored without becoming a brighter patch, with enough separation from
 the canvas to remain visible. Mono keeps every role grayscale.
 Body, secondary and bold text retain the palette's neutral cast with distinct
@@ -94,8 +94,10 @@ the canvas permits it; a black canvas keeps a black sidebar. Body text is soften
 to a canvas contrast ceiling of 10 in dark and 9 in light, with a readability
 floor of 7 across shared surfaces when possible. Secondary text targets 4.6–6.
 Readability takes precedence over ceilings. Bubble text is checked after adding
-the primary tint. Bold uses stronger neutral text. Code backgrounds stay
-within 1.10 of the canvas; syntax token and diff colors retain their source values.
+the primary tint. Bold uses stronger neutral text. Code backgrounds keep their
+source lightness but take the canvas hue, so a neutral code fill does not sit as a
+cold slab inside a warm theme, and stay within 1.10 of the canvas; syntax token and
+diff colors retain their source values.
 
 Borders use the matching OpenChamber role's contrast on each corresponding
 surface as a baseline, including explicit tool and quote borders. Each cap allows
