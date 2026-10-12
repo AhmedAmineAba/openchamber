@@ -357,11 +357,11 @@ export const createSettingsHelpers = (dependencies) => {
     if (SIDEBAR_WORKTREE_SORT_ORDER_VALUES.has(candidate.sidebarWorktreeSortOrder)) {
       result.sidebarWorktreeSortOrder = candidate.sidebarWorktreeSortOrder;
     }
-    if (typeof candidate.sidebarShowRecentSection === 'boolean') {
-      result.sidebarShowRecentSection = candidate.sidebarShowRecentSection;
-    }
     if (typeof candidate.sidebarShowChatsSection === 'boolean') {
       result.sidebarShowChatsSection = candidate.sidebarShowChatsSection;
+    }
+    if (typeof candidate.sidebarShowWorkSection === 'boolean') {
+      result.sidebarShowWorkSection = candidate.sidebarShowWorkSection;
     }
 
     if (Array.isArray(candidate.securityScopedBookmarks)) {
@@ -506,14 +506,8 @@ export const createSettingsHelpers = (dependencies) => {
     if (typeof candidate.sessionWorkEnabled === 'boolean') {
       result.sessionWorkEnabled = candidate.sessionWorkEnabled;
     }
-    if (typeof candidate.sessionWorkAutoOpen === 'boolean') {
-      result.sessionWorkAutoOpen = candidate.sessionWorkAutoOpen;
-    }
     if (typeof candidate.sessionReviewOfferEnabled === 'boolean') {
       result.sessionReviewOfferEnabled = candidate.sessionReviewOfferEnabled;
-    }
-    if (typeof candidate.sessionWorkKeepInGroup === 'boolean') {
-      result.sessionWorkKeepInGroup = candidate.sessionWorkKeepInGroup;
     }
     if (typeof candidate.sessionGoalEnabled === 'boolean') {
       result.sessionGoalEnabled = candidate.sessionGoalEnabled;
@@ -754,12 +748,6 @@ export const createSettingsHelpers = (dependencies) => {
     }
     if (typeof candidate.showTurnChangedFiles === 'boolean') {
       result.showTurnChangedFiles = candidate.showTurnChangedFiles;
-    }
-    if (typeof candidate.showExpandedBashTools === 'boolean') {
-      result.showExpandedBashTools = candidate.showExpandedBashTools;
-    }
-    if (typeof candidate.showExpandedEditTools === 'boolean') {
-      result.showExpandedEditTools = candidate.showExpandedEditTools;
     }
     if (typeof candidate.timeFormatPreference === 'string') {
       const mode = candidate.timeFormatPreference.trim();
