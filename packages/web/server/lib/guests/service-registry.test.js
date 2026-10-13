@@ -173,6 +173,16 @@ describe('reapOrphanedGuestServices decisions', () => {
     expect(await fs.readdir(dir)).toEqual([]);
   });
 
+  test('removes temp records of a writer that died and keeps those of a live one', async () => {
+    const processes = fakeProcesses(new Set([7001]));
+    const registry = createGuestServiceRegistry(processes);
+    await fs.writeFile(path.join(dir, '4242.json.tmp-6001-0a1b2c3d'), '{}');
+    await fs.writeFile(path.join(dir, '4343.json.tmp-7001-0a1b2c3d'), '{}');
+
+    expect(await registry.reapOrphanedGuestServices(dir)).toEqual({ inspected: 0, reaped: 0 });
+    expect(await fs.readdir(dir)).toEqual(['4343.json.tmp-7001-0a1b2c3d']);
+  });
+
   test('keeps the record when the process cannot be inspected', async () => {
     const processes = fakeProcesses(new Set([4242]));
     const registry = createGuestServiceRegistry({

@@ -216,12 +216,21 @@ export const createGuestServiceRegistry = ({
    * @returns {Promise<{ inspected: number, reaped: number }>}
    */
   const reapOrphanedGuestServices = async (dir, { log } = {}) => {
-    let names;
+    let entries;
     try {
-      names = (await fs.readdir(dir)).filter((name) => name.endsWith('.json'));
+      entries = await fs.readdir(dir);
     } catch {
       return { inspected: 0, reaped: 0 };
     }
+    // A host that died between the write and the rename of a record leaves its
+    // temp file behind; the writer's pid is in the name.
+    await Promise.all(entries.map(async (name) => {
+      const writer = name.match(/\.json\.tmp-(\d+)-[0-9a-f]+$/);
+      if (writer && !isPidAlive(Number.parseInt(writer[1], 10))) {
+        await fs.rm(path.join(dir, name), { force: true }).catch(() => {});
+      }
+    }));
+    const names = entries.filter((name) => name.endsWith('.json'));
     const outcomes = await Promise.all(names.map(async (name) => {
       const filePath = path.join(dir, name);
       try {

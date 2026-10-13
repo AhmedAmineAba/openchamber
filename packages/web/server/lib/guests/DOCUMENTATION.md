@@ -110,6 +110,12 @@ entry script and the executable must be the recorded host binary. "Host gone"
 on Unix is a parent pid other than the recorded owner, since a parent pid
 changes only when the parent dies; Windows never reparents, so there the owner
 pid must be dead. Records that do not parse, including a non-positive pid that
-would signal a process group, are dropped without signalling anything. Tests
-call `beginGuestServiceHost()` without a directory, which records nothing and
-reaps nothing.
+would signal a process group, are dropped without signalling anything. A temp
+file a host left between writing a record and renaming it
+(`<pid>.json.tmp-<writer pid>-<hex>`) is removed once its writer pid is dead.
+Tests call `beginGuestServiceHost()` without a directory, which records nothing
+and reaps nothing.
+
+Orphans are rare on Windows: libuv puts every spawned child in a job object that
+is killed with the host, even on a hard kill, so the Windows branch of the
+reaper is a safety net.
