@@ -63,6 +63,8 @@ export const spaceConditionOf = (
  * Whether the line under a space's group says what is wrong with it: being made, failed,
  * stopped, out of reach, not answering, or an action under way. The group's stale mark shows
  * only when it does not, so a stopped space gets no second warning that reads like a fault.
+ * It follows the state lines of `SpaceGroupStatus` only: the access and setup lines below them
+ * say nothing about the session list, so the mark may sit beside them.
  */
 export const spaceLineSaysState = (
   entry: SpaceEntry | undefined,
