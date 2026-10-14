@@ -20,7 +20,8 @@ import { runtimeFetch } from '@/lib/runtime-fetch';
 import { useI18n, type I18nKey } from '@/lib/i18n';
 import { useDirectoryStore } from '@/stores/useDirectoryStore';
 import { useMcpConfigStore, type McpDraft } from '@/stores/useMcpConfigStore';
-import { useMcpStore, type McpStatusMap } from '@/stores/useMcpStore';
+import { useMcpStore } from '@/stores/useMcpStore';
+import type { McpServerStatus } from '@/lib/opencode/model';
 import { usePluginsStore, type PluginEntry, type RegistryResult } from '@/stores/usePluginsStore';
 import { useSkillsStore, type DiscoveredSkill } from '@/stores/useSkillsStore';
 import { useSkillsCatalogStore } from '@/stores/useSkillsCatalogStore';
@@ -70,7 +71,7 @@ type RailSelection =
 // Stable empty references: a selector returning a fresh [] or {} on every
 // call re-renders the component forever (Maximum update depth exceeded).
 const EMPTY_MCP_SERVERS: never[] = [];
-const EMPTY_MCP_STATUSES: McpStatusMap = {};
+const EMPTY_MCP_STATUSES: Record<string, McpServerStatus> = {};
 const EMPTY_PLUGIN_ENTRIES: PluginEntry[] = [];
 const EMPTY_GUESTS: import('@/lib/guests/types').InstalledGuest[] = [];
 const EMPTY_REGISTRY_INFO: Record<string, RegistryResult> = {};
@@ -451,7 +452,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
     } finally {
       setBusyId(null);
     }
-  }, [createMcp, currentDirectory, installSkills, isMcpInstalled, isPluginInstalled, isSkillInstalled, readInput, readToken, t]);
+  }, [createMcp, createPluginEntry, currentDirectory, installSkills, isExtensionInstalled, isMcpInstalled, isPluginInstalled, isSkillInstalled, readInput, readToken, t]);
 
   /** One Uninstall pass: removes the MCP server, the plugin entries, and the installed skills. */
   const uninstallEntry = React.useCallback(async (entry: CatalogEntry) => {
@@ -507,7 +508,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
     } finally {
       setBusyId(null);
     }
-  }, [currentDirectory, deleteMcp, deletePluginEntry, isMcpInstalled, isPluginInstalled, isSkillInstalled, pluginEntries, t]);
+  }, [currentDirectory, deleteMcp, deletePluginEntry, isExtensionInstalled, isMcpInstalled, isPluginInstalled, isSkillInstalled, pluginEntries, t]);
 
   const canInstallEntry = (entry: CatalogEntry): boolean => {
     if (entry.status === 'coming-soon') return false;
@@ -612,7 +613,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
               <span className="min-w-0 truncate text-sm font-medium text-foreground">{name}</span>
             );
           })()}
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <div className="ms-auto flex shrink-0 items-center gap-1.5">
             {componentInstalled ? (
               <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-medium', statusPillClass('success'))}>
                 {t('integrationsCatalog.status.installed')}
@@ -692,7 +693,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
         }}
         aria-pressed={selected}
         className={cn(
-          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left typography-ui-label transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start typography-ui-label transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           selected
             ? 'bg-interactive-selection text-foreground'
             : 'text-muted-foreground hover:bg-interactive-hover/50 hover:text-foreground',
@@ -711,7 +712,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center gap-1 px-6 pt-3">
-          <Button variant="ghost" size="xs" className="-ml-2 gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => setSelectedId(null)}>
+          <Button variant="ghost" size="xs" className="-ms-2 gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => setSelectedId(null)}>
             <Icon name="arrow-left-s" className="size-4" />
             {t('integrationsCatalog.detail.back')}
           </Button>
@@ -777,7 +778,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
                     <section className="flex flex-col gap-1">
                       <h3 className="typography-ui-label font-semibold text-foreground">
                         {t('integrationsCatalog.group.plugin')}
-                        <span className="ml-2 font-normal text-muted-foreground">{plugins.length}</span>
+                        <span className="ms-2 font-normal text-muted-foreground">{plugins.length}</span>
                       </h3>
                       {plugins.map((component) => renderComponentRow(entry, component))}
                     </section>
@@ -791,7 +792,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
                     <section className="flex flex-col gap-1">
                       <h3 className="typography-ui-label font-semibold text-foreground">
                         {t('integrationsCatalog.group.skills')}
-                        <span className="ml-2 font-normal text-muted-foreground">{skillComponents.length}</span>
+                        <span className="ms-2 font-normal text-muted-foreground">{skillComponents.length}</span>
                       </h3>
                       {skillComponents.map((component) => renderComponentRow(entry, component))}
                     </section>
@@ -805,7 +806,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
                     <section className="flex flex-col gap-1">
                       <h3 className="typography-ui-label font-semibold text-foreground">
                         {t('integrationsCatalog.group.extension')}
-                        <span className="ml-2 font-normal text-muted-foreground">{extensions.length}</span>
+                        <span className="ms-2 font-normal text-muted-foreground">{extensions.length}</span>
                       </h3>
                       {extensions.map((component) => renderComponentRow(entry, component))}
                     </section>
@@ -934,7 +935,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
             setSelectedId(entry.id);
           }
         }}
-        className="group flex min-w-0 cursor-pointer flex-col gap-2.5 rounded-xl border border-[var(--interactive-border)] bg-[var(--surface-elevated)] px-3.5 py-3 text-left transition-colors hover:bg-[var(--interactive-hover)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--interactive-focus-ring)]"
+        className="group flex min-w-0 cursor-pointer flex-col gap-2.5 rounded-xl border border-[var(--interactive-border)] bg-[var(--surface-elevated)] px-3.5 py-3 text-start transition-colors hover:bg-[var(--interactive-hover)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--interactive-focus-ring)]"
       >
         <div className="flex items-start gap-2.5">
           <CatalogMark entry={entry} />
@@ -959,7 +960,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
 
   return (
     <div className="absolute inset-0 z-10 flex bg-background">
-      <div className="flex w-52 shrink-0 flex-col border-r border-border/50">
+      <div className="flex w-52 shrink-0 flex-col border-e border-border/50">
         <div className="flex-1 overflow-y-auto p-2">
           {renderRailItem({ kind: 'all' }, t('integrationsCatalog.category.all'), CATALOG_ENTRIES.length)}
           <div className="my-1.5 border-t border-[var(--interactive-border)]/60" />
@@ -983,7 +984,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
               <div className="relative w-64 shrink-0">
                 <Icon
                   name="search"
-                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
                   aria-hidden
                 />
                 <Input
@@ -991,7 +992,7 @@ export function IntegrationsCatalogView(): React.ReactNode {
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={t('integrationsCatalog.search.placeholder')}
                   aria-label={t('integrationsCatalog.search.placeholder')}
-                  className="h-9 rounded-full border-none bg-[var(--surface-muted)] pl-9 shadow-none ring-1 ring-inset ring-transparent transition-colors hover:bg-[var(--interactive-hover)]/40 focus:bg-[var(--surface-muted)] focus:ring-[var(--interactive-focus-ring)]"
+                  className="h-9 rounded-full border-none bg-[var(--surface-muted)] ps-9 shadow-none ring-1 ring-inset ring-transparent transition-colors hover:bg-[var(--interactive-hover)]/40 focus:bg-[var(--surface-muted)] focus:ring-[var(--interactive-focus-ring)]"
                 />
               </div>
             </div>

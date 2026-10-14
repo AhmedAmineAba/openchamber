@@ -2,11 +2,12 @@ import { describe, expect, test } from "bun:test"
 
 import {
   patchInputFiles,
-  blocksOnForm,
+  isQuestionTool,
   carriesFileDiffs,
   executeOutputTruncation,
   executeScript,
   executeToolCalls,
+  executeHasBackgroundableWork,
   isExplorationTool,
   isFileChangeTool,
   isShellTool,
@@ -30,7 +31,7 @@ describe("tool identity", () => {
     expect(isExplorationTool("list")).toBe(false)
     expect(isExplorationTool("grep")).toBe(true)
     expect(isWebTool("webfetch")).toBe(true)
-    expect(blocksOnForm("question")).toBe(true)
+    expect(isQuestionTool("question")).toBe(true)
   })
 
   test("normalizes namespaced and deduplicated names", () => {
@@ -74,6 +75,23 @@ describe("tool input and metadata", () => {
 })
 
 describe("tool row description", () => {
+  test("OpenChamber tools show their action and the detail that tells calls apart", () => {
+    expect(toolDescription("openchamber", {
+      action: "session.link",
+      parameters: { sessionId: "ses_1", link: { identifier: "#3998", title: "Keep PR badges after rebases", url: "https://x", kind: "change" } },
+    }, undefined)).toEqual({ kind: "text", value: "session.link · #3998 Keep PR badges after rebases" })
+    expect(toolDescription("openchamber", {
+      action: "session.send",
+      parameters: { sessionId: "ses_1", prompt: "Addition from the maintainer\nmore" },
+    }, undefined)).toEqual({ kind: "text", value: "session.send · Addition from the maintainer" })
+    expect(toolDescription("openchamber_memory", { action: "memory.save", parameters: { title: "Drafts rule" } }, undefined))
+      .toEqual({ kind: "text", value: "memory.save · Drafts rule" })
+    expect(toolDescription("openchamber_web", { action: "browser.snapshot", parameters: {} }, undefined))
+      .toEqual({ kind: "text", value: "browser.snapshot" })
+    expect(toolDescription("openchamber_notify", { title: "Review ready" }, undefined))
+      .toEqual({ kind: "text", value: "Review ready" })
+  })
+
   test("shell shows the first line of the command", () => {
     expect(toolDescription("shell", { command: "git status\ngit log" }, undefined)).toEqual({
       kind: "text",
@@ -194,6 +212,14 @@ describe("tool row description", () => {
 })
 
 describe("execute call details", () => {
+  test("recognizes blocking child progress and ignores invalid job markers", () => {
+    expect(executeHasBackgroundableWork({ shellID: "sh_1" })).toBe(true)
+    expect(executeHasBackgroundableWork({ sessionID: "ses_child", status: "running" })).toBe(true)
+    expect(executeHasBackgroundableWork({ sessionID: "ses_child", status: "completed" })).toBe(false)
+    expect(executeHasBackgroundableWork({ shellID: 1, sessionID: false, status: "running" })).toBe(false)
+    expect(executeHasBackgroundableWork({ shellID: "  ", toolCalls: [null, { tool: "runtime.shell:3", status: "running" }] })).toBe(true)
+    expect(executeHasBackgroundableWork(undefined)).toBe(false)
+  })
   test("keeps order and status, serializes the input on one line, drops nameless calls", () => {
     expect(executeToolCalls({
       toolCalls: [

@@ -5,7 +5,7 @@
  * back to the generic sprite icon.
  */
 
-export type BrandIcon = {
+type BrandIcon = {
   path: string;
 };
 
