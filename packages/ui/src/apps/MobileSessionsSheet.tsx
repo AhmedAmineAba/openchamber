@@ -2357,8 +2357,9 @@ export const MobileSessionsSheet: React.FC<MobileSessionsSheetProps> = ({ open, 
                     <MobileDisclosure open={projectExpanded}>{() => timelineActive ? (
                       <div className="pb-2">
                         {/* A space without chats has no timeline row, so its header
-                            stands in for it, with its state, until its first chat. */}
-                        {buckets.filter((bucket) => bucket.space && bucket.sessions.length === 0).map((bucket) => (
+                            stands in for it, with its state, until its first chat;
+                            not before the sessions loaded, when every space looks empty. */}
+                        {(hasLoadedGlobalSessions ? buckets : []).filter((bucket) => bucket.space && bucket.sessions.length === 0).map((bucket) => (
                           <div key={bucket.key} className="mt-1.5">{renderBucketHeader(node, bucket, false, activeWorktreePath)}</div>
                         ))}
                         {renderTimelineRows(`${node.project.id}::timeline`, timelineEntriesByProject.get(node.project.id) ?? [], false)}
