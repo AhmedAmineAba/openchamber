@@ -55,6 +55,9 @@ const createMockResponse = () => {
     getHeader(name) {
       return headers.get(name.toLowerCase());
     },
+    on() {
+      return this;
+    },
     get statusCode() {
       return statusCode;
     },
@@ -2594,5 +2597,89 @@ describe('GET /api/fs/find-by-name', () => {
     for (const bad of ['src/util.ts', '*.ts', '', '..']) {
       expect((await ask(bad)).statusCode, bad).toBe(400);
     }
+  });
+});
+
+describe('GET /api/fs/find-in-files', () => {
+  let repo;
+  beforeEach(async () => {
+    repo = await mkdtemp(path.join(tmpdir(), 'oc-find-in-files-route-'));
+    execFileSync('git', ['init', '-q'], { cwd: repo });
+    await mkdir(path.join(repo, 'src'), { recursive: true });
+    await nativeFs.writeFile(path.join(repo, 'src', 'a.ts'), 'first needle\nsecond needle\n');
+    await nativeFs.writeFile(path.join(repo, 'ignored.log'), 'needle\n');
+    await nativeFs.writeFile(path.join(repo, '.gitignore'), '*.log\n');
+  });
+  afterEach(async () => {
+    await rm(repo, { recursive: true, force: true });
+  });
+
+  const register = async (overrides = {}) => {
+    const { spawn } = await import('node:child_process');
+    const { createRipgrepResolver } = await import('./ripgrep.js');
+    const fs = await import('node:fs');
+    const { app, getRoute } = createRouteRegistry();
+    registerFsRoutes(app, {
+      os: { homedir: () => '/home/user' },
+      path,
+      fsPromises: nativeFs,
+      spawn,
+      crypto: { randomUUID: () => 'job-0' },
+      normalizeDirectoryPath: (p) => p,
+      resolveProjectDirectory: async () => ({ directory: repo }),
+      buildAugmentedPath: () => '/usr/bin',
+      resolveGitBinaryForSpawn: () => 'git',
+      resolveRipgrepBinary: createRipgrepResolver({ fs: fs.default, path }).resolveRipgrepBinary,
+      openchamberUserConfigRoot: '/home/user/.config',
+      ...overrides,
+    });
+    const route = getRoute('GET', '/api/fs/find-in-files');
+    return async (query) => {
+      const res = createMockResponse();
+      await route({ query, headers: {} }, res);
+      return res;
+    };
+  };
+
+  it('answers matching lines with the stop reason', async () => {
+    const ask = await register();
+    const res = await ask({ query: 'needle' });
+    expect(res.statusCode).toBe(200);
+    expect(res.getHeader('cache-control')).toBe('no-store');
+    expect(res.body.stopped).toBeNull();
+    expect(res.body.matches.map((match) => [match.relativePath, match.line, match.text])).toEqual([
+      ['src/a.ts', 1, 'first needle'],
+      ['src/a.ts', 2, 'second needle'],
+    ]);
+    expect(res.body.matches[0]).toMatchObject({ path: path.join(repo, 'src/a.ts'), column: 7, ranges: [[6, 12]], cutStart: false });
+
+    const limited = await ask({ query: 'needle', limit: '1' });
+    expect(limited.body.stopped).toBe('limit');
+    expect(limited.body.matches).toHaveLength(1);
+
+    const unignored = await ask({ query: 'needle', respectGitignore: 'false' });
+    expect(unignored.body.matches.map((match) => match.relativePath)).toContain('ignored.log');
+  });
+
+  it('rejects an empty query and an invalid regular expression', async () => {
+    const ask = await register();
+    expect((await ask({ query: '   ' })).statusCode).toBe(400);
+    const invalid = await ask({ query: '(', regex: 'true' });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.body).toEqual({ error: 'unclosed group', reason: 'invalid-pattern' });
+  });
+
+  it('answers 501 when no ripgrep can be found', async () => {
+    const ask = await register({ resolveRipgrepBinary: async () => null });
+    const res = await ask({ query: 'needle' });
+    expect(res.statusCode).toBe(501);
+    expect(res.body.reason).toBe('search-unavailable');
+  });
+
+  it('requires an active workspace', async () => {
+    const ask = await register({ resolveProjectDirectory: async () => ({ directory: null, error: 'No workspace' }) });
+    const res = await ask({ query: 'needle' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('No workspace');
   });
 });

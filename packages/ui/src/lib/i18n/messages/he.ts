@@ -8,6 +8,7 @@ import { routingI18n } from './routing.i18n';
 import { pluginPanelI18n } from './plugin-panel.i18n';
 import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
+import { fileContentSearchI18n } from './file-content-search.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
@@ -3756,6 +3757,7 @@ export const dict = {
   ...pluginPanelI18n.he,
   ...surfacePanelI18n.he,
   ...fileArtifactsI18n.he,
+  ...fileContentSearchI18n.he,
   ...usageStatsI18n.he,
   ...webSearchI18n.he,
   ...isolatedSpacesI18n.he,

@@ -2,8 +2,15 @@ import { createRealpathCache } from '../path-realpath-cache.js';
 import { redactGitText } from '../git/redaction.js';
 import { resolveByteRange } from './byte-range.js';
 import { createWorkspaceFileNameIndex } from './workspace-file-names.js';
+import {
+  CONTENT_SEARCH_DEFAULT_LIMIT,
+  CONTENT_SEARCH_MAX_LIMIT,
+  CONTENT_SEARCH_MAX_QUERY_LENGTH,
+  createContentSearchRuntime,
+} from './content-search.js';
 import nodeFsPromises from 'node:fs/promises';
 import nodePath from 'node:path';
+import { z } from 'zod';
 
 const EXEC_JOB_TTL_MS = 30 * 60 * 1000;
 const OUTSIDE_FILE_GRANT_TTL_MS = 10 * 60 * 1000;
@@ -607,6 +614,8 @@ export const registerFsRoutes = (app, dependencies) => {
     resolveProjectDirectory,
     buildAugmentedPath,
     resolveGitBinaryForSpawn,
+    // Content search needs ripgrep; without a resolver the route answers 501.
+    resolveRipgrepBinary = async () => null,
     openchamberUserConfigRoot,
     managedChatsRoot,
     cloneRepository,
@@ -1011,6 +1020,56 @@ export const registerFsRoutes = (app, dependencies) => {
       return res.status(400).json({ error: project.error || 'Active workspace is required' });
     }
     return res.json({ paths: await workspaceFileNames.find(project.directory, name) });
+  });
+
+  // Find in files: lines of workspace files containing a text or a regex,
+  // searched by ripgrep (content-search.js). Hitting the limit is a normal
+  // answer with `stopped: 'limit'`; a failed search is never an empty one.
+  const contentSearch = createContentSearchRuntime({ spawn, path, resolveRipgrepBinary });
+  const flagQuery = z.enum(['true', 'false']).optional();
+  const findInFilesQuerySchema = z.object({
+    query: z.string().max(CONTENT_SEARCH_MAX_QUERY_LENGTH).refine((value) => value.trim().length > 0),
+    regex: flagQuery,
+    includeHidden: flagQuery,
+    respectGitignore: flagQuery,
+    limit: z.coerce.number().int().min(1).max(CONTENT_SEARCH_MAX_LIMIT).optional(),
+  });
+  app.get('/api/fs/find-in-files', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const parsedQuery = findInFilesQuerySchema.safeParse(req.query);
+    if (!parsedQuery.success) {
+      return res.status(400).json({ error: 'A search query is required' });
+    }
+    const { query, regex, includeHidden, respectGitignore, limit } = parsedQuery.data;
+    const project = await resolveProjectDirectory(req);
+    if (!project.directory) {
+      return res.status(400).json({ error: project.error || 'Active workspace is required' });
+    }
+
+    // A client that moved on (a new keystroke, a closed panel) ends the
+    // ripgrep process instead of letting it finish for nobody.
+    const abort = new AbortController();
+    res.on('close', () => abort.abort());
+    const result = await contentSearch.searchFileContents(project.directory, {
+      query,
+      regex: regex === 'true',
+      limit: limit ?? CONTENT_SEARCH_DEFAULT_LIMIT,
+      includeHidden: includeHidden === 'true',
+      respectGitignore: respectGitignore !== 'false',
+      signal: abort.signal,
+    });
+    switch (result.status) {
+      case 'ok':
+        return res.json({ matches: result.matches, stopped: result.stopped });
+      case 'unavailable':
+        return res.status(501).json({ error: 'ripgrep is not available on this server', reason: 'search-unavailable' });
+      case 'invalid-pattern':
+        return res.status(400).json({ error: result.message, reason: 'invalid-pattern' });
+      case 'aborted':
+        return undefined;
+      default:
+        return res.status(500).json({ error: result.message, reason: 'search-failed' });
+    }
   });
 
   app.post('/api/fs/directory-stats', async (req, res) => {
