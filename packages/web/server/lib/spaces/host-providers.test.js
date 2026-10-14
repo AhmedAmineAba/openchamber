@@ -38,6 +38,14 @@ describe('the host\'s custom providers', () => {
     await expect(providers.read('magpie', '/p')).rejects.toThrow('OpenCode port is not available');
   });
 
+  it('says a provider without an http(s) address is unsupported, and leaves out an id a grant cannot name', async () => {
+    const providers = createHostProviders({
+      readLayers: layers({ user: { providers: { 'no-address': { ...GATEWAY, settings: {} }, 'ftp-address': { ...GATEWAY, settings: { baseURL: 'ftp://files.example/' } }, 'bad id!': GATEWAY, magpie: GATEWAY } } }),
+      hostEnvironment: {},
+    });
+    expect((await providers.list('/p')).map((provider) => [provider.id, provider.supported])).toEqual([['no-address', false], ['ftp-address', false], ['magpie', true]]);
+  });
+
   it('reads one provider with its key: the stored credential first, then a named variable, then a literal in the settings', async () => {
     const stored = createHostProviders({ readLayers: layers({ user: { providers: { magpie: GATEWAY } } }), readStoredKey: async () => 'sk-stored', hostEnvironment: { MAGPIE_KEY: 'sk-env' } });
     expect(await stored.read('magpie', '/p')).toMatchObject({ id: 'magpie', key: 'sk-stored', headers: { 'x-team': 'platform' }, models: { 'gpt-5.5': { modelID: 'gpt-5.5' } } });

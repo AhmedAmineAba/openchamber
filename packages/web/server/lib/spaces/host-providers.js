@@ -68,13 +68,17 @@ const layersOf = (readLayers, directory) => {
   return [customConfig, projectConfig, userOverrideConfig, userConfig];
 };
 
-/** Every provider id the layers define under either spelling, once. */
+// A provider id a grant can name, the record's own rule; an id outside it, hand-written in the
+// configuration, is left out of the list rather than offered and refused.
+const GRANT_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
+
+/** Every provider id the layers define under either spelling, once, that a grant can name. */
 const definedIds = (layers) => {
   const ids = new Set();
   for (const layer of layers) {
     for (const key of ['providers', 'provider']) {
       const section = layer?.[key];
-      if (isRecord(section)) for (const id of Object.keys(section)) ids.add(id);
+      if (isRecord(section)) for (const id of Object.keys(section)) if (GRANT_ID_PATTERN.test(id)) ids.add(id);
     }
   }
   return ids;
@@ -151,7 +155,8 @@ export function createHostProviders({ readLayers = readConfigLayers, readStoredK
         models: Object.keys(models),
         hasKey: (await resolveKey(providerId, entity, { storedKey })) !== null,
         hasHeaders: Object.keys(headers).length > 0,
-        supported: headerOfPackage(entity.package) !== null,
+        // What a grant checks too: an SDK the window can carry a key for, and an http(s) address.
+        supported: headerOfPackage(entity.package) !== null && rest.baseURL !== null && httpUrlOf(rest.baseURL) !== null,
       });
     }
     return providers;
