@@ -60,6 +60,17 @@ export const spaceConditionOf = (
 };
 
 /**
+ * Whether the line under a space's group says what is wrong with it: being made, failed,
+ * stopped, out of reach, not answering, or an action under way. The group's stale mark shows
+ * only when it does not, so a stopped space gets no second warning that reads like a fault.
+ */
+export const spaceLineSaysState = (
+  entry: SpaceEntry | undefined,
+  mark: SpaceMark | undefined,
+  action: SpaceActionState | undefined,
+): boolean => entry?.state === 'preparing' || entry?.state === 'failed' || spaceConditionOf(entry, mark, action) !== null;
+
+/**
  * The actions the group's menu offers for a space, in order. A restart needs a running space
  * with a gatekeeper that a start can bring back; one whose gatekeeper is gone can only be stopped
  * or deleted. Nothing for a space that is being made or whose making failed, and nothing for one
