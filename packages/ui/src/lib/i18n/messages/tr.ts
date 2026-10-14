@@ -9,6 +9,7 @@ import { pluginPanelI18n } from './plugin-panel.i18n';
 import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
+import { htmlRenderI18n } from './html-render.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
@@ -76,6 +77,7 @@ export const dict = {
   ...surfacePanelI18n.tr,
   ...fileArtifactsI18n.tr,
   ...fileContentSearchI18n.tr,
+  ...htmlRenderI18n.tr,
   ...usageStatsI18n.tr,
   ...webSearchI18n.tr,
   ...isolatedSpacesI18n.tr,
@@ -151,6 +153,7 @@ export const dict = {
   'mobile.connect.cancelPassword': 'Başka bir sunucu kullan',
   'mobile.connect.connecting': 'Bağlanıyor...',
   'mobile.connect.notice.unreachable': '{label} sunucusuna ulaşılamadı. Sunucunun çalıştığından emin olun.',
+  'mobile.connect.notice.relayLimit': "Relay, {label} bağlantısını reddetti: çok fazla cihaz veya yeniden bağlanma var. Başka bir cihazda OpenChamber'ı kapatın ya da bir dakika bekleyin, ardından yeniden denemek için {label} öğesine dokunun.",
   'mobile.connect.notice.authExpired': '{label} erişiminin süresi doldu veya erişim iptal edildi. Yeniden oturum açın.',
   'mobile.connect.recovery.description': 'Kaydedilen sunucuya bağlanılamadı. Çalıştığından emin olun veya başka bir instance seçin.',
   'mobile.connect.scanQr': 'QR kodu tara',
@@ -168,6 +171,7 @@ export const dict = {
   'mobile.connect.splash.connectingTo': 'Cihaza bağlanılıyor:',
   'mobile.connect.error.invalidUrl': 'Bu sunucu URL\'si geçerli değil.',
   'mobile.connect.error.unreachable': 'Bu OpenChamber sunucusuna ulaşılamadı.',
+  'mobile.connect.error.relayLimit': "Relay bağlantıyı reddetti: çok fazla cihaz veya yeniden bağlanma var. Başka bir cihazda OpenChamber'ı kapatın ya da bir dakika bekleyip yeniden deneyin.",
   'mobile.connect.error.authRequired': 'Bu sunucu bir şifre veya client token gerektiriyor.',
   'mobile.connect.error.passwordFailed': 'Sunucunun kilidi açılamadı. Şifreyi kontrol edin.',
   'mobile.instances.addTitle': 'Instance ekle',
@@ -788,7 +792,7 @@ export const dict = {
   'sessions.sidebar.group.worktreeRemoving': 'Worktree kaldırılıyor…',
   'sessions.sidebar.project.folderMissing': 'Proje klasörü bulunamıyor veya kullanılamıyor',
   'sessions.sidebar.group.space': 'Yalıtılmış alan',
-  'sessions.sidebar.group.spaceStale': 'Alan yanıt vermiyor. Oturumlar güncel olmayabilir.',
+  'sessions.sidebar.group.spaceStale': 'Bu alanın tüm oturumları gösterilmiyor.',
   'sessions.sidebar.grouping.spaceUnnamed': 'Yalıtılmış alan',
   'sessions.sidebar.sessionDialogs.worktree.label': 'Worktree',
   'sessions.sidebar.sessionDialogs.worktree.pathUnavailable': 'Worktree yolu kullanılamıyor.',
@@ -2134,6 +2138,7 @@ export const dict = {
   'session.newWorktree.toast.worktreeCreatedDescription': '{target} - arka planda hazırlanıyor',
   'session.newWorktree.toast.fetchSourceFailed': 'Uzak depodan fetch edilemedi — yerel durumdan oluşturuldu',
   'session.newWorktree.toast.fetchSourceAccess': 'Fetch yapılamadı: bu deponun erişimi Repository\'yi yapılandır bölümünde ilgi bekliyor. Yerel durumdan oluşturuldu.',
+  'session.newWorktree.toast.branchBackup': '{branch} artık uzak dalla aynı. Önceki commit\'leri {backup} dalında saklandı.',
   'session.githubIntegration.tabs.pullRequests': 'Pull Request\'ler',
   'session.githubIntegration.validation.branchAlreadyCheckedOut': 'Branch zaten bir worktree\'de checkout edilmiş',
   'session.githubIntegration.validation.failed': 'Doğrulama başarısız',
@@ -2831,6 +2836,7 @@ export const dict = {
   'desktopHostSwitcher.status.incompatible': 'Uyumsuz',
   'desktopHostSwitcher.status.wrongService': 'Yanlış servis',
   'desktopHostSwitcher.status.unreachable': 'Erişilemiyor',
+  'desktopHostSwitcher.status.relayLimit': "Relay sınırına ulaşıldı",
   'desktopHostSwitcher.status.unknown': 'Bilinmiyor',
   'desktopHostSwitcher.status.ping': ' · {ms}ms ping',
   'desktopHostSwitcher.statusAria': 'Instance durumu',
@@ -2894,6 +2900,10 @@ export const dict = {
   'desktopHostSwitcher.toast.sshConnected': 'SSH instance\'ı "{host}" bağlandı',
   'desktopHostSwitcher.toast.sshFailedToConnect': 'SSH instance\'ı "{host}" bağlanamadı',
   'desktopHostSwitcher.toast.instanceUnreachable': '"{host}" instance\'ına erişilemiyor',
+  'desktopHostSwitcher.toast.relayLimit': "Relay, \"{host}\" bağlantısını reddetti: çok fazla cihaz veya yeniden bağlanma var. Başka bir cihazda OpenChamber'ı kapatın ya da bir dakika bekleyip yeniden deneyin.",
+  'relayConnection.limitReached.title': "Relay bağlantıyı reddetti",
+  'relayConnection.limitReached.description': "Bu instance için çok fazla cihaz veya yeniden bağlanma var. Başka bir cihazda OpenChamber'ı kapatın ya da bir dakika bekleyip yeniden deneyin.",
+  'relayConnection.limitReached.retry': "Yeniden dene",
   'miniChat.header.newSession': 'Yeni session',
   'miniChat.header.session': 'Session',
   'miniChat.header.defaultAgent': 'Varsayılan agent',
