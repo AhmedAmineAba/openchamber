@@ -89,11 +89,20 @@ Use `IconName` for icon values stored in arrays, objects, state, or config. `Ico
 
 Animate only `transform` and `opacity`. Use `transform: rotate(...)`, not the individual `rotate` property. Non-composited properties recalculate style continuously; geometry also triggers layout, and wrappers, `will-change`, `contain`, or stepped timing do not remove that cost. Animate only while conveying live information.
 
+Motion that can stay on screen for minutes follows the state it shows:
+
+- **Steady state stands still**: connected, failed, degraded, a project action running for hours, a session row that is busy. Show a static icon in the state's color.
+- **A wait blinks**: connecting, agent working, setup or review running, a pairing waiting for the phone. Apply `useWaitingBlink(active)` (`hooks/useDurationTicker.ts`); every indicator toggles bright and dim on one shared 1 s tick. Live elapsed counters use the same tick (`useDurationTickerNow(active, 1000)`).
+- **A loading spinner** that lasts seconds keeps `animate-spin`.
+
+The cost behind these rules is in `performance-engineering`, "Motion That Stays On Screen".
+
 For any other technique, load `performance-engineering` and `scripts/perf/DOCUMENTATION.md`, measure it with `bun run profile:animation`, and add a fixture variant when needed. This skill owns animation styling; `performance-engineering` owns performance evidence.
 
 ## Completion Criteria
 
 - Animations are limited to `transform` and `opacity`, or their cost was measured and accepted.
+- Nothing that can stay on screen for minutes runs an infinite CSS animation: steady states stand still, waits use `useWaitingBlink`.
 - No hardcoded/palette colors were introduced.
 - Buttons use shared variants and sizes.
 - Menus and pickers satisfy the keyboard navigation contract without caller-specific key handling for standard shared components.
