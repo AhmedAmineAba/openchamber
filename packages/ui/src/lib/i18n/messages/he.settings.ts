@@ -262,7 +262,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': 'פג תוקף',
   'settings.openchamber.tunnel.state.revoked': 'בוטל',
   'settings.openchamber.tunnel.state.inactive': 'לא פעיל',
-  'settings.openchamber.tunnel.state.noExpiry': 'ללא תפוגה',
   'settings.openchamber.tunnel.state.never': 'אף פעם',
   'settings.openchamber.tunnel.state.tunnelReady': 'המנהרה מוכנה',
   'settings.openchamber.tunnel.session.redeemedAt': 'מומש {time}',

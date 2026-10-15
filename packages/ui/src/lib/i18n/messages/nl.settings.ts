@@ -263,7 +263,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': 'Verlopen',
   'settings.openchamber.tunnel.state.revoked': 'Ingetrokken',
   'settings.openchamber.tunnel.state.inactive': 'Inactief',
-  'settings.openchamber.tunnel.state.noExpiry': 'Geen verloop',
   'settings.openchamber.tunnel.state.never': 'Nooit',
   'settings.openchamber.tunnel.state.tunnelReady': 'Tunnel gereed',
   'settings.openchamber.tunnel.session.redeemedAt': 'Ingelost {time}',

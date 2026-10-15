@@ -262,7 +262,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': 'منتهي الصلاحية',
   'settings.openchamber.tunnel.state.revoked': 'ملغى',
   'settings.openchamber.tunnel.state.inactive': 'غير نشط',
-  'settings.openchamber.tunnel.state.noExpiry': 'بلا انتهاء صلاحية',
   'settings.openchamber.tunnel.state.never': 'أبدًا',
   'settings.openchamber.tunnel.state.tunnelReady': 'النفق جاهز',
   'settings.openchamber.tunnel.session.redeemedAt': 'استُخدم {time}',

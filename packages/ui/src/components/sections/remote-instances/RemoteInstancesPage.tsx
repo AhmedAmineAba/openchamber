@@ -74,6 +74,7 @@ import { useEnterprisePolicyStore } from '@/stores/useEnterprisePolicyStore';
 import { loadDesktopSettings } from '@/lib/persistence';
 import { getRuntimeApiBaseUrl, switchRuntimeEndpoint } from '@/lib/runtime-switch';
 import { runtimeKeyForDesktopHost } from '@/lib/desktopCurrentHost';
+import { useDurationTickerNow, useWaitingBlink } from '@/hooks/useDurationTicker';
 import { useSshConfirmation } from './useSshConfirmation';
 
 const randomPort = (): number => {
@@ -211,15 +212,25 @@ const remedyHintKey = (remedy: ErrorRemedy): I18nKey | null => {
 
 const phaseDotClass = (phase?: string): string => {
   if (phase === 'ready') {
-    return 'bg-[var(--status-success)] animate-pulse';
+    return 'bg-[var(--status-success)]';
   }
   if (phase === 'error') {
-    return 'bg-[var(--status-error)] animate-pulse';
+    return 'bg-[var(--status-error)]';
   }
   if (phase === 'degraded' || isConnectingPhase(phase)) {
-    return 'bg-[var(--status-warning)] animate-pulse';
+    return 'bg-[var(--status-warning)]';
   }
   return 'bg-muted-foreground/40';
+};
+
+/**
+ * A status dot. A steady state (connected, degraded, failed) stands still; a
+ * wait (connecting, a pairing waiting for the phone, a probe in flight)
+ * blinks on the shared 1 s tick.
+ */
+const StatusDot: React.FC<{ className: string; waiting?: boolean }> = ({ className, waiting = false }) => {
+  const blink = useWaitingBlink(waiting);
+  return <span className={cn('rounded-full', className, blink)} />;
 };
 
 const buildForwardLabel = (forward: DesktopSshPortForward): string => {
@@ -468,7 +479,6 @@ export const RemoteInstancesPage: React.FC = () => {
   const [expandedForwards, setExpandedForwards] = React.useState<Record<string, boolean>>({});
   const [isPrimaryActionPending, setIsPrimaryActionPending] = React.useState(false);
   const [isRetryPending, setIsRetryPending] = React.useState(false);
-  const [clockMs, setClockMs] = React.useState(() => Date.now());
   const [directHosts, setDirectHosts] = React.useState<DesktopHost[]>([]);
   // Live reachability per saved host (undefined = probe in flight), mirroring
   // the host switcher's status line so this list is not just dead text.
@@ -1115,46 +1125,10 @@ export const RemoteInstancesPage: React.FC = () => {
     };
   }, [refreshStatuses, selectedId]);
 
-  React.useEffect(() => {
-    // Use requestAnimationFrame for smoother clock updates without setInterval overhead
-    let rafId: number | null = null;
-    let lastTime = Date.now();
-    
-    const tick = () => {
-      const now = Date.now();
-      // Update only once per second
-      if (now - lastTime >= 1_000) {
-        setClockMs(now);
-        lastTime = now;
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-    
-    // Only run when visible
-    if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-      rafId = requestAnimationFrame(tick);
-    }
-    
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible' && rafId === null) {
-        rafId = requestAnimationFrame(tick);
-      } else if (document.visibilityState !== 'visible' && rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-    };
-    
-    document.addEventListener('visibilitychange', onVisibility);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-    };
-  }, []);
 
   const status = selectedId ? statusesById[selectedId] : null;
+  // Ages the status line once a second, on the shared 1 s tick.
+  const clockMs = useDurationTickerNow(Boolean(status), 1_000);
   const statusPhase = status?.phase;
   const isReady = statusPhase === 'ready';
   const isReconnecting = statusPhase === 'degraded';
@@ -1163,6 +1137,7 @@ export const RemoteInstancesPage: React.FC = () => {
   const canDisconnect = isReady || isBusy;
   const statusAgeMs = status ? Math.max(0, clockMs - status.updatedAtMs) : 0;
   const reconnectAppearsStuck = isReconnecting && statusAgeMs > 12_000;
+  const retryIconBlink = useWaitingBlink(isConnecting || (isReconnecting && !reconnectAppearsStuck));
   const currentState = instanceState(statusPhase);
   const currentRemedy = currentState === 'error' ? errorRemedy(status?.detail) : null;
   const currentRemedyHintKey = remedyHintKey(currentRemedy);
@@ -1613,7 +1588,7 @@ export const RemoteInstancesPage: React.FC = () => {
                       <div key={`pending-${pending.id}`} className="flex items-center justify-between gap-3 py-1.5">
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--status-warning)] animate-pulse" />
+                            <StatusDot className="h-2 w-2 shrink-0 bg-[var(--status-warning)]" waiting />
                             <p className="typography-ui-label text-foreground truncate">{pending.label || t('settings.remoteInstances.clientAuth.field.labelPlaceholder')}</p>
                             {pending.usesRelay ? (
                               <span className="typography-micro text-muted-foreground bg-muted px-1 rounded shrink-0 leading-none pb-px border border-border/50">{t('settings.remoteInstances.clientAuth.state.viaRelay')}</span>
@@ -1734,10 +1709,13 @@ export const RemoteInstancesPage: React.FC = () => {
                   <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 space-y-0.5">
                         <div className="flex min-w-0 items-center gap-2">
-                          <span className={cn(
-                            'h-2 w-2 shrink-0 rounded-full',
-                            !probe ? 'bg-muted-foreground/30 animate-pulse' : isOnline ? 'bg-[var(--status-success)]' : 'bg-[var(--status-error)]',
-                          )} />
+                          <StatusDot
+                            className={cn(
+                              'h-2 w-2 shrink-0',
+                              !probe ? 'bg-muted-foreground/30' : isOnline ? 'bg-[var(--status-success)]' : 'bg-[var(--status-error)]',
+                            )}
+                            waiting={!probe}
+                          />
                           <p className="typography-ui-label text-foreground truncate">{redactSensitiveUrl(host.label)}</p>
                           {directDefaultHostId === host.id ? <span className="typography-micro text-muted-foreground shrink-0">{t('desktopHostSwitcher.header.default')}</span> : null}
                           <span className={cn('typography-micro shrink-0', isOnline ? 'text-[var(--status-success)]' : 'text-muted-foreground')}>
@@ -2013,7 +1991,7 @@ export const RemoteInstancesPage: React.FC = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 space-y-0.5">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${phaseDotClass(phase)}`} />
+                        <StatusDot className={cn('h-2 w-2', phaseDotClass(phase))} waiting={isConnectingPhase(phase)} />
                         <p className="typography-ui-label text-foreground truncate">{title}</p>
                       </div>
                       <p className="typography-micro text-muted-foreground truncate">
@@ -2186,7 +2164,7 @@ export const RemoteInstancesPage: React.FC = () => {
       <div className="mb-6 px-1">
         <h1 className={`${SETTINGS_PAGE_TITLE_CLASS} truncate`}>{instanceTitle}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 typography-meta text-muted-foreground">
-          <span className={`h-2.5 w-2.5 rounded-full ${phaseDotClass(statusPhase)}`} />
+          <StatusDot className={cn('h-2.5 w-2.5', phaseDotClass(statusPhase))} waiting={isConnectingPhase(statusPhase)} />
           <span className="text-foreground">{t(instanceStateLabelKey(currentState))}</span>
           {currentState === 'connecting' ? <span>{t(phaseLabelKey(statusPhase))}</span> : null}
           {status?.localUrl ? <span className="font-mono text-foreground/80">{status.localUrl}</span> : null}
@@ -2220,7 +2198,7 @@ export const RemoteInstancesPage: React.FC = () => {
               onClick={handleRetryAction}
               disabled={!canRetry}
             >
-              <Icon name="refresh" className={`h-3.5 w-3.5 ${isConnecting || (isReconnecting && !reconnectAppearsStuck) ? 'animate-spin' : ''}`} />
+              <Icon name="refresh" className={cn('h-3.5 w-3.5', retryIconBlink)} />
               {retryButtonLabel}
             </Button>
             <Button

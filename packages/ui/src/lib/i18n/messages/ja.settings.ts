@@ -263,7 +263,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': '期限切れ',
   'settings.openchamber.tunnel.state.revoked': '無効化済み',
   'settings.openchamber.tunnel.state.inactive': '非アクティブ',
-  'settings.openchamber.tunnel.state.noExpiry': '期限なし',
   'settings.openchamber.tunnel.state.never': 'なし',
   'settings.openchamber.tunnel.state.tunnelReady': 'Tunnel 準備完了',
   'settings.openchamber.tunnel.session.redeemedAt': '{time} に使用',

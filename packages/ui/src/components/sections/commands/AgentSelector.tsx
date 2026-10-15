@@ -151,7 +151,7 @@ export const AgentSelector: React.FC<AgentSelectorProps> = ({
                     <div className="flex items-center gap-2">
                         {!isReady && !agentName ? (
                             <>
-                                <Icon name="loader-4" className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                                <Icon name={isUnavailable ? 'error-warning' : 'loader-4'} className={cn('h-3.5 w-3.5 text-muted-foreground', !isUnavailable && 'animate-spin')} />
                                 <span className="typography-meta text-muted-foreground">{isUnavailable ? t('common.unavailable') : t('common.loading')}</span>
                             </>
                         ) : (

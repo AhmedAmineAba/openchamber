@@ -174,7 +174,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     <div className="flex min-w-0 items-center gap-2">
                         {!displayReady ? (
                             <>
-                                <Icon name="loader-4" className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                                <Icon name={isUnavailable ? 'error-warning' : 'loader-4'} className={cn('h-3.5 w-3.5 text-muted-foreground', !isUnavailable && 'animate-spin')} />
                                 <span className="typography-meta text-muted-foreground">{isUnavailable ? t('common.unavailable') : t('common.loading')}</span>
                             </>
                         ) : isAutoSelected ? (
@@ -215,7 +215,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 >
                     {!displayReady ? (
                         <>
-                            <Icon name="loader-4" className="h-3.5 w-3.5 animate-spin text-muted-foreground flex-shrink-0" />
+                            <Icon name={isUnavailable ? 'error-warning' : 'loader-4'} className={cn('h-3.5 w-3.5 text-muted-foreground flex-shrink-0', !isUnavailable && 'animate-spin')} />
                             {!compact && (
                                 <span className="typography-ui-label font-normal whitespace-nowrap text-muted-foreground">
                                     {isUnavailable ? t('common.unavailable') : t('common.loading')}

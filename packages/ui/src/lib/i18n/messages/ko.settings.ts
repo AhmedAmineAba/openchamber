@@ -230,7 +230,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': '만료됨',
   'settings.openchamber.tunnel.state.revoked': '폐기됨',
   'settings.openchamber.tunnel.state.inactive': '비활성',
-  'settings.openchamber.tunnel.state.noExpiry': '만료 없음',
   'settings.openchamber.tunnel.state.never': '없음',
   'settings.openchamber.tunnel.state.tunnelReady': '터널 준비 완료',
   'settings.openchamber.tunnel.session.redeemedAt': '{time}에 사용됨',

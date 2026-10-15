@@ -230,7 +230,6 @@ export const settingsDict = {
   "settings.openchamber.tunnel.state.expired": "Expirado",
   "settings.openchamber.tunnel.state.revoked": "Revogado",
   "settings.openchamber.tunnel.state.inactive": "Inativo",
-  "settings.openchamber.tunnel.state.noExpiry": "Sem expiração",
   "settings.openchamber.tunnel.state.never": "Nunca",
   "settings.openchamber.tunnel.state.tunnelReady": "Túnel pronto",
   "settings.openchamber.tunnel.session.redeemedAt": "Resgatado {time}",

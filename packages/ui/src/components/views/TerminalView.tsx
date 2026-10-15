@@ -170,8 +170,12 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ visible, directory, 
     const terminalTabItems = React.useMemo(() => {
         return (directoryTerminalState?.tabs ?? []).map((tab) => ({
             icon: (() => {
-                const showProjectActionSpinner = tab.purpose.type === 'project-action'
+                const projectActionActive = tab.purpose.type === 'project-action'
                     && ACTIVE_PROJECT_ACTION_LIFECYCLES.has(tab.lifecycle);
+                // A running action (a dev server, for hours) is a steady
+                // state: its own icon in the running color, standing still.
+                // Only the seconds of starting and stopping spin.
+                const showProjectActionSpinner = projectActionActive && tab.lifecycle !== 'running';
                 const tabIconName = showProjectActionSpinner
                     ? 'loader-4'
                     : resolveTabIconName(tab.iconKey);
@@ -180,7 +184,8 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ visible, directory, 
                         name={tabIconName}
                         className={cn(
                             'h-4 w-4',
-                            showProjectActionSpinner && 'animate-spin text-muted-foreground motion-reduce:animate-none'
+                            showProjectActionSpinner && 'animate-spin text-muted-foreground motion-reduce:animate-none',
+                            projectActionActive && !showProjectActionSpinner && 'text-[var(--status-warning)]'
                         )}
                     />
                 );

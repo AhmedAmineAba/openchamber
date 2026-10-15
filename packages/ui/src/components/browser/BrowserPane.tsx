@@ -991,7 +991,7 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tab
           />
         ) : null}
         {initialSrc !== null && !startUrl && !navigation.url && !isLoading ? (
-          <BrowserEmptyState onOpen={loadUrlFromUser} directory={directory} />
+          <BrowserEmptyState onOpen={loadUrlFromUser} directory={directory} visible={visible} />
         ) : null}
         {isWaitingForServer ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background p-6 text-center">
@@ -1039,7 +1039,7 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tab
  * opaque to us here: no navigation events, no annotation, no console. The
  * toolbar reflects that instead of offering controls that would silently fail.
  */
-const IframeBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tabID }) => {
+const IframeBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tabID, visible }) => {
   const { t } = useI18n();
   const setContextPanelTabTargetPath = useUIStore((state) => state.setContextPanelTabTargetPath);
   const normalized = normalizeBrowserUrl(initialUrl);
@@ -1145,7 +1145,7 @@ const IframeBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tabI
             sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
           />
         ) : (
-          <BrowserEmptyState onOpen={navigate} directory={directory} />
+          <BrowserEmptyState onOpen={navigate} directory={directory} visible={visible} />
         )}
       </div>
     </div>

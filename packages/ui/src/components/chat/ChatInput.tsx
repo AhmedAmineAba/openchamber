@@ -3893,7 +3893,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
     const worktreeSetupDirectory = currentSessionDirectoryForSync ?? currentDirectory ?? null;
     const worktreeSetupPending = useWorktreeBootstrapPending(isBtwActive ? null : worktreeSetupDirectory);
     const worktreeSetupRow = worktreeSetupPending
-        ? <ComposerStatusStrip icon="loader-4" spin text={t('chat.worktreeSetup.running')} />
+        ? <ComposerStatusStrip icon="loader-4" blink text={t('chat.worktreeSetup.running')} />
         : null;
     // A message sent while its space is still being made waits for it; the
     // composer is empty then, so this row is the only sign it was not lost.

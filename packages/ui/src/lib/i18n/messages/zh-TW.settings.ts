@@ -227,7 +227,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': '已過期',
   'settings.openchamber.tunnel.state.revoked': '已撤銷',
   'settings.openchamber.tunnel.state.inactive': '非使用中',
-  'settings.openchamber.tunnel.state.noExpiry': '無到期時間',
   'settings.openchamber.tunnel.state.never': '永不過期',
   'settings.openchamber.tunnel.state.tunnelReady': 'Tunnel 已就緒',
   'settings.openchamber.tunnel.session.redeemedAt': '已兌換 {time}',

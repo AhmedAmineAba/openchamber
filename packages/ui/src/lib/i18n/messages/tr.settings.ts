@@ -242,7 +242,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.expired': 'Süresi doldu',
   'settings.openchamber.tunnel.state.revoked': 'İptal edildi',
   'settings.openchamber.tunnel.state.inactive': 'Etkin değil',
-  'settings.openchamber.tunnel.state.noExpiry': 'Sona erme yok',
   'settings.openchamber.tunnel.state.never': 'Asla',
   'settings.openchamber.tunnel.state.tunnelReady': 'Tunnel hazır',
   'settings.openchamber.tunnel.session.redeemedAt': 'Kullanıldı: {time}',

@@ -1133,7 +1133,6 @@ export const settingsDict = {
   'settings.openchamber.tunnel.state.inactive': 'Nieaktywny',
   'settings.openchamber.tunnel.state.loading': 'Ładowanie',
   'settings.openchamber.tunnel.state.never': 'Nigdy',
-  'settings.openchamber.tunnel.state.noExpiry': 'Bez wygaśnięcia',
   'settings.openchamber.tunnel.state.revoked': 'Unieważniony',
   'settings.openchamber.tunnel.state.tunnelReady': 'Tunel gotowy',
   'settings.openchamber.tunnel.title': 'Tunel zewnętrzny',

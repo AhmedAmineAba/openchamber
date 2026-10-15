@@ -270,7 +270,7 @@ describe('TerminalView project action tab indicator', () => {
     expect(useTerminalStore.getState().getDirectoryState('/repo')!.tabs).toHaveLength(2);
   });
 
-  test('shows a spinner only for active project-action tabs and keeps terminal or action icons elsewhere', async () => {
+  test('shows a running project action as its own still icon and spins only while it starts or stops', async () => {
     await act(async () => {
       root.render(React.createElement(TerminalView, { visible: false }));
     });
@@ -278,16 +278,25 @@ describe('TerminalView project action tab indicator', () => {
     const tabs = Array.from(host.querySelectorAll('[data-tab-id]'));
     expect(tabs).toHaveLength(3);
 
-    const interactiveTab = tabs.find((tab) => tab.querySelector('[data-tab-label]')?.textContent === 'Interactive');
-    const runningActionTab = tabs.find((tab) => tab.querySelector('[data-tab-label]')?.textContent === 'Build');
-    const exitedActionTab = tabs.find((tab) => tab.querySelector('[data-tab-label]')?.textContent === 'Deploy');
+    const tabIcon = (label: string) => tabs
+      .find((tab) => tab.querySelector('[data-tab-label]')?.textContent === label)
+      ?.querySelector('[data-icon]');
 
-    expect(interactiveTab?.querySelector('[data-icon]')?.getAttribute('data-icon')).toBe('terminal');
-    expect(runningActionTab?.querySelector('[data-icon]')?.getAttribute('data-icon')).toBe('loader-4');
-    expect(runningActionTab?.querySelector('[data-icon]')?.className).toContain('animate-spin');
-    expect(runningActionTab?.querySelector('[data-icon]')?.className).toContain('motion-reduce:animate-none');
-    expect(runningActionTab?.querySelector('[data-icon]')?.className).toContain('text-muted-foreground');
-    expect(exitedActionTab?.querySelector('[data-icon]')?.getAttribute('data-icon')).toBe('play');
+    expect(tabIcon('Interactive')?.getAttribute('data-icon')).toBe('terminal');
+    expect(tabIcon('Build')?.getAttribute('data-icon')).toBe('hammer');
+    expect(tabIcon('Build')?.className).toContain('text-[var(--status-warning)]');
+    expect(tabIcon('Build')?.className).not.toContain('animate-spin');
+    expect(tabIcon('Deploy')?.getAttribute('data-icon')).toBe('play');
+    expect(host.querySelectorAll('.animate-spin').length).toBe(0);
+
+    const buildTabId = useTerminalStore.getState().getDirectoryState('/repo')!.tabs.find((tab) => tab.label === 'Build')!.id;
+    await act(async () => {
+      useTerminalStore.getState().setTabLifecycle('/repo', buildTabId, 'stopping');
+    });
+
+    const stoppingIcon = host.querySelector('[data-icon="loader-4"]');
+    expect(stoppingIcon?.className).toContain('animate-spin');
+    expect(stoppingIcon?.className).toContain('motion-reduce:animate-none');
     expect(host.querySelectorAll('[data-icon="loader-4"]').length).toBe(1);
   });
 

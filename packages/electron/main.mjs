@@ -5967,9 +5967,8 @@ ipcMain.handle('openchamber:file:grant-existing', async (event, filePath) => {
 // Tray clicks flow back through dispatchTrayAction → renderer (focus/respond) or
 // native handlers (show / hide / toggle / quit).
 
-// Icon assets: a calm outline (idle), a statically filled cube (a finished
-// session left unread), and an eased sequence the busy state breathes through.
-const TRAY_BREATH_FRAME_COUNT = 16;
+// Icon assets: a calm outline (idle) and a statically filled cube (a finished
+// session left unread). The busy state alternates the two.
 // The window the user is "on" for tray routing: the focused one, else the last
 // focused that is still alive.
 const resolveTraySurface = () => {
@@ -5992,7 +5991,6 @@ const trayIconAssets = () => {
     return {
       idleIconPath: iconPath,
       unseenIconPath: iconPath,
-      breathIconPaths: [iconPath],
       statusIconPaths: {
         busy: path.join(statusDir, 'busy.png'),
         retry: path.join(statusDir, 'retry.png'),
@@ -6005,8 +6003,6 @@ const trayIconAssets = () => {
   return {
     idleIconPath: path.join(dir, 'trayTemplate-idle.png'),
     unseenIconPath: path.join(dir, 'trayTemplate-unseen.png'),
-    breathIconPaths: Array.from({ length: TRAY_BREATH_FRAME_COUNT }, (_, i) =>
-      path.join(dir, `trayTemplate-breath-${String(i).padStart(2, '0')}.png`)),
     // Per-session status icons shown in the menu rows (left, vertically centred
     // across the title + sublabel). 'blank' reserves the gutter for idle rows.
     statusIconPaths: {

@@ -230,7 +230,6 @@ export const settingsDict = {
   "settings.openchamber.tunnel.state.expired": "Термін дії минув",
   "settings.openchamber.tunnel.state.revoked": "Відкликано",
   "settings.openchamber.tunnel.state.inactive": "Неактивний",
-  "settings.openchamber.tunnel.state.noExpiry": "Без терміну дії",
   "settings.openchamber.tunnel.state.never": "Ніколи",
   "settings.openchamber.tunnel.state.tunnelReady": "Тунель готовий",
   "settings.openchamber.tunnel.session.redeemedAt": "Використано {time}",

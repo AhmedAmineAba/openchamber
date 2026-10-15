@@ -2176,30 +2176,13 @@ textarea[data-terminal-hidden-input="true"]::placeholder {
   animation: oc-busy-pulse 1.2s ease-in-out infinite;
 }
 
+
 /*
- * The staggered dots of a busy indicator that stays on screen for as long as
- * the agent works. A smooth opacity pulse is composited, yet it still makes
- * the compositor and the GPU process draw sixty frames a second: about ten
- * percent of a core on an otherwise still page. Three steps per half cycle
- * last 200ms each, the same as the stagger between dots, so every dot changes
- * on the same five frames a second, which halves that cost. Keep the stagger
- * a multiple of one step or the dots stop sharing frames.
+ * The dim half of a waiting indicator's 1 s bright/dim toggle
+ * (`useWaitingBlink`). No transition: a fade would draw every frame of it.
  */
-.animate-busy-wave {
-  animation: oc-busy-pulse 1.2s steps(3, jump-none) infinite;
-}
-
-@keyframes oc-status-logo {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.animate-status-logo {
-  animation: oc-status-logo 4s steps(10, jump-none) infinite;
+.waiting-dim {
+  opacity: 0.4;
 }
 
 @keyframes activity-spin {
@@ -2337,10 +2320,12 @@ textarea[data-terminal-hidden-input="true"]::placeholder {
     display: none;
   }
 
-  .animate-busy-pulse,
-  .animate-busy-wave,
-  .animate-status-logo {
+  .animate-busy-pulse {
     animation: none;
+  }
+
+  .waiting-dim {
+    opacity: 1;
   }
 
 }
