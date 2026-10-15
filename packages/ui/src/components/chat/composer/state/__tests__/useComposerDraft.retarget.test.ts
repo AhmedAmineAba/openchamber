@@ -29,7 +29,7 @@ function renderComposer(initialText: string) {
     const mentionsRef: React.RefObject<Set<string>> = { current: new Set() };
     const result = { text: '', mentionsRef, restored };
 
-    function Probe({ identity }: { identity: ChatDraftIdentity }) {
+    function Probe({ identity, draftId }: { identity: ChatDraftIdentity; draftId: number | null }) {
         const [message, setMessage] = React.useState(initialText);
         const messageRef = React.useRef(message);
         const confirmedMentionsRef = React.useRef(new Set(initialText.includes('@a.ts') ? ['a.ts'] : []));
@@ -37,6 +37,7 @@ function renderComposer(initialText: string) {
         useComposerDraft({
             message, messageRef, setMessage, confirmedMentionsRef, identity, persistEnabled: true,
             initialDraft: { text: '', identity: projectDraft },
+            newSessionDraftId: draftId,
             onDraftRestored: (reason) => { result.restored.push(reason); },
         });
         result.text = message;
@@ -44,8 +45,8 @@ function renderComposer(initialText: string) {
         return null;
     }
 
-    const render = (identity: ChatDraftIdentity) => {
-        act(() => { root.render(React.createElement(Probe, { identity })); });
+    const render = (identity: ChatDraftIdentity, draftId: number | null = 1) => {
+        act(() => { root.render(React.createElement(Probe, { identity, draftId })); });
     };
     render(projectDraft);
     return {
@@ -131,9 +132,37 @@ describe('new-session draft changing its directory', () => {
         writeChatDraft(session, 'session draft', []);
         const composer = renderComposer('new chat text');
         try {
-            composer.render(session);
+            composer.render(session, null);
             expect(composer.result.text).toBe('session draft');
             expect(readChatDraft(projectDraft).text).toBe('new chat text');
+        } finally {
+            composer.teardown();
+        }
+    });
+
+    test('a new chat opened in another directory leaves the typed text where it was', () => {
+        useInputStore.getState().selectAttachmentDraft(projectDraft);
+        useInputStore.getState().addRestoredAttachment(file);
+        const composer = renderComposer('typed in project a');
+        try {
+            // Another feature opens a new draft (new id) for another directory.
+            composer.render(otherProjectDraft, 2);
+            expect(composer.result.text).toBe('');
+            expect(readChatDraft(projectDraft).text).toBe('typed in project a');
+            expect(useInputStore.getState().attachmentDrafts.get(getChatDraftIdentityKey(projectDraft))?.map((attached) => attached.filename)).toEqual(['notes.txt']);
+        } finally {
+            composer.teardown();
+        }
+    });
+
+    test('attached files move even without text', () => {
+        useInputStore.getState().selectAttachmentDraft(projectDraft);
+        useInputStore.getState().addRestoredAttachment(file);
+        const composer = renderComposer('');
+        try {
+            composer.render(otherProjectDraft);
+            expect(useInputStore.getState().attachedFiles.map((attached) => attached.filename)).toEqual(['notes.txt']);
+            expect(useInputStore.getState().attachmentDrafts.get(getChatDraftIdentityKey(projectDraft)) ?? []).toEqual([]);
         } finally {
             composer.teardown();
         }
