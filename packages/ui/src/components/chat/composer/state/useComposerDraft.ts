@@ -4,7 +4,8 @@
  * A draft belongs to a (runtime, directory, session) identity. Switching any
  * of those saves the outgoing draft and restores the incoming one, so moving
  * between sessions never loses typed text and never leaks it into the wrong
- * conversation.
+ * conversation. The one exception is the new-session draft: changing its
+ * project or worktree moves its text and files to the new directory.
  *
  * Writes are debounced while typing but forced at every edge where the page
  * may stop running — tab hidden, frozen, unloading, unmounting — because a
@@ -189,19 +190,43 @@ export function useComposerDraft(options: ComposerDraftOptions): ComposerDraftCo
         // debounced effect must not immediately write it back out.
         skipNextPersistRef.current = true;
 
-        if (!skipOutgoingDraftRef.current && previousKey) {
-            const outgoing = { text: messageRef.current, confirmedMentions: new Set(confirmedMentionsRef.current) };
+        const outgoing = { text: messageRef.current, confirmedMentions: new Set(confirmedMentionsRef.current) };
+        // There is one new-session draft: picking another project or worktree
+        // for it changes where it will run, not which draft it is, so its
+        // text and files go along instead of staying with the old directory.
+        const retargetsNewSessionDraft = !skipOutgoingDraftRef.current
+            && previous?.sessionId === null
+            && identity?.sessionId === null
+            && previous.runtimeKey === identity.runtimeKey
+            && outgoing.text.length > 0;
+        if (retargetsNewSessionDraft && previousKey) {
+            draftMemoryRef.current.set(previousKey, { text: '', confirmedMentions: new Set() });
+            if (persistEnabled) persistNow(previous, '');
+            useInputStore.getState().moveAttachedFiles(previous, identity);
+        } else if (!skipOutgoingDraftRef.current && previousKey) {
             draftMemoryRef.current.set(previousKey, outgoing);
             if (persistEnabled) persistNow(previous, outgoing.text);
         }
         skipOutgoingDraftRef.current = false;
 
-        const restored = (currentKey && draftMemoryRef.current.get(currentKey))
+        const saved = (currentKey && draftMemoryRef.current.get(currentKey))
             || (persistEnabled ? readChatDraft(identity) : { text: '', confirmedMentions: new Set<string>() });
+        // Mentions name files of the old directory, so only the text travels.
+        // A draft already saved for the new directory is kept above it.
+        const restored = retargetsNewSessionDraft
+            ? {
+                text: saved.text && saved.text !== outgoing.text ? `${saved.text}\n\n${outgoing.text}` : outgoing.text,
+                confirmedMentions: saved.confirmedMentions,
+            }
+            : saved;
         messageRef.current = restored.text;
         setMessage(restored.text);
         confirmedMentionsRef.current = new Set(restored.confirmedMentions);
-        if (restored.text) {
+        if (retargetsNewSessionDraft) {
+            // The text is the one the user is typing, so it is neither
+            // selected as a restored draft nor left to the skipped debounce.
+            if (persistEnabled) persistNow(identity, restored.text);
+        } else if (restored.text) {
             requestAnimationFrame(() => callbacksRef.current.onDraftRestored?.('saved'));
         }
     }, [clearPending, confirmedMentionsRef, identity, messageRef, persistEnabled, persistNow, setMessage]);

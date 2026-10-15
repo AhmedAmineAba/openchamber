@@ -555,6 +555,12 @@ and the send path reading the same grammar.
   draft. Two orderings are load-bearing: the debounced write is skipped once
   while a draft is being restored, and a deleted draft's empty signature is
   recorded before a queued write could resurrect it.
+  A switch between two new-session identities (both without a session) is
+  the one draft changing its project or worktree, so a non-empty draft moves:
+  its text and attached files go to the new directory, the old directory's
+  draft is cleared, and confirmed mentions are dropped because they name the
+  old directory's files. A draft already saved for the new directory stays
+  above the moved text. The moved text is not selected as a restored draft.
   Fork replay text and files arrive in `input-store.pendingComposerRestore`,
   addressed to the fork's runtime, directory, and session. The hook consumes
   them after loading that identity's draft. Selection alone is not enough:
