@@ -8,9 +8,9 @@ import {
   CONTENT_SEARCH_MAX_QUERY_LENGTH,
   createContentSearchRuntime,
 } from './content-search.js';
+import { isString } from '../shared/guards.js';
 import nodeFsPromises from 'node:fs/promises';
 import nodePath from 'node:path';
-import { z } from 'zod';
 
 const EXEC_JOB_TTL_MS = 30 * 60 * 1000;
 const OUTSIDE_FILE_GRANT_TTL_MS = 10 * 60 * 1000;
@@ -1025,22 +1025,19 @@ export const registerFsRoutes = (app, dependencies) => {
   // Find in files: lines of workspace files containing a text or a regex,
   // searched by ripgrep (content-search.js). Hitting the limit is a normal
   // answer with `stopped: 'limit'`; a failed search is never an empty one.
+  // This module loads with Node built-ins only (see the packaged-desktop
+  // module-load test), so the query is read with the shared guards.
   const contentSearch = createContentSearchRuntime({ spawn, path, resolveRipgrepBinary });
-  const flagQuery = z.enum(['true', 'false']).optional();
-  const findInFilesQuerySchema = z.object({
-    query: z.string().max(CONTENT_SEARCH_MAX_QUERY_LENGTH).refine((value) => value.trim().length > 0),
-    regex: flagQuery,
-    includeHidden: flagQuery,
-    respectGitignore: flagQuery,
-    limit: z.coerce.number().int().min(1).max(CONTENT_SEARCH_MAX_LIMIT).optional(),
-  });
   app.get('/api/fs/find-in-files', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    const parsedQuery = findInFilesQuerySchema.safeParse(req.query);
-    if (!parsedQuery.success) {
+    const query = isString(req.query.query) ? String(req.query.query) : '';
+    if (!query.trim() || query.length > CONTENT_SEARCH_MAX_QUERY_LENGTH) {
       return res.status(400).json({ error: 'A search query is required' });
     }
-    const { query, regex, includeHidden, respectGitignore, limit } = parsedQuery.data;
+    const requestedLimit = isString(req.query.limit) ? Number.parseInt(String(req.query.limit), 10) : Number.NaN;
+    const limit = Number.isInteger(requestedLimit)
+      ? Math.min(Math.max(1, requestedLimit), CONTENT_SEARCH_MAX_LIMIT)
+      : CONTENT_SEARCH_DEFAULT_LIMIT;
     const project = await resolveProjectDirectory(req);
     if (!project.directory) {
       return res.status(400).json({ error: project.error || 'Active workspace is required' });
@@ -1052,10 +1049,10 @@ export const registerFsRoutes = (app, dependencies) => {
     res.on('close', () => abort.abort());
     const result = await contentSearch.searchFileContents(project.directory, {
       query,
-      regex: regex === 'true',
-      limit: limit ?? CONTENT_SEARCH_DEFAULT_LIMIT,
-      includeHidden: includeHidden === 'true',
-      respectGitignore: respectGitignore !== 'false',
+      regex: req.query.regex === 'true',
+      limit,
+      includeHidden: req.query.includeHidden === 'true',
+      respectGitignore: req.query.respectGitignore !== 'false',
       signal: abort.signal,
     });
     switch (result.status) {

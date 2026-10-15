@@ -9,7 +9,8 @@
 // stops the process as soon as the caller's limit or the deadline is reached.
 
 import { StringDecoder } from 'node:string_decoder';
-import { z } from 'zod';
+
+import { isRecord, isString } from '../shared/guards.js';
 
 export const CONTENT_SEARCH_DEFAULT_LIMIT = 200;
 export const CONTENT_SEARCH_MAX_LIMIT = 500;
@@ -26,20 +27,27 @@ const MAX_RANGES_PER_LINE = 32;
 const STDERR_MAX_BYTES = 64 * 1024;
 
 // ripgrep's `--json` text fields: UTF-8 as `text`, anything else as base64 `bytes`.
-const ripgrepTextSchema = z.union([
-  z.object({ text: z.string() }).transform(({ text }) => Buffer.from(text, 'utf8')),
-  z.object({ bytes: z.string() }).transform(({ bytes }) => Buffer.from(bytes, 'base64')),
-]);
+const decodeRipgrepText = (value) => {
+  if (!isRecord(value)) return null;
+  if (isString(value.text)) return Buffer.from(String(value.text), 'utf8');
+  if (isString(value.bytes)) return Buffer.from(String(value.bytes), 'base64');
+  return null;
+};
 
-const ripgrepMatchSchema = z.object({
-  type: z.literal('match'),
-  data: z.object({
-    path: ripgrepTextSchema,
-    lines: ripgrepTextSchema,
-    line_number: z.number().int().positive(),
-    submatches: z.array(z.object({ start: z.number().int().nonnegative(), end: z.number().int().nonnegative() })).min(1),
-  }),
-});
+// One `match` event, or null for any other event or a malformed one. This
+// module loads with Node built-ins only (see the packaged-desktop module-load
+// test), so the event is read with the shared guards.
+const readRipgrepMatch = (event) => {
+  if (!isRecord(event) || event.type !== 'match' || !isRecord(event.data)) return null;
+  const { data } = event;
+  const pathBytes = decodeRipgrepText(data.path);
+  const lineBytes = decodeRipgrepText(data.lines);
+  const submatches = Array.isArray(data.submatches)
+    ? data.submatches.filter((submatch) => isRecord(submatch) && Number.isInteger(submatch.start) && Number.isInteger(submatch.end))
+    : [];
+  if (!pathBytes || !lineBytes || !Number.isInteger(data.line_number) || data.line_number < 1 || submatches.length === 0) return null;
+  return { pathBytes, lineBytes, line: data.line_number, submatches };
+};
 
 // ripgrep offsets count UTF-8 bytes; the UI needs UTF-16 code units. Matches
 // arrive sorted, so each conversion decodes only the bytes since the last one.
@@ -179,7 +187,7 @@ export const createContentSearchRuntime = ({
       const deadline = setTimeout(() => stop('deadline'), deadlineMs);
       deadline.unref?.();
 
-      const takeMatch = ({ path: pathBytes, lines: lineBytes, line_number: line, submatches }) => {
+      const takeMatch = ({ pathBytes, lineBytes, line, submatches }) => {
         const relativePath = toRelativePath(pathBytes.toString('utf8'));
         if (!relativePath) return;
         matches.push({
@@ -201,8 +209,8 @@ export const createContentSearchRuntime = ({
         } catch {
           return;
         }
-        const parsed = ripgrepMatchSchema.safeParse(event);
-        if (parsed.success) takeMatch(parsed.data.data);
+        const match = readRipgrepMatch(event);
+        if (match) takeMatch(match);
       };
 
       child.stdout.on('data', (chunk) => {
