@@ -9,9 +9,26 @@ import {
 } from "./dropdown-menu.styles";
 import { GlassRedrawGuard } from "./glass-redraw-guard"
 import { handleDropdownNavigationKey } from "./dropdown-navigation";
+import { useMenuWindowDismiss } from "./menu-window-dismiss";
 
-function ContextMenu({ ...props }: React.ComponentProps<typeof BaseContextMenu.Root>) {
-  return <BaseContextMenu.Root {...props} />;
+function ContextMenu({ open, defaultOpen, onOpenChange, ...props }: React.ComponentProps<typeof BaseContextMenu.Root>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
+  const actionsRef = useMenuWindowDismiss(open ?? uncontrolledOpen);
+
+  const handleOpenChange: NonNullable<React.ComponentProps<typeof BaseContextMenu.Root>["onOpenChange"]> = (nextOpen, eventDetails) => {
+    if (open === undefined) setUncontrolledOpen(nextOpen);
+    onOpenChange?.(nextOpen, eventDetails);
+  };
+
+  return (
+    <BaseContextMenu.Root
+      {...props}
+      actionsRef={actionsRef}
+      defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={handleOpenChange}
+    />
+  );
 }
 
 function ContextMenuTrigger({ ...props }: React.ComponentProps<typeof BaseContextMenu.Trigger>) {
