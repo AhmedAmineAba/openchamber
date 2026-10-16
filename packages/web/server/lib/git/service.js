@@ -2916,18 +2916,31 @@ export async function getTrackingBranch(directory) {
 }
 
 /**
- * Short name of the checked-out branch, or `null` when HEAD is detached, the
- * directory is not a repository, or git fails. Reads one ref: it runs on every
+ * Short name of the checked-out branch, or '' when HEAD is detached or the
+ * directory is not a repository. Other failures throw. Reads one ref on every
  * message a session sends.
  */
 export async function getCheckedOutBranch(directory) {
   const normalizedDirectory = normalizeDirectoryPath(directory);
   if (!normalizedDirectory) {
-    return null;
+    throw new Error('directory is required to read the checked-out branch');
   }
   const head = await runGitCommand(normalizedDirectory, ['symbolic-ref', '--quiet', '--short', 'HEAD']);
-  const branch = head.success ? head.stdout.trim() : '';
-  return branch || null;
+  if (head.success) return head.stdout.trim();
+  if ((head.exitCode === 1 && !head.stderr.trim()) || isNotGitRepositoryError(head.message)) return '';
+  throw new Error(head.message || 'Failed to read the checked-out branch');
+}
+
+/** Paths with no uncommitted change, including paths git cannot resolve. */
+export async function getPathsWithoutChanges(directory, paths) {
+  const unchanged = [];
+  for (const filePath of paths) {
+    const status = await runGitCommand(directory, [
+      '--literal-pathspecs', 'status', '--porcelain', '--untracked-files=all', '--', filePath,
+    ]);
+    if (!status.success || !status.stdout.trim()) unchanged.push(filePath);
+  }
+  return unchanged;
 }
 
 // Whether `sha` is reachable from the checked-out HEAD. An object git has never

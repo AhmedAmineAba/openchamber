@@ -95,8 +95,12 @@ branch another session had switched the shared checkout to while it was
 talking with the user: nothing it could see said the branch had changed. Now
 OpenCode tells it the entry changed, and the agent decides what that means.
 The directory is in the value, so a session moved to another worktree reads as
-a move. A branch that cannot be read, detached HEAD included, leaves the entry
-as it is. Without the tool the entry is removed.
+a move. Detached HEAD and directories outside a Git repository write
+"This session works in `<dir>`, with no branch checked out." A failed Git read
+leaves the previous entry as it is. Dispatched prompts resolve the target
+session's own `location.directory` through `client.session.get` before syncing;
+an unavailable location skips sync and preserves its entries. Without the tool
+the checkout entry is removed.
 
 What the agent can do about a busy checkout, moving into a worktree, is
 introduced in the tool's own description (`../agent-tool/DOCUMENTATION.md`),

@@ -3,6 +3,7 @@ import express from 'express';
 import {
   createWorktree as createWorktreeDefault,
   getBranches as getBranchesDefault,
+  getPathsWithoutChanges as getPathsWithoutChangesDefault,
   getWorktreeBootstrapStatus as getWorktreeBootstrapStatusDefault,
   listStashes as listStashesDefault,
   removeWorktree as removeWorktreeDefault,
@@ -457,6 +458,7 @@ export const createOpenChamberSessionService = (dependencies) => {
     removeWorktree = removeWorktreeDefault,
     getBranches = getBranchesDefault,
     stashPush = stashPushDefault,
+    getPathsWithoutChanges = getPathsWithoutChangesDefault,
     stashApply = stashApplyDefault,
     stashDrop = stashDropDefault,
     listStashes = listStashesDefault,
@@ -680,7 +682,15 @@ export const createOpenChamberSessionService = (dependencies) => {
     // A session the agent dispatched has no UI to write the project's
     // standing context into it, so it is written here. `sync` never throws:
     // a session that runs without its background beats one that never runs.
-    if (sessionKnowledgeRuntime) await sessionKnowledgeRuntime.sync(sessionID, directory);
+    if (sessionKnowledgeRuntime) {
+      try {
+        const session = await client.session.get({ sessionID });
+        const sessionDirectory = asNonEmptyString(session?.location?.directory);
+        if (sessionDirectory) await sessionKnowledgeRuntime.sync(sessionID, sessionDirectory);
+      } catch (error) {
+        console.warn('[OpenChamberSessions] Failed to read session directory for knowledge sync:', error?.message || error);
+      }
+    }
 
     if (resolvedCommand) {
       try {
@@ -1089,6 +1099,7 @@ export const createOpenChamberSessionService = (dependencies) => {
     removeWorktree,
     getBranches,
     stashPush,
+    getPathsWithoutChanges,
     stashApply,
     stashDrop,
     listStashes,

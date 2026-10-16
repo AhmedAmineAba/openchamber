@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { asNonEmptyString } from '../shared/guards.js';
 import { OpenChamberControlError, asControlError } from '../openchamber-control/error.js';
 
@@ -28,6 +29,7 @@ import { OpenChamberControlError, asControlError } from '../openchamber-control/
  * @param {(input: { directory: string, parentDirectory: string, parentRemoteName: string }) => Promise<unknown>} dependencies.hydrateCheckout
  * @param {object} dependencies.bootstrapStore
  * @param {(directory: string, options: { message: string, paths: string[] }) => Promise<unknown>} dependencies.stashPush
+ * @param {(directory: string, paths: string[]) => Promise<string[]>} dependencies.getPathsWithoutChanges
  * @param {(directory: string, options: { ref: string }) => Promise<unknown>} dependencies.stashApply
  * @param {(directory: string, options: { ref: string }) => Promise<unknown>} dependencies.stashDrop
  * @param {(directory: string) => Promise<Array<{ ref: string, message: string, hash: string }>>} dependencies.listStashes
@@ -44,6 +46,7 @@ export const createSessionWorktreeMover = (dependencies) => {
     hydrateCheckout,
     bootstrapStore,
     stashPush,
+    getPathsWithoutChanges,
     stashApply,
     stashDrop,
     listStashes,
@@ -85,7 +88,7 @@ export const createSessionWorktreeMover = (dependencies) => {
   const carryChanges = async ({ source, destination, sessionId, name, paths }) => {
     const message = `OpenChamber: session ${sessionId} moved to worktree ${name}`;
     const before = new Set((await listStashes(source)).map((entry) => entry.hash));
-    await stashPush(source, { message, paths });
+    await stashPush(source, { message, paths: paths.map((filePath) => path.resolve(source, filePath)) });
     let stash;
     try {
       stash = await findStash(source, (entry) => !before.has(entry.hash) && entry.message.includes(message));
@@ -153,6 +156,12 @@ export const createSessionWorktreeMover = (dependencies) => {
       throw new OpenChamberControlError('carry is a list of file paths', 400);
     }
     const paths = [...new Set(carry.map((path) => path.trim()))];
+    if (paths.length > 0) {
+      const unchanged = await getPathsWithoutChanges(source, paths);
+      if (unchanged.length > 0) {
+        throw new OpenChamberControlError(`carry paths have no uncommitted changes or cannot be resolved by git: ${unchanged.join(', ')}`, 400);
+      }
+    }
 
     const { root } = await resolvePrimaryWorktreeRoot(source);
     let startRef = null;

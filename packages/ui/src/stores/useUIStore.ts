@@ -1070,7 +1070,6 @@ interface UIStore {
   agentRenderToolEnabled: boolean;
   /** Whether OpenChamber's agent tools sit behind OpenCode's Code Mode instead of being direct tools. */
   agentToolsCodeMode: boolean;
-  /** Whether an agent moves its session into a new worktree on a busy branch without asking first. */
   /** The isolated-spaces switch as saved; the server applies it at its next start. */
   isolatedSpacesEnabled: boolean;
   /** The permission mode the server writes onto each new top-level session. */

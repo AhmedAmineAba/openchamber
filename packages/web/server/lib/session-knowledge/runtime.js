@@ -45,7 +45,9 @@ const truncate = (value) => (
  * named too, so a session moved to another worktree reads as a move.
  */
 const describeCheckout = ({ directory, branch }) => (
-  `This session works in \`${directory}\`, on branch \`${branch}\`.`
+  branch
+    ? `This session works in \`${directory}\`, on branch \`${branch}\`.`
+    : `This session works in \`${directory}\`, with no branch checked out.`
 );
 
 const renderMemorySection = (entries) => entries
@@ -185,8 +187,8 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
     isAgentMemoryEnabled,
     // Whether this session's agent has the `openchamber` tool to link with.
     isSessionLinkingAvailable = null,
-    // The branch checked out in a directory, or null when there is none to
-    // name; read only while the agent has the tool.
+    // The checked-out branch, or '' when none is checked out. Failures throw;
+    // read only while the agent has the tool.
     readCheckoutBranch = null,
     // Whether this session's agent has the `openchamber_render` tool.
     isPageRenderingAvailable = async () => false,
@@ -281,7 +283,7 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
     const branch = linking && directory && readCheckoutBranch
       ? await Promise.resolve(readCheckoutBranch(directory)).catch(() => null)
       : null;
-    const checkout = branch ? { directory, branch } : null;
+    const checkout = branch !== null ? { directory, branch } : null;
 
     const rendering = await Promise.resolve(isPageRenderingAvailable()).catch(() => false);
 

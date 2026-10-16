@@ -237,6 +237,30 @@ describe('which branch the session works on', () => {
     }
   });
 
+  test('an empty branch replaces the old branch and directory; a failed read preserves it', async () => {
+    const instructionEntries = createEntriesStub();
+    let branch = 'main';
+    const runtime = runtimeOn(null, {
+      ...pinnedStore(),
+      instructionEntries,
+      readCheckoutBranch: async () => {
+        if (branch instanceof Error) throw branch;
+        return branch;
+      },
+    });
+    await runtime.sync('ses_a', DIRECTORY);
+    expect(instructionEntries.held.get(CHECKOUT)).toContain('on branch `main`');
+
+    branch = '';
+    await runtime.sync('ses_a', '/work/plain-directory');
+    const noBranch = 'This session works in `/work/plain-directory`, with no branch checked out.';
+    expect(instructionEntries.held.get(CHECKOUT)).toBe(noBranch);
+
+    branch = new Error('git failed');
+    await runtime.sync('ses_a', '/work/unreadable');
+    expect(instructionEntries.held.get(CHECKOUT)).toBe(noBranch);
+  });
+
   test('is not read without the tool, and the entry is cleared', async () => {
     const reads = [];
     const runtime = createRuntime({

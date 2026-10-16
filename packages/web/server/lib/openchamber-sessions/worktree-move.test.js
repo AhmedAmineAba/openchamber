@@ -11,10 +11,12 @@ const STASH = { ref: 'stash@{0}', message: 'On main: OpenChamber: session ses_1 
  * A git that records what happened: one stash list shared by every worktree,
  * the way `refs/stash` is, and switches for each step that can fail.
  */
-const createMover = ({ changes = true, applyFails = false, moveFails = false, restoreFails = false, removeFails = false } = {}) => {
+const createMover = ({ changes = true, applyFails = false, moveFails = false, restoreFails = false, removeFails = false, unchanged = [] } = {}) => {
   const stashes = [];
   const calls = [];
+  const getPathsWithoutChanges = vi.fn(async () => unchanged);
   const mover = createSessionWorktreeMover({
+    getPathsWithoutChanges,
     createWorktree: vi.fn(async (directory, input, options) => {
       calls.push(['createWorktree', directory, input]);
       await options.hydrateCheckout({ directory: WORKTREE.path, parentRemoteName: '' });
@@ -54,7 +56,7 @@ const createMover = ({ changes = true, applyFails = false, moveFails = false, re
     }),
     warn: vi.fn(),
   });
-  return { mover, calls, stashes };
+  return { mover, calls, stashes, getPathsWithoutChanges };
 };
 
 describe('moving a session into a new worktree', () => {
@@ -77,7 +79,7 @@ describe('moving a session into a new worktree', () => {
     expect(calls[0]).toEqual(['createWorktree', ROOT, { mode: 'new', name: 'fix-login', startRef: 'main' }]);
     expect(calls[1][1]).toEqual({ directory: WORKTREE.path, parentDirectory: ROOT, parentRemoteName: '' });
     // Only the named files: everything else uncommitted stays in the checkout.
-    expect(calls[3]).toEqual(['stashPush', SOURCE, ['src/a.ts', 'src/b.ts']]);
+    expect(calls[3]).toEqual(['stashPush', SOURCE, ['/repo/app/src/a.ts', '/repo/app/src/b.ts']]);
     // Applied by hash: a stash pushed in between would otherwise be the one applied.
     expect(calls[4]).toEqual(['stashApply', WORKTREE.path, STASH.hash]);
     expect(stashes).toEqual([]);
@@ -102,7 +104,7 @@ describe('moving a session into a new worktree', () => {
     expect(calls).toEqual([]);
   });
 
-  it('moves without touching the stash when the named files have no changes, whatever git said about the push', async () => {
+  it('handles changes disappearing after validation, whatever git said about the push', async () => {
     const { mover, calls } = createMover({ changes: false });
 
     const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', branchName: 'iuliia/fix-login', startRef: 'develop', carry: ['src/a.ts'] });
@@ -110,6 +112,31 @@ describe('moving a session into a new worktree', () => {
     expect(result.changesMoved).toBe(false);
     expect(calls[0]).toEqual(['createWorktree', ROOT, { mode: 'new', name: 'fix-login', branchName: 'iuliia/fix-login', startRef: 'develop' }]);
     expect(calls.map(([step]) => step)).toEqual(['createWorktree', 'hydrateCheckout', 'waitForWorktreeReady', 'stashPush', 'moveSession']);
+  });
+
+  it('rejects every unchanged or unresolvable carry path before creating a worktree', async () => {
+    const { mover, calls, getPathsWithoutChanges } = createMover({ unchanged: ['clean.ts', 'missing.ts', '../outside.ts'] });
+    await expect(mover.move({
+      sessionId: 'ses_1', directory: '/repo/app/nested', name: 'fix-login',
+      carry: ['changed.ts', 'clean.ts', 'missing.ts', '../outside.ts'],
+    })).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'carry paths have no uncommitted changes or cannot be resolved by git: clean.ts, missing.ts, ../outside.ts',
+    });
+    expect(getPathsWithoutChanges).toHaveBeenCalledWith('/repo/app/nested', ['changed.ts', 'clean.ts', 'missing.ts', '../outside.ts']);
+    expect(calls).toEqual([]);
+  });
+
+  it('resolves carry paths against a nested session directory for the root-scoped stash', async () => {
+    const { mover, calls } = createMover();
+    const result = await mover.move({
+      sessionId: 'ses_1', directory: '/repo/app/nested', name: 'fix-login',
+      carry: ['file.ts', '../sibling.ts', '/repo/app/absolute.ts'],
+    });
+    expect(calls).toContainEqual(['stashPush', '/repo/app/nested', [
+      '/repo/app/nested/file.ts', '/repo/app/sibling.ts', '/repo/app/absolute.ts',
+    ]]);
+    expect(result.carried).toEqual(['file.ts', '../sibling.ts', '/repo/app/absolute.ts']);
   });
 
   it('checks out a branch that already exists, and keeps it when the move fails', async () => {
@@ -191,6 +218,7 @@ describe('moving a session into a new worktree', () => {
     const failingMover = createSessionWorktreeMover({
       ...Object.fromEntries(['createWorktree', 'removeWorktree', 'waitForWorktreeReady', 'hydrateCheckout', 'stashApply', 'stashDrop', 'moveSession'].map((name) => [name, vi.fn(async () => (name === 'createWorktree' ? WORKTREE : undefined))])),
       bootstrapStore: {},
+      getPathsWithoutChanges: vi.fn(async () => []),
       stashPush: vi.fn(async () => ({})),
       listStashes: vi.fn(async () => { listings += 1; if (listings > 1) throw new Error('index.lock exists'); return []; }),
       getBranches: vi.fn(async () => ({ all: ['main'], defaultBranches: {} })),

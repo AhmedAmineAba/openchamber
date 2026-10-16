@@ -121,6 +121,7 @@ vi.mock('../git/index.js', () => ({
   removeWorktree: vi.fn(),
   getBranches: vi.fn(),
   stashPush: vi.fn(),
+  getPathsWithoutChanges: vi.fn(async () => []),
   stashApply: vi.fn(),
   stashDrop: vi.fn(),
   listStashes: vi.fn(),
@@ -1062,6 +1063,38 @@ describe('openchamber session routes', () => {
     expect(sync.mock.invocationCallOrder[0])
       .toBeLessThan(sessionCommandMock.mock.invocationCallOrder[0]);
     expect(sessionSyntheticMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['send', 'ses_source'],
+    ['fork', 'ses_fork'],
+  ])('syncs knowledge in the target session directory for %s', async (action, targetId) => {
+    const sync = vi.fn(async () => true);
+    sessionGetMock.mockImplementation(async ({ sessionID }) => ({
+      id: sessionID, location: { directory: '/repo/worktrees/target' },
+    }));
+    const { app } = createApp({ sessionKnowledgeRuntime: { sync } });
+    await request(app)
+      .post(`/api/openchamber/sessions/ses_source/${action}`)
+      .send({ directory: '/repo/app', prompt: 'Continue', model: 'openai/gpt-5.5', agent: 'build' })
+      .expect(200);
+    expect(sync).toHaveBeenCalledExactlyOnceWith(targetId, '/repo/worktrees/target');
+    expect(sync.mock.invocationCallOrder[0]).toBeLessThan(sessionPromptMock.mock.invocationCallOrder[0]);
+  });
+
+  it.each(['missing', 'failed'])('preserves knowledge and sends when the target directory read is %s', async (mode) => {
+    const sync = vi.fn(async () => true);
+    sessionGetMock.mockImplementation(async () => {
+      if (mode === 'failed') throw new Error('session read failed');
+      return { id: 'ses_source' };
+    });
+    const { app } = createApp({ sessionKnowledgeRuntime: { sync } });
+    await request(app)
+      .post('/api/openchamber/sessions/ses_source/send')
+      .send({ directory: '/repo/app', prompt: 'Continue', model: 'openai/gpt-5.5', agent: 'build' })
+      .expect(200);
+    expect(sync).not.toHaveBeenCalled();
+    expect(sessionPromptMock).toHaveBeenCalledWith({ sessionID: 'ses_source', text: 'Continue' });
   });
 
   it('reuses the previous session selection when send omits model, agent, and variant', async () => {
