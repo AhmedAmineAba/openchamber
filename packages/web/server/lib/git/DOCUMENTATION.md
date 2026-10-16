@@ -191,7 +191,8 @@ The agent tool's `session.moveToWorktree` makes a plain branch worktree
 through `createWorktree` for a session that already exists
 (`../openchamber-sessions/worktree-move.js`): a new branch, or with
 `existingBranch` an `existing`-mode checkout of a local or remote branch. It
-then moves the checkout's uncommitted changes over with `stashPush`,
+then moves the uncommitted changes of the files the agent named over with
+`stashPush` (`paths`, taken as literal pathspecs),
 `stashApply` by commit hash and `stashDrop`, and removes the worktree again
 with `removeWorktree` when a later step fails, deleting the local branch only
 when the move made it.

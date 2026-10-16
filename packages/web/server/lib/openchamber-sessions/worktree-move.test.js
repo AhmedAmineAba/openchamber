@@ -29,8 +29,8 @@ const createMover = ({ changes = true, applyFails = false, moveFails = false, re
     bootstrapStore: { read: vi.fn(), write: vi.fn() },
     // `created` is deliberately wrong here: it is read from git's localized
     // message, so the mover must not trust it.
-    stashPush: vi.fn(async (directory, { message }) => {
-      calls.push(['stashPush', directory]);
+    stashPush: vi.fn(async (directory, { message, paths }) => {
+      calls.push(['stashPush', directory, paths]);
       if (changes) stashes.unshift({ ...STASH, message: `On main: ${message}` });
       return { created: !changes };
     }),
@@ -58,10 +58,10 @@ const createMover = ({ changes = true, applyFails = false, moveFails = false, re
 };
 
 describe('moving a session into a new worktree', () => {
-  it('creates the worktree from the default branch, carries the changes over by stash hash, then moves the session', async () => {
+  it('creates the worktree from the default branch, carries the named files over by stash hash, then moves the session', async () => {
     const { mover, calls, stashes } = createMover();
 
-    const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' });
+    const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry: ['src/a.ts', ' src/a.ts ', 'src/b.ts'] });
 
     expect(result).toEqual({
       sessionId: 'ses_1',
@@ -69,21 +69,43 @@ describe('moving a session into a new worktree', () => {
       previousDirectory: SOURCE,
       worktree: { ...WORKTREE, startRef: 'main' },
       changesMoved: true,
+      carried: ['src/a.ts', 'src/b.ts'],
     });
     expect(calls.map(([step]) => step)).toEqual([
       'createWorktree', 'hydrateCheckout', 'waitForWorktreeReady', 'stashPush', 'stashApply', 'moveSession', 'stashDrop',
     ]);
     expect(calls[0]).toEqual(['createWorktree', ROOT, { mode: 'new', name: 'fix-login', startRef: 'main' }]);
     expect(calls[1][1]).toEqual({ directory: WORKTREE.path, parentDirectory: ROOT, parentRemoteName: '' });
+    // Only the named files: everything else uncommitted stays in the checkout.
+    expect(calls[3]).toEqual(['stashPush', SOURCE, ['src/a.ts', 'src/b.ts']]);
     // Applied by hash: a stash pushed in between would otherwise be the one applied.
     expect(calls[4]).toEqual(['stashApply', WORKTREE.path, STASH.hash]);
     expect(stashes).toEqual([]);
   });
 
-  it('moves a clean checkout without touching the stash, whatever git said about the push', async () => {
+  it('carries nothing and leaves the stash alone when no file is named', async () => {
+    const { mover, calls } = createMover();
+
+    const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' });
+
+    expect(result).toMatchObject({ changesMoved: false, carried: [] });
+    expect(calls.map(([step]) => step)).toEqual(['createWorktree', 'hydrateCheckout', 'waitForWorktreeReady', 'moveSession']);
+  });
+
+  it('refuses a carry list that is not file paths before creating anything', async () => {
+    const { mover, calls } = createMover();
+
+    for (const carry of ['src/a.ts', [''], [42]]) {
+      await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry }))
+        .rejects.toMatchObject({ statusCode: 400, message: 'carry is a list of file paths' });
+    }
+    expect(calls).toEqual([]);
+  });
+
+  it('moves without touching the stash when the named files have no changes, whatever git said about the push', async () => {
     const { mover, calls } = createMover({ changes: false });
 
-    const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', branchName: 'iuliia/fix-login', startRef: 'develop' });
+    const result = await mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', branchName: 'iuliia/fix-login', startRef: 'develop', carry: ['src/a.ts'] });
 
     expect(result.changesMoved).toBe(false);
     expect(calls[0]).toEqual(['createWorktree', ROOT, { mode: 'new', name: 'fix-login', branchName: 'iuliia/fix-login', startRef: 'develop' }]);
@@ -129,7 +151,7 @@ describe('moving a session into a new worktree', () => {
   it('removes the worktree and puts the changes back when they do not apply there', async () => {
     const { mover, calls, stashes } = createMover({ applyFails: true });
 
-    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' })).rejects.toMatchObject({
+    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry: ['src/a.ts'] })).rejects.toMatchObject({
       statusCode: 409,
       message: 'The uncommitted changes do not apply in the new worktree: CONFLICT (content): src/a.ts',
     });
@@ -143,7 +165,7 @@ describe('moving a session into a new worktree', () => {
   it('removes the worktree and puts the changes back when the session cannot be moved', async () => {
     const { mover, calls, stashes } = createMover({ moveFails: true });
 
-    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' })).rejects.toMatchObject({
+    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry: ['src/a.ts'] })).rejects.toMatchObject({
       message: 'session not found',
     });
 
@@ -156,7 +178,7 @@ describe('moving a session into a new worktree', () => {
   it('keeps the stash and names it when the changes cannot be put back either', async () => {
     const { mover, stashes } = createMover({ moveFails: true, restoreFails: true });
 
-    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' })).rejects.toMatchObject({
+    await expect(mover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry: ['src/a.ts'] })).rejects.toMatchObject({
       statusCode: 500,
       message: `session not found. The uncommitted changes are kept in git stash ${STASH.hash} (${STASH.message}); restoring them failed: index locked`,
     });
@@ -176,7 +198,7 @@ describe('moving a session into a new worktree', () => {
       warn: vi.fn(),
     });
 
-    await expect(failingMover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login' })).rejects.toMatchObject({
+    await expect(failingMover.move({ sessionId: 'ses_1', directory: SOURCE, name: 'fix-login', carry: ['src/a.ts'] })).rejects.toMatchObject({
       statusCode: 500,
       message: 'The stash list could not be read after stashing the uncommitted changes: index.lock exists. If git stash list shows "OpenChamber: session ses_1 moved to worktree fix-login", the changes are there',
     });

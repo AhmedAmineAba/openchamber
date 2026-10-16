@@ -4119,7 +4119,11 @@ export async function stashPush(directory, options = {}) {
   const message = typeof options.message === 'string' && options.message.trim()
     ? options.message.trim()
     : `OpenChamber stash ${new Date().toISOString()}`;
-  const output = await git.raw(['stash', 'push', '--include-untracked', '-m', message]);
+  // Named paths are taken literally, so a name like `*.ts` matches only itself.
+  const paths = Array.isArray(options.paths) ? options.paths : [];
+  const output = await git.raw(paths.length > 0
+    ? ['--literal-pathspecs', 'stash', 'push', '--include-untracked', '-m', message, '--', ...paths]
+    : ['stash', 'push', '--include-untracked', '-m', message]);
   return {
     success: true,
     created: !/no local changes/i.test(String(output || '')),

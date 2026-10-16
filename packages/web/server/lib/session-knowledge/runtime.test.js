@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { KNOWLEDGE_ENTRY_KEYS, RENDER_PAGE_GUIDANCE, SESSION_LINK_GUIDANCE, WORKTREE_MOVE_GUIDANCE, buildKnowledgeEntries, createSessionKnowledgeRuntime } from './runtime.js';
+import { KNOWLEDGE_ENTRY_KEYS, RENDER_PAGE_GUIDANCE, SESSION_LINK_GUIDANCE, buildKnowledgeEntries, createSessionKnowledgeRuntime } from './runtime.js';
 
 const DIRECTORY = '/work/project';
 const PROJECT_ID = 'path_project';
@@ -33,7 +33,7 @@ const createRuntime = (overrides = {}) => {
   };
   for (const key of [
     'readSessionMetadata', 'persistSessionMetadata', 'isAgentMemoryEnabled', 'isSessionLinkingAvailable',
-    'isWorktreeMoveWithoutAsking', 'isPageRenderingAvailable', 'readCheckoutBranch', 'instructionEntries',
+    'isPageRenderingAvailable', 'readCheckoutBranch', 'instructionEntries',
   ]) {
     if (key in overrides) dependencies[key] = overrides[key];
   }
@@ -150,8 +150,7 @@ describe('when to link', () => {
     });
     const entries = await entriesFor(runtime, NO_PINS);
 
-    // The worktree rule rides with the tool, in its asking form by default.
-    expect(entries[GUIDANCE]).toBe(`${SESSION_LINK_GUIDANCE}\n\n${WORKTREE_MOVE_GUIDANCE.ask}`);
+    expect(entries[GUIDANCE]).toBe(SESSION_LINK_GUIDANCE);
     expect(entries[PINNED]).toBe('');
     expect(entries[MEMORY]).toBe('');
   });
@@ -185,31 +184,10 @@ describe('when to draw a page', () => {
   });
 });
 
-describe('when to move into a worktree', () => {
-  const runtimeWith = (overrides) => createRuntime({
-    isSessionLinkingAvailable: async () => true,
-    isAgentMemoryEnabled: async () => false,
-    projectContextRuntime: { readContext: async () => ({ notes: [], todos: [], plans: [] }) },
-    ...overrides,
-  });
-
-  test('asks by default, and when the setting cannot be read', async () => {
-    for (const isWorktreeMoveWithoutAsking of [undefined, async () => false, async () => { throw new Error('settings unreadable'); }]) {
-      const entries = await entriesFor(runtimeWith({ isWorktreeMoveWithoutAsking }), NO_PINS);
-      expect(entries[GUIDANCE]).toContain(WORKTREE_MOVE_GUIDANCE.ask);
-    }
-  });
-
-  test('moves unasked when the user chose that', async () => {
-    const entries = await entriesFor(runtimeWith({ isWorktreeMoveWithoutAsking: async () => true }), NO_PINS);
-    expect(entries[GUIDANCE]).toContain(WORKTREE_MOVE_GUIDANCE.auto);
-    expect(entries[GUIDANCE]).not.toContain(WORKTREE_MOVE_GUIDANCE.ask);
-  });
-
-  test('says how the agent learns the branch was switched under it', () => {
-    for (const rule of Object.values(WORKTREE_MOVE_GUIDANCE)) {
-      expect(rule).toContain('when you are told the branch this session works on changed and you did not switch it');
-    }
+describe('the worktree move', () => {
+  test('is introduced by the tool description, never told as a rule in the session', async () => {
+    const entries = await entriesFor(createRuntime({ isSessionLinkingAvailable: async () => true }));
+    expect(entries[GUIDANCE]).not.toContain('moveToWorktree');
   });
 });
 

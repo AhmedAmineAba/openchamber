@@ -1102,8 +1102,8 @@ export const createOpenChamberSessionService = (dependencies) => {
 
   /**
    * Move an existing session into a new worktree of its repository, carrying
-   * the checkout's uncommitted changes along (`./worktree-move.js`). The
-   * worktree needs the same bootstrap as `create` gives a new one.
+   * the files the agent names along (`./worktree-move.js`). The worktree needs
+   * the same bootstrap as `create` gives a new one.
    */
   const moveToWorktree = async (sessionID, payload = {}) => {
     if (!(hydrateWorktreeCheckout instanceof Function)
@@ -1119,6 +1119,7 @@ export const createOpenChamberSessionService = (dependencies) => {
       branchName: asNonEmptyString(payload.worktree?.branchName),
       startRef: asNonEmptyString(payload.worktree?.startRef),
       existingBranch: asNonEmptyString(payload.worktree?.existingBranch),
+      carry: payload.carry,
     });
   };
 

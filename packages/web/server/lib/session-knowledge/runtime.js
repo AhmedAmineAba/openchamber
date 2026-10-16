@@ -85,28 +85,6 @@ export const SESSION_LINK_GUIDANCE = "When the user gives you an issue or a chan
   + " sees it with the session. Not one merely mentioned in passing. No need to"
   + " mention in your reply that you linked it.";
 
-const SOMEONE_ELSES_BRANCH = " The branch is someone else's work when it carries an open"
-  + " pull request or uncommitted changes that are not yours, or when you are told the"
-  + " branch this session works on changed and you did not switch it.";
-
-/**
- * When to leave a busy branch, in the form the user chose: `ask` offers the
- * move and waits, `auto` moves first and says so. Stated in every session with
- * the `openchamber` tool, for the reason the link rule is; the tool's own
- * description carries the same rule (WORKTREE_MOVE_RULES in
- * ../agent-tool/runtime.js). Change both together.
- */
-export const WORKTREE_MOVE_GUIDANCE = {
-  ask: "Before you change files for a task in a checkout whose branch is someone else's"
-    + " work, offer to move this session into a new worktree with the openchamber tool's"
-    + " session.moveToWorktree and wait for the user's yes; move at once only when the"
-    + " user asked for a worktree themselves." + SOMEONE_ELSES_BRANCH,
-  auto: "Before you change files for a task in a checkout whose branch is someone else's"
-    + " work, first move this session into a new worktree with the openchamber tool's"
-    + " session.moveToWorktree, without asking, and tell the user in one line where the"
-    + " work now lives." + SOMEONE_ELSES_BRANCH,
-};
-
 /**
  * When to draw a page, stated in every session that has the
  * `openchamber_render` tool, for the reason the link rule is: the tool
@@ -176,9 +154,8 @@ const buildPinnedBlock = ({ notes, plans }) => {
   ].join('\n\n');
 };
 
-const buildGuidance = ({ linking, worktreeMove, rendering }) => [
+const buildGuidance = ({ linking, rendering }) => [
   linking ? SESSION_LINK_GUIDANCE : '',
-  worktreeMove === 'off' ? '' : WORKTREE_MOVE_GUIDANCE[worktreeMove],
   rendering ? RENDER_PAGE_GUIDANCE : '',
 ].filter(Boolean).join('\n\n');
 
@@ -187,14 +164,15 @@ const buildGuidance = ({ linking, worktreeMove, rendering }) => [
  * away; a key left out keeps what the session holds, which is what a branch
  * that could not be read means.
  */
-export const buildKnowledgeEntries = ({ notes, plans, memory, linking = false, worktreeMove = 'off', rendering = false, checkout = null }) => {
+export const buildKnowledgeEntries = ({ notes, plans, memory, linking = false, rendering = false, checkout = null }) => {
   const entries = {
     [KNOWLEDGE_ENTRY_KEYS.pinned]: truncate(buildPinnedBlock({ notes, plans })),
     [KNOWLEDGE_ENTRY_KEYS.memory]: truncate(buildMemoryBlock(memory)),
-    [KNOWLEDGE_ENTRY_KEYS.guidance]: buildGuidance({ linking, worktreeMove, rendering }),
+    [KNOWLEDGE_ENTRY_KEYS.guidance]: buildGuidance({ linking, rendering }),
   };
-  // The branch is told while the worktree rule is, since only that rule acts on it.
-  if (worktreeMove === 'off') entries[KNOWLEDGE_ENTRY_KEYS.checkout] = '';
+  // The branch is told while the agent has the tool, whose worktree move is
+  // the one thing it can do about a busy branch.
+  if (!linking) entries[KNOWLEDGE_ENTRY_KEYS.checkout] = '';
   else if (checkout) entries[KNOWLEDGE_ENTRY_KEYS.checkout] = describeCheckout(checkout);
   return entries;
 };
@@ -207,11 +185,8 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
     isAgentMemoryEnabled,
     // Whether this session's agent has the `openchamber` tool to link with.
     isSessionLinkingAvailable = null,
-    // Whether that tool moves a session into a worktree unasked (the setting);
-    // read only when the tool is there.
-    isWorktreeMoveWithoutAsking = null,
     // The branch checked out in a directory, or null when there is none to
-    // name; read only while the worktree rule is told.
+    // name; read only while the agent has the tool.
     readCheckoutBranch = null,
     // Whether this session's agent has the `openchamber_render` tool.
     isPageRenderingAvailable = async () => false,
@@ -302,20 +277,15 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
     const linking = typeof isSessionLinkingAvailable === 'function'
       ? await Promise.resolve(isSessionLinkingAvailable()).catch(() => false)
       : false;
-    // The worktree rule rides with the tool: no tool, no rule. An unreadable
-    // setting means the safe form, asking.
-    const unasked = linking && isWorktreeMoveWithoutAsking
-      ? await Promise.resolve(isWorktreeMoveWithoutAsking()).catch(() => false)
-      : false;
-    const worktreeMove = linking ? (unasked ? 'auto' : 'ask') : 'off';
-    const branch = worktreeMove !== 'off' && directory && readCheckoutBranch
+    // The branch is read only while the tool that moves a session off it is there.
+    const branch = linking && directory && readCheckoutBranch
       ? await Promise.resolve(readCheckoutBranch(directory)).catch(() => null)
       : null;
     const checkout = branch ? { directory, branch } : null;
 
     const rendering = await Promise.resolve(isPageRenderingAvailable()).catch(() => false);
 
-    return { notes, plans, memory, linking, worktreeMove, rendering, checkout };
+    return { notes, plans, memory, linking, rendering, checkout };
   };
 
   /**

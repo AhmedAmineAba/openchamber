@@ -31,7 +31,7 @@ source:
 |---|---|
 | `openchamber.pinned` | pinned notes and plan bodies |
 | `openchamber.memory` | the memory index and when to save |
-| `openchamber.guidance` | when to link, move into a worktree, draw a page |
+| `openchamber.guidance` | when to link, when to draw a page |
 | `openchamber.checkout` | the directory and branch the session works on |
 
 `sync` writes all of them right before a message goes out: the UI awaits it
@@ -86,30 +86,22 @@ own description. Stated only in the action's description it went unread: an
 agent handed an issue to investigate saw no reason to open a session-control
 tool, so it never linked anything. It goes into `openchamber.guidance`.
 
-## When to move into a worktree
+## Which branch the session works on
 
-The same session is told when to leave a busy branch: before it changes files
-on a branch that is someone else's work, one that carries an open pull request
-or changes that are not the agent's, or whose switch the agent is told about
-and did not make. The form follows the `agentWorktreeMoveWithoutAsking` setting
-(`WORKTREE_MOVE_GUIDANCE.ask` offers the move and waits, `.auto` moves first
-and says so), read through `isWorktreeMoveWithoutAsking` and only while the
-tool is there. Flipping the setting changes `openchamber.guidance`, so the
-agent hears the new form. The tool description carries the same text
-(`../agent-tool/runtime.js`, `WORKTREE_MOVE_RULES`); change both together.
+While the agent has the managed `openchamber` tool, `openchamber.checkout`
+names the session's directory and the branch checked out there
+(`readCheckoutBranch`, read on every send). An agent once went on editing on a
+branch another session had switched the shared checkout to while it was
+talking with the user: nothing it could see said the branch had changed. Now
+OpenCode tells it the entry changed, and the agent decides what that means.
+The directory is in the value, so a session moved to another worktree reads as
+a move. A branch that cannot be read, detached HEAD included, leaves the entry
+as it is. Without the tool the entry is removed.
 
-The rule alone went unused: in the first days no agent called the move, and one
-went on editing on a branch another session had switched the shared checkout
-to while it was talking with the user. Nothing it could see said the branch had
-changed. So while the rule is told, the session also hears where it works.
-`readCheckoutBranch` reads the checked-out branch on every send, and
-`openchamber.checkout` names it with the directory. When another session or the
-user switches the branch between two messages, the entry changes and OpenCode
-tells the agent the value under that key changed, which is the cue the rule
-names. The directory is in the value, so a session moved to another worktree
-reads as a move. A branch that cannot be read, detached HEAD included, leaves
-the entry as it is: an unreadable branch is not news. Without the tool the
-entry is removed, since only the rule acts on it.
+What the agent can do about a busy checkout, moving into a worktree, is
+introduced in the tool's own description (`../agent-tool/DOCUMENTATION.md`),
+never stated here as a rule. Whether a busy checkout calls for a worktree
+depends on how the user works.
 
 ## When to draw a page
 
