@@ -27,14 +27,62 @@ const truncate = (value, budget) => (
   value.length <= budget ? value : `${value.slice(0, Math.max(0, budget - 1))}…`
 );
 
-/** The signature part of the worktree rule, by the form it takes (`buildKnowledgeText`). */
-const WORKTREE_MOVE_SIGNATURE = { off: [], ask: ['w:ask'], auto: ['w:auto'] };
+/**
+ * The signature part of the worktree rule, by the form it takes
+ * (`buildKnowledgeText`). The version moves when the rule's text changes.
+ */
+const WORKTREE_MOVE_SIGNATURE = { off: [], ask: ['w:ask:2'], auto: ['w:auto:2'] };
+
+/**
+ * Where the session was last told it works: directory and branch. Kept in the
+ * signature, so it is recorded only once the message carrying it went out.
+ * Both are encoded, so neither can contain the `|` and `:` separators.
+ */
+const CHECKOUT_SIGNATURE_PREFIX = 'c:';
+
+const checkoutSignature = ({ directory, branch }) => (
+  `${CHECKOUT_SIGNATURE_PREFIX}${encodeURIComponent(directory)}:${encodeURIComponent(branch)}`
+);
+
+const readCheckoutSignature = (signature) => {
+  const entry = signature.split('|').find((part) => part.startsWith(CHECKOUT_SIGNATURE_PREFIX));
+  const [directory, branch] = entry ? entry.slice(CHECKOUT_SIGNATURE_PREFIX.length).split(':') : [];
+  if (!directory || !branch) return null;
+  try {
+    return { directory: decodeURIComponent(directory), branch: decodeURIComponent(branch) };
+  } catch {
+    return null;
+  }
+};
+
+const withoutCheckout = (signature) => signature
+  .split('|')
+  .filter((part) => !part.startsWith(CHECKOUT_SIGNATURE_PREFIX))
+  .join('|');
+
+/**
+ * What the agent needs to hear about the branch it works on. A branch that
+ * changed between two of the session's messages is the one case the agent
+ * cannot see for itself: another session sharing the checkout switched it,
+ * and the agent would go on editing that session's work.
+ */
+const describeCheckout = (previous, current) => {
+  if (!current) return '';
+  if (previous && previous.directory === current.directory) {
+    return previous.branch === current.branch
+      ? ''
+      : `The checkout this session works in switched from branch \`${previous.branch}\` to`
+        + ` \`${current.branch}\` since your previous message. If you did not switch it, another`
+        + ' session or the user did, and the branch is their work.';
+  }
+  return `The checkout this session works in is on branch \`${current.branch}\`.`;
+};
 
 /**
  * Identity of everything the session should be carrying, content revisions
  * included: editing a pinned note must re-send it, not merely renaming one.
  */
-export const buildKnowledgeSignature = ({ notes, plans, memory, linking = false, worktreeMove = 'off', rendering = false }) => {
+export const buildKnowledgeSignature = ({ notes, plans, memory, linking = false, worktreeMove = 'off', rendering = false, checkout = null }) => {
   const parts = [
     ...notes.map((note) => `n:${note.id}:${note.updatedAt}`),
     ...plans.map((plan) => `p:${plan.id}:${plan.title}`),
@@ -49,6 +97,7 @@ export const buildKnowledgeSignature = ({ notes, plans, memory, linking = false,
     ...(rendering ? ['r:on:3'] : []),
     // Flipping the setting changes the rule, so the session hears it again.
     ...WORKTREE_MOVE_SIGNATURE[worktreeMove],
+    ...(checkout ? [checkoutSignature(checkout)] : []),
   ];
   return parts.length === 0 ? '' : parts.sort().join('|');
 };
@@ -90,6 +139,10 @@ export const SESSION_LINK_GUIDANCE = "When the user gives you an issue or a chan
   + " sees it with the session. Not one merely mentioned in passing. No need to"
   + " mention in your reply that you linked it.";
 
+const SOMEONE_ELSES_BRANCH = " The branch is someone else's work when it carries an open"
+  + " pull request or uncommitted changes that are not yours, or when it switched between"
+  + " your messages and you did not switch it.";
+
 /**
  * When to leave a busy branch, in the form the user chose: `ask` offers the
  * move and waits, `auto` moves first and says so. Stated in every session with
@@ -98,15 +151,14 @@ export const SESSION_LINK_GUIDANCE = "When the user gives you an issue or a chan
  * ../agent-tool/runtime.js). Change both together.
  */
 export const WORKTREE_MOVE_GUIDANCE = {
-  ask: "When the user hands you a new task in a checkout whose branch already carries"
-    + " an open pull request or uncommitted changes that are not yours, offer to move"
-    + " this session into a new worktree with the openchamber tool's"
+  ask: "Before you change files for a task in a checkout whose branch is someone else's"
+    + " work, offer to move this session into a new worktree with the openchamber tool's"
     + " session.moveToWorktree and wait for the user's yes; move at once only when the"
-    + " user asked for a worktree themselves.",
-  auto: "When the user hands you a new task in a checkout whose branch already carries"
-    + " an open pull request or uncommitted changes that are not yours, first move this"
-    + " session into a new worktree with the openchamber tool's session.moveToWorktree,"
-    + " without asking, and tell the user in one line where the work now lives.",
+    + " user asked for a worktree themselves." + SOMEONE_ELSES_BRANCH,
+  auto: "Before you change files for a task in a checkout whose branch is someone else's"
+    + " work, first move this session into a new worktree with the openchamber tool's"
+    + " session.moveToWorktree, without asking, and tell the user in one line where the"
+    + " work now lives." + SOMEONE_ELSES_BRANCH,
 };
 
 /**
@@ -188,8 +240,10 @@ export const KNOWLEDGE_HEADER = 'Standing context for this session, added by Ope
   + ' It is background, not a request: act on the user\'s messages, and carry on'
   + ' with any task already in progress.';
 
-export const buildKnowledgeText = ({ notes, plans, memory, linking = false, worktreeMove = 'off', rendering = false }) => {
+export const buildKnowledgeText = ({ notes, plans, memory, linking = false, worktreeMove = 'off', rendering = false, checkoutNotice = '' }) => {
   const blocks = [
+    // First, so a block cut at the length budget never loses it.
+    checkoutNotice,
     buildPinnedBlock({ notes, plans }),
     buildMemoryBlock(memory),
     linking ? SESSION_LINK_GUIDANCE : '',
@@ -215,6 +269,9 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
     // Whether that tool moves a session into a worktree unasked (the setting);
     // read only when the tool is there.
     isWorktreeMoveWithoutAsking = null,
+    // The branch checked out in a directory, or null when there is none to
+    // name; read only while the worktree rule is told.
+    readCheckoutBranch = null,
     // Whether this session's agent has the `openchamber_render` tool.
     isPageRenderingAvailable = async () => false,
     // Pins and the delivered-signature cursor live in OpenChamber's own session
@@ -307,10 +364,14 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
       ? await Promise.resolve(isWorktreeMoveWithoutAsking()).catch(() => false)
       : false;
     const worktreeMove = linking ? (unasked ? 'auto' : 'ask') : 'off';
+    const branch = worktreeMove !== 'off' && directory && readCheckoutBranch
+      ? await Promise.resolve(readCheckoutBranch(directory)).catch(() => null)
+      : null;
+    const checkout = branch ? { directory, branch } : null;
 
     const rendering = await Promise.resolve(isPageRenderingAvailable()).catch(() => false);
 
-    return { notes, plans, memory, linking, worktreeMove, rendering };
+    return { notes, plans, memory, linking, worktreeMove, rendering, checkout };
   };
 
   /**
@@ -371,11 +432,24 @@ export const createSessionKnowledgeRuntime = (dependencies) => {
    */
   const resolvePending = async (directory, deliveredSignature, pins = { notes: [], plans: [] }) => {
     const collected = await collect(directory, pins);
-    const signature = buildKnowledgeSignature(collected);
+    const previous = readCheckoutSignature(deliveredSignature);
+    // A branch that could not be read is no news: the session keeps what it
+    // was last told, rather than being sent everything again.
+    const checkout = collected.worktreeMove === 'off' ? null : (collected.checkout ?? previous);
+    const signature = buildKnowledgeSignature({ ...collected, checkout });
     if (!signature || signature === deliveredSignature) {
       return { text: '', signature };
     }
-    return { text: buildKnowledgeText(collected), signature };
+    const checkoutNotice = describeCheckout(previous, checkout);
+    // Only the branch changed: say that, with the rule it calls for, and leave
+    // out what the session already carries.
+    if (checkoutNotice && withoutCheckout(signature) === withoutCheckout(deliveredSignature)) {
+      return {
+        text: [KNOWLEDGE_HEADER, checkoutNotice, WORKTREE_MOVE_GUIDANCE[collected.worktreeMove]].join('\n\n'),
+        signature,
+      };
+    }
+    return { text: buildKnowledgeText({ ...collected, checkoutNotice }), signature };
   };
 
   /**

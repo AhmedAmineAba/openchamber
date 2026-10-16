@@ -160,6 +160,8 @@ both settings are `false`.
   the managed config like the other tool settings and the running OpenCode
   reads the new description. The session context carries the same rule
   (`../session-knowledge/`, `WORKTREE_MOVE_GUIDANCE`); change both together.
+  The session context also names the branch and says when it switched between
+  the agent's messages, which the agent cannot see for itself.
 - A rule about when to act belongs where the model reads it before choosing a
   tool: the head of the tool description and, when it must hold in every
   session, the session context (`../session-knowledge/`). An action's

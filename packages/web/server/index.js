@@ -132,7 +132,7 @@ import { readIdleStopSetting, startIdleStop } from './lib/spaces/idle-stop.js';
 import { dockerHostOf } from './lib/spaces/places/ssh-host.js';
 import { SPACE_IDLE_EXIT_CODE } from './lib/spaces/layout.js';
 import { createSwitchController, registerSpaceRoutes } from './lib/spaces/routes.js';
-import { configureGitEnvironment, resolvePrimaryWorktreeRoot } from './lib/git/service.js';
+import { configureGitEnvironment, getCheckedOutBranch, resolvePrimaryWorktreeRoot } from './lib/git/service.js';
 import { createEnvironmentStore } from './lib/environment/store.js';
 import { createEnvironmentRuntime } from './lib/environment/runtime.js';
 import { readOpenCodeServiceEnv } from './lib/environment/opencode-service-env.js';
@@ -1025,6 +1025,7 @@ const sessionKnowledgeRuntime = createSessionKnowledgeRuntime({
     const settings = await readSettingsFromDiskMigrated().catch(() => null);
     return settings?.agentWorktreeMoveWithoutAsking === true;
   },
+  readCheckoutBranch: getCheckedOutBranch,
   isPageRenderingAvailable: async () => {
     if (isExternalOpenCode || ENV_SKIP_OPENCODE_START) return false;
     const settings = await readSettingsFromDiskMigrated().catch(() => null);

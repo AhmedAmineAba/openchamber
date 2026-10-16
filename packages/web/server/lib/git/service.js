@@ -2915,6 +2915,21 @@ export async function getTrackingBranch(directory) {
   return tracking || null;
 }
 
+/**
+ * Short name of the checked-out branch, or `null` when HEAD is detached, the
+ * directory is not a repository, or git fails. Reads one ref: it runs on every
+ * message a session sends.
+ */
+export async function getCheckedOutBranch(directory) {
+  const normalizedDirectory = normalizeDirectoryPath(directory);
+  if (!normalizedDirectory) {
+    return null;
+  }
+  const head = await runGitCommand(normalizedDirectory, ['symbolic-ref', '--quiet', '--short', 'HEAD']);
+  const branch = head.success ? head.stdout.trim() : '';
+  return branch || null;
+}
+
 // Whether `sha` is reachable from the checked-out HEAD. An object git has never
 // fetched fails the same way an unrelated commit does: not an ancestor.
 export async function isAncestorOfHead(directory, sha) {

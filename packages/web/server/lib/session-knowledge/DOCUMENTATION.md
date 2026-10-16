@@ -102,14 +102,31 @@ is sent once and again after compaction.
 
 ## When to move into a worktree
 
-The same session is told when to leave a busy branch: a new task on a checkout
-whose branch already carries an open pull request or changes that are not the
-agent's. The form follows the `agentWorktreeMoveWithoutAsking` setting
-(`WORKTREE_MOVE_GUIDANCE.ask` offers the move and waits, `.auto` moves first and
-says so), read through `isWorktreeMoveWithoutAsking` and only while the tool is
-there. It is part of the signature (`w:ask`, `w:auto`), so flipping the setting
-re-sends the rule. The tool description carries the same text
+The same session is told when to leave a busy branch: before it changes files
+on a branch that is someone else's work, one that carries an open pull request
+or changes that are not the agent's, or that switched between its messages
+without the agent switching it. The form follows the
+`agentWorktreeMoveWithoutAsking` setting (`WORKTREE_MOVE_GUIDANCE.ask` offers
+the move and waits, `.auto` moves first and says so), read through
+`isWorktreeMoveWithoutAsking` and only while the tool is there. It is part of
+the signature (`w:ask:2`, `w:auto:2`, versioned with the text), so flipping the
+setting re-sends the rule. The tool description carries the same text
 (`../agent-tool/runtime.js`, `WORKTREE_MOVE_RULES`); change both together.
+
+The rule alone went unused: in the first days no agent called the move, and one
+went on editing on a branch another session had switched the shared checkout
+to while it was talking with the user. Nothing it could see said the branch had
+changed. So while the rule is told, the session also hears where it works.
+`readCheckoutBranch` reads the checked-out branch on every send, and the
+signature carries it with the directory (`c:<directory>:<branch>`, both
+URI-encoded). The first send in a directory names the branch. A later send on
+which the branch differs from the delivered one says it switched, and when
+nothing else changed the message is just that notice and the rule, without the
+rest of the block. A move to another directory names the new branch rather
+than reporting a switch, since the session itself moved. A branch that cannot
+be read, detached HEAD included, keeps the delivered entry: an unreadable branch
+is not news, and dropping it would re-send the whole block. The notice leads
+the block, so the length budget never cuts it.
 
 ## When to draw a page
 

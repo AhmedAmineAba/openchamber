@@ -32,6 +32,7 @@ import {
   getLog,
   getStatus,
   getTrackingBranch,
+  getCheckedOutBranch,
   getWorktrees,
   isGitRepository,
   isPatchEquivalentOfHead,
@@ -5577,6 +5578,26 @@ describe('getTrackingBranch', () => {
     runGit(repo, ['checkout', '--detach']);
     await expect(getTrackingBranch(repo)).resolves.toBeNull();
     await expect(getTrackingBranch(createTempDir())).resolves.toBeNull();
+  });
+});
+
+describe('getCheckedOutBranch', () => {
+  it('names the checked-out branch, and is null when there is none to name', async () => {
+    if (!canRunGit()) return;
+
+    const repo = createTempDir();
+    runGit(repo, ['init', '-b', 'main']);
+    runGit(repo, ['config', 'user.email', 'test@example.com']);
+    runGit(repo, ['config', 'user.name', 'Test User']);
+    runGit(repo, ['commit', '--allow-empty', '-m', 'Initial commit']);
+    await expect(getCheckedOutBranch(repo)).resolves.toBe('main');
+
+    runGit(repo, ['checkout', '-b', 'fix/other-session']);
+    await expect(getCheckedOutBranch(repo)).resolves.toBe('fix/other-session');
+
+    runGit(repo, ['checkout', '--detach']);
+    await expect(getCheckedOutBranch(repo)).resolves.toBeNull();
+    await expect(getCheckedOutBranch(createTempDir())).resolves.toBeNull();
   });
 });
 

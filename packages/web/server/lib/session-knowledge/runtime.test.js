@@ -36,6 +36,7 @@ const createRuntime = (overrides = {}) => {
   };
   if ('isWorktreeMoveWithoutAsking' in overrides) dependencies.isWorktreeMoveWithoutAsking = overrides.isWorktreeMoveWithoutAsking;
   if ('isPageRenderingAvailable' in overrides) dependencies.isPageRenderingAvailable = overrides.isPageRenderingAvailable;
+  if ('readCheckoutBranch' in overrides) dependencies.readCheckoutBranch = overrides.readCheckoutBranch;
   return createSessionKnowledgeRuntime(dependencies);
 };
 
@@ -67,7 +68,7 @@ describe('when to link', () => {
 
     // The worktree rule rides with the tool, in its asking form by default.
     expect(text).toBe(`${KNOWLEDGE_HEADER}\n\n${SESSION_LINK_GUIDANCE}\n\n${WORKTREE_MOVE_GUIDANCE.ask}`);
-    expect(signature).toBe('l:on|w:ask');
+    expect(signature).toBe('l:on|w:ask:2');
     expect((await runtime.resolvePending(DIRECTORY, signature, { notes: [], plans: [] })).text).toBe('');
   });
 
@@ -118,16 +119,120 @@ describe('when to move into a worktree', () => {
     for (const isWorktreeMoveWithoutAsking of [undefined, async () => false, async () => { throw new Error('settings unreadable'); }]) {
       const { text, signature } = await runtimeWith({ isWorktreeMoveWithoutAsking }).resolvePending(DIRECTORY, '', { notes: [], plans: [] });
       expect(text).toBe(`${KNOWLEDGE_HEADER}\n\n${SESSION_LINK_GUIDANCE}\n\n${WORKTREE_MOVE_GUIDANCE.ask}`);
-      expect(signature).toBe('l:on|w:ask');
+      expect(signature).toBe('l:on|w:ask:2');
     }
   });
 
   test('moves unasked when the user chose that, and the change re-sends the rule', async () => {
     const runtime = runtimeWith({ isWorktreeMoveWithoutAsking: async () => true });
-    const { text, signature } = await runtime.resolvePending(DIRECTORY, 'l:on|w:ask', { notes: [], plans: [] });
+    const { text, signature } = await runtime.resolvePending(DIRECTORY, 'l:on|w:ask:2', { notes: [], plans: [] });
     expect(text).toContain(WORKTREE_MOVE_GUIDANCE.auto);
     expect(text).not.toContain(WORKTREE_MOVE_GUIDANCE.ask);
-    expect(signature).toBe('l:on|w:auto');
+    expect(signature).toBe('l:on|w:auto:2');
+  });
+
+  test('sessions told the earlier rule hear the new one', async () => {
+    const { text } = await runtimeWith({}).resolvePending(DIRECTORY, 'l:on|w:ask', { notes: [], plans: [] });
+    expect(text).toContain(WORKTREE_MOVE_GUIDANCE.ask);
+  });
+});
+
+describe('which branch the session works on', () => {
+  const NO_PINS = { notes: [], plans: [] };
+  const runtimeOn = (branches) => {
+    const reads = [];
+    const runtime = createRuntime({
+      isSessionLinkingAvailable: async () => true,
+      isAgentMemoryEnabled: async () => false,
+      projectContextRuntime: { readContext: async () => ({ notes: [note()], todos: [], plans: [] }) },
+      readCheckoutBranch: async (directory) => {
+        reads.push(directory);
+        const branch = branches.shift();
+        if (branch instanceof Error) throw branch;
+        return branch;
+      },
+    });
+    return { runtime, reads };
+  };
+
+  test('the first send names the branch, ahead of the rest of the block', async () => {
+    const { runtime } = runtimeOn(['main']);
+    const { text, signature } = await runtime.resolvePending(DIRECTORY, '', PINS);
+
+    expect(text.startsWith(`${KNOWLEDGE_HEADER}\n\nThe checkout this session works in is on branch \`main\`.\n\n`)).toBe(true);
+    expect(text).toContain('Pinned note body.');
+    expect(signature).toBe(`c:${encodeURIComponent(DIRECTORY)}:main|l:on|n:n1:1|w:ask:2`);
+  });
+
+  test('the same branch is nothing new', async () => {
+    const { runtime } = runtimeOn(['main', 'main']);
+    const first = await runtime.resolvePending(DIRECTORY, '', PINS);
+    expect((await runtime.resolvePending(DIRECTORY, first.signature, PINS)).text).toBe('');
+  });
+
+  test('a branch switched under the session is told alone, with the rule it calls for', async () => {
+    const { runtime } = runtimeOn(['main', 'fix/other-session']);
+    const first = await runtime.resolvePending(DIRECTORY, '', PINS);
+    const { text, signature } = await runtime.resolvePending(DIRECTORY, first.signature, PINS);
+
+    expect(text).toBe([
+      KNOWLEDGE_HEADER,
+      'The checkout this session works in switched from branch `main` to `fix/other-session` since'
+        + ' your previous message. If you did not switch it, another session or the user did, and'
+        + ' the branch is their work.',
+      WORKTREE_MOVE_GUIDANCE.ask,
+    ].join('\n\n'));
+    expect(text).not.toContain('Pinned note body.');
+    expect(signature).toContain(`c:${encodeURIComponent(DIRECTORY)}:${encodeURIComponent('fix/other-session')}`);
+  });
+
+  test('a switch that comes with other news rides the full block', async () => {
+    const { runtime } = runtimeOn(['main', 'feature']);
+    const first = await runtime.resolvePending(DIRECTORY, '', { notes: [], plans: [] });
+    const { text } = await runtime.resolvePending(DIRECTORY, first.signature, PINS);
+
+    expect(text).toContain('switched from branch `main` to `feature`');
+    expect(text).toContain('Pinned note body.');
+  });
+
+  test('a session that moved to another directory hears its new branch, not a switch', async () => {
+    const { runtime } = runtimeOn(['main', 'feat/moved']);
+    const first = await runtime.resolvePending(DIRECTORY, '', NO_PINS);
+    const { text } = await runtime.resolvePending('/work/project-worktree', first.signature, NO_PINS);
+
+    expect(text).toBe([
+      KNOWLEDGE_HEADER,
+      'The checkout this session works in is on branch `feat/moved`.',
+      WORKTREE_MOVE_GUIDANCE.ask,
+    ].join('\n\n'));
+  });
+
+  test('a branch that cannot be read keeps what the session was told', async () => {
+    for (const unreadable of [null, new Error('git failed')]) {
+      const { runtime } = runtimeOn(['main', unreadable]);
+      const first = await runtime.resolvePending(DIRECTORY, '', PINS);
+      const again = await runtime.resolvePending(DIRECTORY, first.signature, PINS);
+      expect(again).toEqual({ text: '', signature: first.signature });
+    }
+  });
+
+  test('a branch name with separators survives the signature', async () => {
+    const { runtime } = runtimeOn(['odd|name:x', 'odd|name:x']);
+    const first = await runtime.resolvePending(DIRECTORY, '', NO_PINS);
+    expect((await runtime.resolvePending(DIRECTORY, first.signature, NO_PINS)).text).toBe('');
+  });
+
+  test('is not read without the tool', async () => {
+    const reads = [];
+    const runtime = createRuntime({
+      isSessionLinkingAvailable: async () => false,
+      readCheckoutBranch: async (directory) => { reads.push(directory); return 'main'; },
+    });
+    const { text, signature } = await runtime.resolvePending(DIRECTORY, '', PINS);
+
+    expect(reads).toEqual([]);
+    expect(text).not.toContain('The checkout this session works in');
+    expect(signature).not.toContain('c:');
   });
 });
 
