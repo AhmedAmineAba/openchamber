@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Popover } from '@base-ui/react/popover';
 import { cn } from '@/lib/utils';
 import { dropdownMenuPopupClass } from '@/components/ui/dropdown-menu.styles';
+import { commandSearchAtBottomClass, usePopupSideOnOpen } from '@/components/ui/popup-side';
 import {
     Command,
     CommandInput,
@@ -45,7 +46,6 @@ import { useKeybind } from '@/hooks/useKeybind';
 import type { Theme } from '@/types/theme';
 import { normalizePath } from '../attachments/filePaths';
 import { getProjectDisplayLabel, type DraftTargetProject } from '../state/useDraftTarget';
-import { choosePickerPopupSide } from './pickerPopupSide';
 
 interface BranchOption {
     value: string;
@@ -178,20 +178,9 @@ function DraftTargetSelectorsView(props: DraftTargetProps) {
         setProjectPortalContainer(dialog instanceof HTMLElement ? dialog : null);
         setProjectCollisionBoundary(element?.closest('main') ?? null);
     }, []);
-    // The open picker's side, chosen on every open before paint, whether a
-    // click or a shortcut opened it.
-    const [pickerPopupSide, setPickerPopupSide] = React.useState<'top' | 'bottom'>('bottom');
-    React.useLayoutEffect(() => {
-        const trigger = openPicker === 'project' ? projectTriggerRef.current
-            : openPicker === 'worktree' ? worktreeTriggerRef.current
-            : null;
-        if (!trigger) return;
-        const main = trigger.closest('main')?.getBoundingClientRect();
-        setPickerPopupSide(choosePickerPopupSide(trigger.getBoundingClientRect(), {
-            top: Math.max(main?.top ?? 0, 0),
-            bottom: Math.min(main?.bottom ?? window.innerHeight, window.innerHeight),
-        }));
-    }, [openPicker]);
+    // Each picker picks its side when it opens and keeps it while open.
+    const projectPopupSide = usePopupSideOnOpen(openPicker === 'project', projectTriggerRef);
+    const worktreePopupSide = usePopupSideOnOpen(openPicker === 'worktree', worktreeTriggerRef);
     // The popover owns no shortcut suspension (unlike Select/DropdownMenu
     // wrappers), so suspend global shortcuts while the project popup is
     // open and restore them on close/unmount.
@@ -344,7 +333,7 @@ function DraftTargetSelectorsView(props: DraftTargetProps) {
                         shared popup class, so the list scrolls within the
                         space on the chosen side. */}
                     <Popover.Positioner
-                        side={pickerPopupSide}
+                        side={projectPopupSide}
                         align="start"
                         sideOffset={4}
                         collisionAvoidance={{ side: 'none' }}
@@ -366,7 +355,7 @@ function DraftTargetSelectorsView(props: DraftTargetProps) {
                                     'min-h-0 flex-1',
                                     // Upward: the search field goes to the bottom, next to
                                     // the trigger, with its divider above it.
-                                    pickerPopupSide === 'top' && 'flex-col-reverse [&_[data-slot=command-input-wrapper]]:border-b-0 [&_[data-slot=command-input-wrapper]]:border-t',
+                                    projectPopupSide === 'top' && commandSearchAtBottomClass,
                                 )}
                                 shouldFilter={false}
                                 value={projectActiveId ?? undefined}
@@ -463,7 +452,7 @@ function DraftTargetSelectorsView(props: DraftTargetProps) {
                             </TooltipContent>
                         ) : null}
                     </Tooltip>
-                    <SelectContent side={pickerPopupSide} align="start" sideOffset={4} collisionAvoidance={{ side: 'none' }} constrainToMain className="w-max min-w-48" onKeyDown={handlePickerKeyDown} finalFocus={getFinalFocus}>
+                    <SelectContent side={worktreePopupSide} align="start" sideOffset={4} collisionAvoidance={{ side: 'none' }} constrainToMain className="w-max min-w-48" onKeyDown={handlePickerKeyDown} finalFocus={getFinalFocus}>
                         {projectRootBranchOption ? (
                             <SelectGroup>
                                 <SelectLabel>{t('chat.chatInput.projectRoot')}</SelectLabel>

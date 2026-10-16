@@ -76,13 +76,14 @@ Using a control must not shift anything the user did not touch.
   matches what it stands in for; hover actions fade in over reserved space.
 - **Collapse and expand** move only what is below them; the clicked header
   stays under the pointer.
-- **Popups open where they fit.** A dropdown, select or picker opens toward
-  the side with room for its options, never into a two-row sliver: a trigger
-  near the window's bottom (Mini Chat, a bottom composer) opens upward. Pick the
-  side once per open and keep it while open; a search field stays on the
-  trigger's edge. `choosePickerPopupSide` in the composer's draft pickers is
-  the reference. Check every popup in the smallest window that shows it,
-  Mini Chat included.
+- **Popups open where they fit.** Every dropdown, select, menu or picker
+  opens toward the side with room for its options, never into a sliver at the
+  window's edge (Mini Chat, a composer at the bottom or top). Base UI flips to
+  the roomier side by default; keep that. A popup that must hold its side
+  while open (a search field that stays put while results filter) turns flips
+  off and takes its side from `usePopupSideOnOpen` (`components/ui/popup-side.ts`),
+  with its search field on the trigger's edge. Check every popup in the
+  smallest window that shows it.
 
 ## Vertical space: content gets the height
 
