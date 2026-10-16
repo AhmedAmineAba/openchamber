@@ -593,7 +593,8 @@ and the send path reading the same grammar.
   the directory shows up as a known branch. The pin stops only the app. A pick
   in the project or worktree picker always applies and clears it, because a
   project without git never lists a branch and its pin never clears by itself.
-  Only a worktree still being created (`pendingWorktreeRequestId`,
+  Re-picking what a pinned draft already shows changes nothing, so one click
+  cannot drop an unlisted space or worktree directory. Only a worktree still being created (`pendingWorktreeRequestId`,
   `bootstrapPendingDirectory`) keeps both pickers inert. The hook also owns the
   advisory dirty state for the selected directory, clearing it as soon as the
   target changes so a warning never names a previous branch.

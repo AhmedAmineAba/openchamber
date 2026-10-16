@@ -348,6 +348,11 @@ export function useDraftTarget(enabled: boolean) {
         if (!project) {
             return;
         }
+        // Re-picking the shown project would move a pinned space or worktree
+        // draft to the project root, so it changes nothing.
+        if (draft?.preserveDirectoryOverride && projectId === selectedDraftProject?.id) {
+            return;
+        }
         releaseDraftDirectoryPin();
         if (project.kind === 'chat') {
             setNewSessionDraftTarget({ projectId: CHAT_DRAFT_PROJECT_ID, directoryOverride: null }, { force: true });
@@ -360,7 +365,7 @@ export function useDraftTarget(enabled: boolean) {
             projectId,
             directoryOverride: project.path,
         }, { force: true });
-    }, [activeProjectId, projects, setActiveProjectIdOnly, setNewSessionDraftTarget]);
+    }, [activeProjectId, projects, selectedDraftProject?.id, setActiveProjectIdOnly, setNewSessionDraftTarget]);
 
     const handleDraftDirectoryChange = React.useCallback((directory: string) => {
         const draft = useSessionUIStore.getState().newSessionDraft;
@@ -370,12 +375,17 @@ export function useDraftTarget(enabled: boolean) {
         if (!selectedDraftProject) {
             return;
         }
+        // Without its pin an unlisted directory leaves the list and the draft
+        // snaps to the project root, so re-picking it changes nothing.
+        if (draft?.preserveDirectoryOverride && normalizePath(directory) === selectedDraftDirectory) {
+            return;
+        }
         releaseDraftDirectoryPin();
         setNewSessionDraftTarget({
             projectId: selectedDraftProject.id,
             directoryOverride: directory,
         }, { force: true });
-    }, [selectedDraftProject, setNewSessionDraftTarget]);
+    }, [selectedDraftDirectory, selectedDraftProject, setNewSessionDraftTarget]);
     return {
         projects,
         selectedDraftProject,
