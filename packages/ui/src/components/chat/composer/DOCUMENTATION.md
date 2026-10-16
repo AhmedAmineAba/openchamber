@@ -587,19 +587,31 @@ and the send path reading the same grammar.
   including for **Insert and send**, and a toast says where it went.
 - `state/useDraftTarget.ts` — the draft can target a directory that does not
   exist yet (a worktree being created). It must survive not appearing in the
-  branch list, or the selector snaps back to the project root mid-creation. It
-  also owns the advisory dirty state for the selected directory, clearing it as
-  soon as the target changes so a warning never names a previous branch.
+  branch list, or the selector snaps back to the project root mid-creation. A
+  draft opened on a given directory (Mini Chat, a worktree or space row) pins
+  it with `preserveDirectoryOverride`: the app does not move the draft until
+  the directory shows up as a known branch. The pin stops only the app. A pick
+  in the project or worktree picker always applies and clears it, because a
+  project without git never lists a branch and its pin never clears by itself.
+  Re-picking what a pinned draft already shows changes nothing, so one click
+  cannot drop an unlisted space or worktree directory. Only a worktree still being created (`pendingWorktreeRequestId`,
+  `bootstrapPendingDirectory`) keeps both pickers inert. The hook also owns the
+  advisory dirty state for the selected directory, clearing it as soon as the
+  target changes so a warning never names a previous branch.
 - `ui/DraftTargetSelectors.tsx` owns the controlled project/worktree picker
   state and registers its application shortcuts locally. The desktop project
   picker is a searchable popup: it ranks the current projects with
   `rankByQuery` over display label and path, keeps the query and the active
   result as transient local state that resets on every close, and commits
   through the existing project-change flow only on explicit activation.
-  Filtering changes the result area below the anchored input without moving
-  the search field. The worktree picker remains a Select; mobile keeps its
-  bottom sheets. Both end with the two ways to make a worktree: **Quick
-  worktree** (`createWorktreeDraft`, auto-named, at once) and **New worktree…**,
+  Filtering changes the result area beyond the anchored input without moving
+  the search field. When less than 240px is left under the trigger and more
+  is above it, as in Mini Chat where the picker sits near the window's bottom,
+  the popup opens upward with the search field at its bottom, next to the
+  trigger, and the results above it. The side is chosen once per open
+  (`ui/projectPopupSide.ts`) and never flips while open. The worktree picker
+  remains a Select; mobile keeps its bottom sheets. Both end with the two
+  ways to make a worktree: **Quick worktree** (`createWorktreeDraft`, auto-named, at once) and **New worktree…**,
   which opens `NewWorktreeDialog` for the draft's own project. `ChatInput` hosts
   that dialog, like the isolated-space one, because Timeline has no project
   headers to open it from; a plain worktree pins the draft to the new
