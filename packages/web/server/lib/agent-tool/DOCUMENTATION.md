@@ -155,7 +155,12 @@ both settings are `false`.
   go along; nothing else moves. The head of the tool description introduces
   the move (`WORKTREE_MOVE_INTRO`): what it does, when a checkout looks busy,
   and that whether to use it depends on how the user works, so the agent asks
-  first unless the request already calls for separate work. It is an
+  first unless the request already calls for separate work. It also says
+  why to prefer it over `git worktree add` (the session moves along) and
+  over OpenCode's own `worktree_create` with `session_move`, which OpenCode
+  suggests in every session: that one checks out a detached copy of the
+  current commit, so on someone else's branch it starts from their commits,
+  and carries no files. It is an
   introduction on purpose. It used to be a rule in every session, with a
   setting to move unasked, and that made one person's workflow everybody's.
   The session context names the branch (`../session-knowledge/`), and

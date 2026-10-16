@@ -281,6 +281,8 @@ describe('managed agent tool runtime', () => {
 
     expect(tool.openchamber.description).toContain('Whether that fits depends on how the user works');
     expect(tool.openchamber.description).toContain('such as a pull request of its own');
+    // OpenCode's own worktree_create makes a detached copy of the current commit.
+    expect(tool.openchamber.description).toContain('Unlike worktree_create, it makes a new branch from the default branch');
     expect(tool.openchamber.description).not.toContain('without asking');
     expect(tool.openchamber.input.properties.action.oneOf.map((entry) => entry.const)).toContain('session.moveToWorktree');
     expect(tool.openchamber.input.properties.parameters.properties.carry).toEqual(expect.objectContaining({ type: 'array' }));
