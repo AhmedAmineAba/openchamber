@@ -2662,6 +2662,20 @@ describe('GET /api/fs/find-in-files', () => {
     expect(unignored.body.matches.map((match) => match.relativePath)).toContain('ignored.log');
   });
 
+  it('builds result paths under the root the client asked for when it is a symlink', async () => {
+    const link = `${repo}-link`;
+    await nativeFs.symlink(repo, link);
+    try {
+      const ask = await register({
+        resolveProjectDirectory: async () => ({ directory: repo, requestedDirectory: link }),
+      });
+      const res = await ask({ query: 'first' });
+      expect(res.body.matches.map((match) => match.path)).toEqual([path.join(link, 'src/a.ts')]);
+    } finally {
+      await rm(link, { force: true });
+    }
+  });
+
   it('rejects an empty query and an invalid regular expression', async () => {
     const ask = await register();
     expect((await ask({ query: '   ' })).statusCode).toBe(400);

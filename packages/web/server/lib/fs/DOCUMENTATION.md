@@ -72,7 +72,10 @@ is the 1-based position of the first match in the original line, `text` is the
 line without indentation, cut to at most 200 characters, and `ranges` are
 `[start, end)` offsets inside `text` (UTF-16 code units, converted from
 ripgrep's byte offsets). A match more than 48 characters into a line is shown
-with 24 characters before it and `cutStart: true`. Matches are sorted by path,
+with 24 characters before it and `cutStart: true`. ripgrep runs in the
+canonical project directory, but `path` is built under the directory the client
+requested (`requestedDirectory`), so a project opened through a symlink gets the
+same paths as its file tree. Matches are sorted by path,
 then line.
 
 `limit` defaults to 200 and is capped at 500; when it is reached the process

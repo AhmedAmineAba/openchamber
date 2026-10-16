@@ -1048,6 +1048,7 @@ export const registerFsRoutes = (app, dependencies) => {
     const abort = new AbortController();
     res.on('close', () => abort.abort());
     const result = await contentSearch.searchFileContents(project.directory, {
+      resultRoot: project.requestedDirectory,
       query,
       regex: req.query.regex === 'true',
       limit,

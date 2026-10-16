@@ -339,7 +339,8 @@ jobs:
         run: |
           bun run prepare:opencode-cli
           bun run verify:opencode-cli
-          bun run prepare:ripgrep
+          # Windows arm64 builds on an x64 runner; ripgrep needs the target arch.
+          OPENCHAMBER_TARGET_ARCH=${{ matrix.arch }} bun run prepare:ripgrep
 
       - name: Bundle main process
         working-directory: packages/electron

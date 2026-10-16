@@ -139,7 +139,11 @@ export const createContentSearchRuntime = ({
    *   `{ status: 'failed', message }` for any other failure,
    *   `{ status: 'aborted' }` when the caller's signal fired first.
    */
+  // ripgrep runs in `rootPath`; result paths are built under
+  // `options.resultRoot` when given, the root as the client addresses it,
+  // which differs from the canonical one when the project sits behind a symlink.
   const searchFileContents = async (rootPath, options) => {
+    const resultRoot = options.resultRoot || rootPath;
     const binary = await resolveRipgrepBinary();
     if (!binary) return { status: 'unavailable' };
     if (options.signal?.aborted) return { status: 'aborted' };
@@ -165,7 +169,7 @@ export const createContentSearchRuntime = ({
       let settled = false;
       let stderr = '';
       const stdoutDecoder = new StringDecoder('utf8');
-      let pending = '';
+      let pending = [];
 
       const finish = (result) => {
         if (settled) return;
@@ -191,7 +195,7 @@ export const createContentSearchRuntime = ({
         const relativePath = toRelativePath(pathBytes.toString('utf8'));
         if (!relativePath) return;
         matches.push({
-          path: path.join(rootPath, relativePath),
+          path: path.join(resultRoot, relativePath),
           relativePath,
           line,
           ...buildPreview(lineBytes, submatches),
@@ -213,14 +217,21 @@ export const createContentSearchRuntime = ({
         if (match) takeMatch(match);
       };
 
+      // A single line can be tens of megabytes (a minified file). The pieces
+      // of an unfinished line wait in a list and only the new chunk is
+      // scanned, so a long line costs one join instead of a rescan per chunk.
       child.stdout.on('data', (chunk) => {
-        pending += stdoutDecoder.write(chunk);
-        let newline = pending.indexOf('\n');
+        const text = stdoutDecoder.write(chunk);
+        let lineStart = 0;
+        let newline = text.indexOf('\n');
         while (newline !== -1) {
-          consume(pending.slice(0, newline));
-          pending = pending.slice(newline + 1);
-          newline = pending.indexOf('\n');
+          pending.push(text.slice(lineStart, newline));
+          consume(pending.join(''));
+          pending = [];
+          lineStart = newline + 1;
+          newline = text.indexOf('\n', lineStart);
         }
+        if (lineStart < text.length) pending.push(text.slice(lineStart));
       });
       // Read stderr to the end: an unread pipe can block ripgrep forever.
       child.stderr.on('data', (chunk) => {
@@ -232,7 +243,8 @@ export const createContentSearchRuntime = ({
           finish({ status: 'aborted' });
           return;
         }
-        consume(pending + stdoutDecoder.end());
+        pending.push(stdoutDecoder.end());
+        consume(pending.join(''));
         matches.sort((a, b) => (a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : a.line - b.line));
         // 0: matches, 1: none, 2: an error. ripgrep also exits 2 after a
         // search that produced matches but could not read every file.

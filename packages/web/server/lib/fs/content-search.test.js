@@ -132,7 +132,7 @@ describe('content search with ripgrep', () => {
 
 // A ripgrep that keeps running until killed, for the paths real searches
 // finish too fast to exercise.
-const createHangingSpawn = ({ stdoutLines = [], stderr = '', exitCode = null } = {}) => {
+const createHangingSpawn = ({ stdoutLines = [], stdoutChunks = [], stderr = '', exitCode = null } = {}) => {
   const children = [];
   const spawnFake = vi.fn(() => {
     const child = new EventEmitter();
@@ -147,6 +147,7 @@ const createHangingSpawn = ({ stdoutLines = [], stderr = '', exitCode = null } =
     children.push(child);
     queueMicrotask(() => {
       for (const line of stdoutLines) child.stdout.emit('data', Buffer.from(`${line}\n`));
+      for (const chunk of stdoutChunks) child.stdout.emit('data', Buffer.from(chunk));
       if (stderr) child.stderr.emit('data', Buffer.from(stderr));
       if (exitCode !== null) child.emit('close', exitCode, null);
     });
@@ -188,6 +189,15 @@ describe('content search process control', () => {
     expect(result.stopped).toBe('deadline');
     expect(result.matches.map((match) => match.relativePath)).toEqual(['a.txt']);
     expect(children[0].killed).toBe(true);
+  });
+
+  it('reads a match event split across many chunks', async () => {
+    const event = matchEvent('long.min.js', 1, `x${'y'.repeat(100_000)}`);
+    const stdoutChunks = `${event}\n${event}\n`.match(/[\s\S]{1,4096}/g);
+    const { spawn: spawnFake } = createHangingSpawn({ stdoutChunks, exitCode: 0 });
+    const runtime = createContentSearchRuntime({ spawn: spawnFake, path, resolveRipgrepBinary });
+    const result = await runtime.searchFileContents('/root', { query: 'x', regex: false });
+    expect(result.matches.map((match) => match.relativePath)).toEqual(['long.min.js', 'long.min.js']);
   });
 
   it('passes the ripgrep flags the options ask for', async () => {

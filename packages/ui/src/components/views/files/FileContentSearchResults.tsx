@@ -63,7 +63,10 @@ export const FileContentSearchResults: React.FC<Props> = ({ state, selectedPath,
   }
 
   if (state.matches.length === 0) {
-    return <Note>{t('sidebarFilesTree.contentSearch.empty')}</Note>;
+    // A search cut short by the deadline found nothing yet; that is not "no matches".
+    return state.stopped === 'deadline'
+      ? <Note>{t('sidebarFilesTree.contentSearch.deadline')}</Note>
+      : <Note>{t('sidebarFilesTree.contentSearch.empty')}</Note>;
   }
 
   return (

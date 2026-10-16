@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -9,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const electronRoot = path.resolve(__dirname, '..');
 const outputDir = path.join(electronRoot, 'resources', 'ripgrep');
 const cacheRoot = path.join(electronRoot, '.cache', 'ripgrep');
+const lockfilePath = path.resolve(electronRoot, '..', '..', 'bun.lock');
 const require = createRequire(import.meta.url);
 
 /**
@@ -33,6 +35,23 @@ const artifactUrl = (packageName, version) => (
 );
 
 const binaryName = process.platform === 'win32' ? 'rg.exe' : 'rg';
+
+// The archive comes from the network, so it has to be the one `bun.lock`
+// pinned: the lockfile records a sha512 for every platform package, including
+// the ones the build host never installs.
+const readLockedIntegrity = (packageName, version) => {
+  const spec = `"@vscode/${packageName}@${version}"`;
+  const entry = fs.readFileSync(lockfilePath, 'utf8').split('\n').find((line) => line.includes(spec));
+  const integrity = entry ? /"sha512-([A-Za-z0-9+/=]+)"/.exec(entry)?.[1] : null;
+  if (!integrity) {
+    throw new Error(`bun.lock has no sha512 for @vscode/${packageName}@${version}`);
+  }
+  return integrity;
+};
+
+const archiveMatchesLock = (archivePath, integrity) => (
+  createHash('sha512').update(fs.readFileSync(archivePath)).digest('base64') === integrity
+);
 
 const download = async (url, destination) => {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
@@ -79,11 +98,16 @@ const main = async () => {
 
   const cacheDir = path.join(cacheRoot, version, `${process.platform}-${targetArchitecture.node}`);
   const archivePath = path.join(cacheDir, `${packageName}-${version}.tgz`);
-  if (!fs.existsSync(archivePath)) {
+  const integrity = readLockedIntegrity(packageName, version);
+  if (fs.existsSync(archivePath) && archiveMatchesLock(archivePath, integrity)) {
+    console.log(`[electron] using cached ripgrep archive: ${archivePath}`);
+  } else {
     console.log(`[electron] downloading ripgrep: @vscode/${packageName}@${version}`);
     await download(artifactUrl(packageName, version), archivePath);
-  } else {
-    console.log(`[electron] using cached ripgrep archive: ${archivePath}`);
+    if (!archiveMatchesLock(archivePath, integrity)) {
+      fs.rmSync(archivePath, { force: true });
+      throw new Error(`Downloaded @vscode/${packageName}@${version} does not match the sha512 in bun.lock`);
+    }
   }
 
   const extractDir = path.join(cacheDir, 'extract');
@@ -104,6 +128,12 @@ const main = async () => {
     fs.chmodSync(outputBinary, 0o755);
   }
 
+  // A Windows arm64 build runs on an x64 runner, which cannot start an arm64
+  // executable; the lockfile check above already vouches for that archive.
+  if (process.platform === 'win32' && targetArchitecture.node !== process.arch) {
+    console.log(`[electron] prepared ripgrep (@vscode/${packageName}@${version}, not run on this ${process.arch} host): ${outputBinary}`);
+    return;
+  }
   const ripgrepVersion = readRipgrepVersion(outputBinary);
   if (!ripgrepVersion) {
     throw new Error(`Prepared ripgrep does not run: ${outputBinary}`);
