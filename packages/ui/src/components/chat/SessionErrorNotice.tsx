@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ErrorResponseDetails } from '@/components/chat/ErrorResponseDetails';
 import { useI18n } from '@/lib/i18n';
 import { showOpenCodeStatus } from '@/lib/openCodeStatus';
+import { isLocalDiagnosticRuntime } from '@/lib/diagnostics/capture';
 import { getLastConversationMessage, type Message, type Part, type Session, type StructuredError } from '@/lib/opencode/model';
 import { useLatestSessionError } from '@/sync/notification-store';
 import { responseBodyOf, summarizeOpenCodeError } from '@/sync/session-error-log';
@@ -233,7 +234,8 @@ export const SessionErrorNotice: React.FC<SessionErrorNoticeProps> = ({ sessionI
             <div className="mt-1 ps-[1.375rem] typography-meta text-muted-foreground break-words">{visibleText}</div>
           )}
         </LongErrorText>
-        {!hasDetails ? (
+        {/* VS Code and the mobile apps do not mount the diagnostic dialog, and a remote runtime has nothing local to show. */}
+        {!hasDetails && isLocalDiagnosticRuntime() ? (
           <div className="ps-[1.375rem]">
             <Button
               variant="link"
