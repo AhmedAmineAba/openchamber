@@ -179,7 +179,7 @@ const RENDER_PARAMETER_PROPERTIES = {
 // the same rule in every session's context; change both together. The
 // worktree rule follows it for the same reason, in the form the user chose
 // (WORKTREE_MOVE_GUIDANCE there).
-const SOMEONE_ELSES_BRANCH = "The branch is someone else's work when it carries an open pull request or uncommitted changes that are not yours, or when it switched between your messages and you did not switch it. ";
+const SOMEONE_ELSES_BRANCH = "The branch is someone else's work when it carries an open pull request or uncommitted changes that are not yours, or when you are told the branch this session works on changed and you did not switch it. ";
 const WORKTREE_MOVE_RULES = {
   ask: "Before you change files for a task in a checkout whose branch is someone else's work, offer to move this session into a new worktree with session.moveToWorktree and wait for the user's yes; move at once only when the user asked for a worktree themselves. " + SOMEONE_ELSES_BRANCH,
   auto: "Before you change files for a task in a checkout whose branch is someone else's work, first move this session into a new worktree with session.moveToWorktree, without asking, and tell the user in one line where the work now lives. " + SOMEONE_ELSES_BRANCH,
