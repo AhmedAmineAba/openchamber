@@ -44,6 +44,19 @@ export interface DraftTargetProject {
     kind?: 'chat' | 'project';
 }
 
+/**
+ * A pinned directory (`preserveDirectoryOverride`) stops the app from moving
+ * the draft while the directory is unconfirmed; it never overrides the user's
+ * own pick. The pin only clears by itself once the directory shows up as a
+ * known branch, which a project without git never does.
+ */
+function releaseDraftDirectoryPin() {
+    const store = useSessionUIStore.getState();
+    if (store.newSessionDraft?.preserveDirectoryOverride) {
+        store.setDraftPreserveDirectoryOverride(false);
+    }
+}
+
 /** A project's display name, falling back to its directory name. */
 export function getProjectDisplayLabel(project: { label?: string; path: string }): string {
     return project.label?.trim() || formatDirectoryName(project.path);
@@ -328,13 +341,14 @@ export function useDraftTarget(enabled: boolean) {
 
     const handleDraftProjectChange = React.useCallback((projectId: string) => {
         const draft = useSessionUIStore.getState().newSessionDraft;
-        if (draft?.pendingWorktreeRequestId || draft?.bootstrapPendingDirectory || draft?.preserveDirectoryOverride) {
+        if (draft?.pendingWorktreeRequestId || draft?.bootstrapPendingDirectory) {
             return;
         }
         const project = projects.find((entry) => entry.id === projectId);
         if (!project) {
             return;
         }
+        releaseDraftDirectoryPin();
         if (project.kind === 'chat') {
             setNewSessionDraftTarget({ projectId: CHAT_DRAFT_PROJECT_ID, directoryOverride: null }, { force: true });
             return;
@@ -350,12 +364,13 @@ export function useDraftTarget(enabled: boolean) {
 
     const handleDraftDirectoryChange = React.useCallback((directory: string) => {
         const draft = useSessionUIStore.getState().newSessionDraft;
-        if (draft?.pendingWorktreeRequestId || draft?.bootstrapPendingDirectory || draft?.preserveDirectoryOverride) {
+        if (draft?.pendingWorktreeRequestId || draft?.bootstrapPendingDirectory) {
             return;
         }
         if (!selectedDraftProject) {
             return;
         }
+        releaseDraftDirectoryPin();
         setNewSessionDraftTarget({
             projectId: selectedDraftProject.id,
             directoryOverride: directory,
