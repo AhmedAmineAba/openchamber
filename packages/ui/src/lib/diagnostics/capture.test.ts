@@ -32,9 +32,11 @@ describe('local diagnostic runtime', () => {
     }
   });
 
-  test('exports no buffered local events while a remote runtime is active', async () => {
+  test('exports the remote server health and probes without local events, paths or hosts', async () => {
     const originalWindow = globalThis.window;
     const originalResolver = getRuntimeUrlResolver();
+    const originalFetch = globalThis.fetch;
+    const requested: string[] = [];
     try {
       Object.defineProperty(globalThis, 'window', {
         configurable: true,
@@ -43,15 +45,53 @@ describe('local diagnostic runtime', () => {
           __OPENCHAMBER_LOCAL_ORIGIN__: 'http://127.0.0.1:3000',
         },
       });
-      setRuntimeUrlResolver(createRuntimeUrlResolver({ apiBaseUrl: 'http://127.0.0.1:4000' }));
+      setRuntimeUrlResolver(createRuntimeUrlResolver({ apiBaseUrl: 'https://devbox.private-host.example' }));
+      globalThis.fetch = async (input) => {
+        const url = new URL(input instanceof Request ? input.url : input.toString());
+        requested.push(url.pathname);
+        if (url.pathname === '/health') return Response.json({
+          openCodeRunning: false, isOpenCodeReady: false, openCodePort: 4096,
+          opencodeBinarySource: 'path', opencodeLaunchWrapperType: 'bun-shebang',
+          lastOpenCodeError: 'spawn /home/private-user/.bun/bin/opencode ENOENT',
+          lastOpenCodeHealthFailure: { at: new Date().toISOString(), class: 'connection_refused' },
+        });
+        if (url.pathname === '/api/info') return Response.json({ version: '2.0.31', paths: { home: '/home/private-user' } });
+        return new Response('upstream secret-123', { status: 503 });
+      };
       clearDiagnosticEvents();
-      recordDiagnosticEvent({ at: Date.now(), source: 'private', action: 'private data' });
+      recordDiagnosticEvent({ at: Date.now(), source: 'ui', action: 'private local event' });
+      recordSessionError({ sessionId: 'ses_privateR', directory: '/private/path-R', name: 'provider.auth', message: 'Bearer secret-456' });
+
       const output = await buildDiagnosticLog();
-      expect(output.includes('skipped (active runtime is not the local instance)')).toBe(true);
-      expect(output.includes('private')).toBe(false);
-      expect(output.includes('Events (0)')).toBe(true);
+      expect(output).toContain('OpenCode: 2.0.31, binary source=path, wrapper=bun-shebang');
+      expect(output).toContain('Last OpenCode start error: binary not found');
+      expect(output).toContain('Current health: HTTP 200, OpenCode running=false, ready=false');
+      expect(output).toContain('[OpenCode process] health failed: connection_refused');
+      expect(output).toContain('[OpenCode API] info probe method=GET route=/api/info function=probeOpenCode http=200 content=json');
+      expect(output).toContain('[OpenCode API] provider probe method=GET route=/api/provider function=probeOpenCode http=503');
+      expect(output).toContain('- Local log files, server journal and SSH manager: skipped on a remote runtime');
+      expect(output).toContain('- UI/renderer buffer, turn errors and rejected sends: skipped on a remote runtime');
+      expect(requested).not.toContain('/api/diagnostics/local-files');
+      expect(/private|secret|devbox|ses_|Bearer/.test(output)).toBe(false);
+
+      globalThis.fetch = async () => { throw new TypeError('Failed to fetch https://devbox.private-host.example'); };
+      const failed = await buildDiagnosticLog();
+      expect(failed).toContain('Current health: unavailable (health request failed or response invalid)');
+      expect(failed).toContain('[server] health probe failed');
+      expect(failed).toContain('[OpenCode API] info probe failed method=GET route=/api/info function=probeOpenCode reason=transport');
+      expect(failed).toContain('OpenCode: unknown\n');
+      expect(/private|devbox/.test(failed)).toBe(false);
+
+      globalThis.fetch = async () => {
+        Object.assign(globalThis.window, { __OPENCHAMBER_API_BASE_URL__: 'https://other-runtime.example' });
+        return Response.json({ openCodeRunning: true, isOpenCodeReady: true });
+      };
+      const switched = await buildDiagnosticLog();
+      expect(switched).toContain('Export interrupted: the active runtime changed while it was collected');
+      expect(switched).not.toContain('Current health');
     } finally {
       clearDiagnosticEvents();
+      globalThis.fetch = originalFetch;
       setRuntimeUrlResolver(originalResolver);
       Object.defineProperty(globalThis, 'window', { configurable: true, value: originalWindow });
     }

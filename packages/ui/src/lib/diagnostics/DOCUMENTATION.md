@@ -22,7 +22,7 @@ Events from the server cross a process boundary, so `parseFileDiagnostics()` val
 ## Runtimes
 
 - Web and desktop on the local instance: capture and export as above. Web reads server events from `GET /api/diagnostics/local-files`; desktop reads them, plus the SSH manager's classified history, over the `desktop_collect_local_diagnostics` IPC.
-- A remote runtime (a remote server, SSH host or hosted mobile): capture records nothing, and the export says local diagnostics were skipped. A runtime switch clears the buffer and the label map.
-- VS Code and the Capacitor mobile app do not mount `App`'s capture and do not open this dialog.
+- Web or desktop connected to a remote runtime (another machine's server, an SSH host): capture records nothing, and the export reads only the active server through the runtime API. `readServerHealth()` samples its `/health` into a list built for that export (repeating the server's last health failure, launch and restart every time), and the three OpenCode probes run against it, so the header, current health and probe results describe the remote OpenCode. Local files, the server journal, the SSH manager and the UI buffer, turn errors and rejected sends are skipped and `Sources` says so. A failed health request or probe appears as `unavailable` or a `probe failed` event. A runtime switch while either export is collecting returns an "Export interrupted" file instead of mixing two runtimes; a switch also clears the buffer and the label map.
+- VS Code, hosted mobile (the phone layout served by the web build) and the Capacitor app render their own roots without `MainLayout`, so the dialog is not mounted. `SessionErrorNotice` reads `DiagnosticDialogAvailableContext` (`dialog-availability.ts`, provided by `MainLayout`) and hides its status link there.
 
 Everything is process-local: reloading the UI empties the renderer buffer, restarting the server empties the journal.

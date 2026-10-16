@@ -7,7 +7,7 @@ import { getRuntimeUrlResolver } from '@/lib/runtime-url';
 import { runtimeFetch } from '@/lib/runtime-fetch';
 import { canUseElectronDesktopIPC, isDesktopLocalOriginActive, isVSCodeRuntime } from '@/lib/desktop';
 import { z } from 'zod';
-import { clearDiagnosticEvents, diagnosticIdentity, recordDiagnosticEvent, recordRendererConsole, rendererErrorDetail, rendererRejectionDetail } from './timeline';
+import { clearDiagnosticEvents, diagnosticIdentity, recordDiagnosticEvent, type DiagnosticEvent, recordRendererConsole, rendererErrorDetail, rendererRejectionDetail } from './timeline';
 
 type Status = { initialized: boolean; connected: boolean; stream: string; session: boolean; directory: boolean };
 export type DiagnosticHealthSample = {
@@ -202,8 +202,21 @@ export function startDiagnosticCapture({ captureConsole = !import.meta.env.DEV }
   };
 }
 
+/** Samples the local instance into the shared timeline buffer. */
 export async function sampleServerHealth(): Promise<DiagnosticHealthSample | null> {
   if (!isLocalDiagnosticRuntime()) return null;
+  return readServerHealth(recordDiagnosticEvent, { repeatHistory: false });
+}
+
+/**
+ * Reads the active runtime's `/health` and reports what it saw through `emit`.
+ * A remote export collects into its own list and wants the server's history
+ * every time; the local buffer has seen earlier samples and skips repeats.
+ */
+export async function readServerHealth(
+  emit: (event: DiagnosticEvent) => void,
+  { repeatHistory }: { repeatHistory: boolean },
+): Promise<DiagnosticHealthSample | null> {
   const scope = getRuntimeKey();
   const url = getRuntimeUrlResolver().health();
   if (!url) return null;
@@ -214,14 +227,14 @@ export async function sampleServerHealth(): Promise<DiagnosticHealthSample | nul
     const response = await runtimeFetch(url, { signal: controller.signal });
     if (getRuntimeKey() !== scope) return null;
     if (!response.ok) {
-      recordDiagnosticEvent({ at: Date.now(), source: 'server', action: 'health probe', detail: `http=${response.status} timeMs=${Date.now() - startedAt}` });
+      emit({ at: Date.now(), source: 'server', action: 'health probe', detail: `http=${response.status} timeMs=${Date.now() - startedAt}` });
       return null;
     }
     const raw = await response.json();
     const parsed = healthSchema.safeParse(raw);
     if (getRuntimeKey() !== scope) return null;
     if (!parsed.success) {
-      recordDiagnosticEvent({ at: Date.now(), source: 'server', action: 'health response invalid' });
+      emit({ at: Date.now(), source: 'server', action: 'health response invalid' });
       return null;
     }
     const health = parsed.data;
@@ -236,7 +249,7 @@ export async function sampleServerHealth(): Promise<DiagnosticHealthSample | nul
       wrapper: health.opencodeLaunchWrapperType ?? 'none',
       lastError: health.lastOpenCodeError ? classifyStartError(health.lastOpenCodeError) : null,
     };
-    recordDiagnosticEvent({
+    emit({
       at: sample.at, source: 'server', action: 'health probe',
       detail: `http=${sample.http} timeMs=${sample.at - startedAt} running=${sample.running} ready=${sample.ready} secure=${sample.secure} port=${sample.port ?? 'unknown'} wsl=${sample.wsl}`,
     });
@@ -244,38 +257,38 @@ export async function sampleServerHealth(): Promise<DiagnosticHealthSample | nul
     const managedProcess = processResult.success ? processResult.data.lastManagedOpenCodeProcess : null;
     if (managedProcess) {
       const { pid, exitCode, signalCode } = managedProcess;
-      recordDiagnosticEvent({
+      emit({
         at: Date.now(), source: 'OpenCode process', action: 'process snapshot',
         detail: `pid=${pid ?? 'none'} exit=${exitCode ?? 'running'} signal=${signalCode ?? 'none'}`,
       });
     }
     const failureResult = healthFailureSchema.safeParse(raw);
     const failure = failureResult.success ? failureResult.data.lastOpenCodeHealthFailure : null;
-    if (failure && lastHealthFailureAt !== failure.at) {
-      lastHealthFailureAt = failure.at;
-      recordDiagnosticEvent({ at: Date.parse(failure.at), source: 'OpenCode process', action: `health failed: ${failure.class}` });
+    if (failure && (repeatHistory || lastHealthFailureAt !== failure.at)) {
+      if (!repeatHistory) lastHealthFailureAt = failure.at;
+      emit({ at: Date.parse(failure.at), source: 'OpenCode process', action: `health failed: ${failure.class}` });
     }
     const launchResult = launchSchema.safeParse(raw);
     const launch = launchResult.success ? launchResult.data.lastOpenCodeLaunchDiagnostics : null;
-    if (launch && lastLaunchAt !== launch.launchedAt) {
-      lastLaunchAt = launch.launchedAt;
-      recordDiagnosticEvent({
+    if (launch && (repeatHistory || lastLaunchAt !== launch.launchedAt)) {
+      if (!repeatHistory) lastLaunchAt = launch.launchedAt;
+      emit({
         at: Date.parse(launch.launchedAt), source: 'OpenCode process', action: 'managed launch',
         detail: `shellEnv=${launch.hasShellEnv ?? 'unknown'} pathEntries=${launch.pathEntryCount ?? 'unknown'}`,
       });
     }
     const restartResult = restartSchema.safeParse(raw);
     const restart = restartResult.success ? restartResult.data.lastOpenCodeRestartDiagnostics : null;
-    if (restart && lastRestartAt !== restart.at) {
-      lastRestartAt = restart.at;
-      recordDiagnosticEvent({
+    if (restart && (repeatHistory || lastRestartAt !== restart.at)) {
+      if (!repeatHistory) lastRestartAt = restart.at;
+      emit({
         at: Date.parse(restart.at), source: 'OpenCode process', action: 'managed restart',
         detail: `busySessions=${restart.busySessionCount ?? 'unknown'}`,
       });
     }
     return sample;
   } catch {
-    if (getRuntimeKey() === scope) recordDiagnosticEvent({ at: Date.now(), source: 'server', action: 'health probe failed' });
+    if (getRuntimeKey() === scope) emit({ at: Date.now(), source: 'server', action: 'health probe failed' });
     return null;
   } finally {
     clearTimeout(timeout);

@@ -6,7 +6,7 @@ import { getRecentSendFailures } from '@/sync/send-failure-log';
 import { getRecentSessionErrors } from '@/sync/session-error-log';
 import { z } from 'zod';
 import { diagnosticIdentity, formatDiagnosticEvents, getDiagnosticEvents, getDiagnosticOmittedCount, getDiagnosticScopeStartedAt, mergeDiagnosticEvents, recordDiagnosticEvent, type DiagnosticEvent } from './timeline';
-import { isLocalDiagnosticRuntime, sampleServerHealth, type DiagnosticHealthSample } from './capture';
+import { isLocalDiagnosticRuntime, readServerHealth, sampleServerHealth, type DiagnosticHealthSample } from './capture';
 
 type FileDiagnostics = { events: DiagnosticEvent[]; coverage: { source: string; status: string; omitted?: number; filtered?: number; warnings?: number; errors?: number }[] };
 // OpenCode 2.x failure classes, such as `provider.auth` or `tool.execution`.
@@ -161,8 +161,8 @@ const collectFiles = async (): Promise<FileDiagnostics | null> => {
 const infoVersionSchema = z.object({ version: z.string().regex(/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]{1,40})?$/) });
 type OpenCodeProbe = { event: DiagnosticEvent; version?: string };
 
+/** One request per fixed endpoint of the active runtime; status and timing only, never a body. */
 const probeOpenCode = async (): Promise<OpenCodeProbe[]> => {
-  if (!isLocalDiagnosticRuntime()) return [];
   const endpoints = ['/api/info', '/api/provider', '/api/session/active'];
   return Promise.all(endpoints.map(async (route): Promise<OpenCodeProbe> => {
     const startedAt = Date.now();
@@ -194,9 +194,42 @@ const formatEnvironment = (health: DiagnosticHealthSample | null, openCodeVersio
   `Last OpenCode start error: ${health ? health.lastError ?? 'none' : 'unknown'}`,
 ];
 
+const formatHealth = (health: DiagnosticHealthSample | null): string => (health
+  ? `HTTP ${health.http}, OpenCode running=${health.running}, ready=${health.ready}, secure=${health.secure}, port=${health.port ?? 'unknown'}, WSL=${health.wsl}`
+  : 'unavailable (health request failed or response invalid)');
+
+const formatLog = (at: number, health: DiagnosticHealthSample | null, openCodeVersion: string | undefined, coverage: string[], events: DiagnosticEvent[]): string =>
+  `OpenChamber diagnostic timeline\nGenerated: ${new Date(at).toISOString()}\n${formatEnvironment(health, openCodeVersion).join('\n')}\n\nCurrent health: ${formatHealth(health)}\n\nSources:\n${coverage.map((item) => `- ${item}`).join('\n')}\n\nEvents (${events.length}):\n${formatDiagnosticEvents(events)}`;
+
+const runtimeChanged = () => `OpenChamber diagnostic timeline\nGenerated: ${new Date().toISOString()}\n${formatEnvironment(null, undefined).slice(0, 2).join('\n')}\n\nSources:\n- Export interrupted: the active runtime changed while it was collected; export again\n\nEvents (0):\n`;
+
+/**
+ * A remote runtime (another machine, an SSH host, a relay) has no local files,
+ * journal or UI buffer to offer, so its export is the active server's health
+ * and the OpenCode probes, collected for this export only.
+ */
+const buildRemoteDiagnosticLog = async (): Promise<string> => {
+  const scope = getRuntimeKey();
+  const events: DiagnosticEvent[] = [];
+  const [health, probes] = await Promise.all([
+    readServerHealth((event) => events.push(event), { repeatHistory: true }),
+    probeOpenCode(),
+  ]);
+  if (getRuntimeKey() !== scope) return runtimeChanged();
+  const coverage = [
+    'Active runtime: remote; only its health and the OpenCode API probes were read',
+    'Local log files, server journal and SSH manager: skipped on a remote runtime',
+    'UI/renderer buffer, turn errors and rejected sends: skipped on a remote runtime',
+    'Remote host logs and containers: not read',
+    'OpenCode log files and output: not read; the startup screen shows the last start error in full',
+  ];
+  const at = Date.now();
+  return formatLog(at, health, probes.find((probe) => probe.version)?.version, coverage,
+    mergeDiagnosticEvents(events, probes.map((probe) => probe.event)));
+};
+
 export async function buildDiagnosticLog(): Promise<string> {
-  const unavailable = () => `OpenChamber diagnostic timeline\nGenerated: ${new Date().toISOString()}\n${formatEnvironment(null, undefined).slice(0, 2).join('\n')}\n\nSources:\n- Local diagnostics: skipped (active runtime is not the local instance)\n\nEvents (0):\n`;
-  if (!isLocalDiagnosticRuntime()) return unavailable();
+  if (!isLocalDiagnosticRuntime()) return buildRemoteDiagnosticLog();
   const scope = getRuntimeKey();
   recordDiagnosticEvent({ at: Date.now(), source: 'ui', action: 'diagnostic export requested' });
   const [health, probes] = await Promise.all([sampleServerHealth(), probeOpenCode()]);
@@ -204,7 +237,7 @@ export async function buildDiagnosticLog(): Promise<string> {
   const at = Date.now();
   let files: FileDiagnostics | null = null;
   try { files = await collectFiles(); } catch { /* Include all other sources and mark files unavailable. */ }
-  if (getRuntimeKey() !== scope || !isLocalDiagnosticRuntime()) return unavailable();
+  if (getRuntimeKey() !== scope || !isLocalDiagnosticRuntime()) return runtimeChanged();
   const scopeStartedAt = getDiagnosticScopeStartedAt();
   const buffered: DiagnosticEvent[] = [
     ...getRecentSessionErrors().filter((entry) => entry.at >= scopeStartedAt).map((entry) => ({
@@ -232,8 +265,5 @@ export async function buildDiagnosticLog(): Promise<string> {
   coverage.push(`UI/renderer buffer: 1,500 events or 24 hours; ${getDiagnosticOmittedCount()} older events omitted`);
   coverage.push('Server journal: bounded history of OpenCode lifecycle transitions and failed HTTP responses');
   const events = mergeDiagnosticEvents(files?.events ?? [], getDiagnosticEvents(), buffered, probes.map((probe) => probe.event));
-  const current = health
-    ? `HTTP ${health.http}, OpenCode running=${health.running}, ready=${health.ready}, secure=${health.secure}, port=${health.port ?? 'unknown'}, WSL=${health.wsl}`
-    : 'unavailable (health request failed or response invalid)';
-  return `OpenChamber diagnostic timeline\nGenerated: ${new Date(at).toISOString()}\n${formatEnvironment(health, openCodeVersion).join('\n')}\n\nCurrent health: ${current}\n\nSources:\n${coverage.map((item) => `- ${item}`).join('\n')}\n\nEvents (${events.length}):\n${formatDiagnosticEvents(events)}`;
+  return formatLog(at, health, openCodeVersion, coverage, events);
 }
