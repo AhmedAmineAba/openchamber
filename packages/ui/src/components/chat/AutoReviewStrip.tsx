@@ -1,10 +1,8 @@
 import React, { memo } from 'react';
 
-import { Icon } from '@/components/icon/Icon';
 import { Button } from '@/components/ui/button';
-import { useWaitingBlink } from '@/hooks/useDurationTicker';
+import { Spinner } from '@/components/ui/spinner';
 import { useI18n } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import { getRuntimeKey } from '@/lib/runtime-switch';
 import { useAutoReviewStore } from '@/stores/useAutoReviewStore';
 import { useUIStore } from '@/stores/useUIStore';
@@ -24,7 +22,6 @@ export const AutoReviewStrip = memo(() => {
   }, [currentSessionId]));
   const stopRun = useAutoReviewStore((state) => state.stopRun);
   const openContextPanelTab = useUIStore((state) => state.openContextPanelTab);
-  const blink = useWaitingBlink(Boolean(currentSessionId && run?.status === 'running'));
 
   if (!currentSessionId || !run || run.status !== 'running') {
     return null;
@@ -45,7 +42,7 @@ export const AutoReviewStrip = memo(() => {
 
   return (
     <div role="status" className="flex h-10 min-w-0 items-center gap-2 border-b border-border/60 ps-3 pe-1.5">
-      <Icon name="loader-4" className={cn('size-3.5 shrink-0 text-muted-foreground', blink)} aria-hidden="true" />
+      <Spinner className="size-3.5 text-muted-foreground" aria-hidden="true" />
       <span className="min-w-0 flex-1 truncate text-sm text-foreground">
         {t('chat.autoReview.title')}
         <span className="text-muted-foreground"> · {statusLabel}</span>

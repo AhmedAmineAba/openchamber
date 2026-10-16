@@ -8,8 +8,7 @@ import { setSessionGoalStatus } from '@/lib/sessionGoalActions';
 import { toast } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/i18n';
-import { useWaitingBlink } from '@/hooks/useDurationTicker';
-import { cn } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 
 interface SessionGoalRowProps {
   sessionId: string | null;
@@ -29,7 +28,6 @@ export const SessionGoalRow: React.FC<SessionGoalRowProps> = React.memo(({ sessi
   // The agent stopped but the goal is still active: the server is sitting out
   // the quiet window and running the audit.
   const evaluating = Boolean(sessionId && enabled && goal?.status === 'active' && (!sessionStatus || sessionStatus.type === 'idle'));
-  const evaluatingBlink = useWaitingBlink(evaluating);
 
   const handleToggleStatus = React.useCallback(async (nextStatus: 'active' | 'paused') => {
     if (!sessionId || busy) return;
@@ -77,7 +75,7 @@ export const SessionGoalRow: React.FC<SessionGoalRowProps> = React.memo(({ sessi
       {evaluating ? (
         // Show the audit instead of a static "Active" that looks stuck.
         <span className="flex flex-shrink-0 items-center gap-1 typography-meta text-muted-foreground">
-          <Icon name="loader-4" className={cn('h-3 w-3', evaluatingBlink)} aria-hidden="true" />
+          <Spinner className="h-3 w-3" aria-hidden="true" />
           {t('chat.goal.status.evaluating')}
         </span>
       ) : (

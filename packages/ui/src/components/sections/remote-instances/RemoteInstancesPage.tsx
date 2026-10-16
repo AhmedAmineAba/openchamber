@@ -76,6 +76,7 @@ import { loadDesktopSettings } from '@/lib/persistence';
 import { getRuntimeApiBaseUrl, switchRuntimeEndpoint } from '@/lib/runtime-switch';
 import { runtimeKeyForDesktopHost } from '@/lib/desktopCurrentHost';
 import { useDurationTickerNow, useWaitingBlink } from '@/hooks/useDurationTicker';
+import { Spinner } from '@/components/ui/spinner';
 import { useSshConfirmation } from './useSshConfirmation';
 
 const randomPort = (): number => {
@@ -1138,7 +1139,7 @@ export const RemoteInstancesPage: React.FC = () => {
   const canDisconnect = isReady || isBusy;
   const statusAgeMs = status ? Math.max(0, clockMs - status.updatedAtMs) : 0;
   const reconnectAppearsStuck = isReconnecting && statusAgeMs > 12_000;
-  const retryIconBlink = useWaitingBlink(isConnecting || (isReconnecting && !reconnectAppearsStuck));
+  const retrySpinning = isConnecting || (isReconnecting && !reconnectAppearsStuck);
   const currentState = instanceState(statusPhase);
   const currentRemedy = currentState === 'error' ? errorRemedy(status?.detail) : null;
   const currentRemedyHintKey = remedyHintKey(currentRemedy);
@@ -2199,7 +2200,7 @@ export const RemoteInstancesPage: React.FC = () => {
               onClick={handleRetryAction}
               disabled={!canRetry}
             >
-              <Icon name="refresh" className={cn('h-3.5 w-3.5', retryIconBlink)} />
+              {retrySpinning ? <Spinner className="h-3.5 w-3.5" /> : <Icon name="refresh" className="h-3.5 w-3.5" />}
               {retryButtonLabel}
             </Button>
             <Button
