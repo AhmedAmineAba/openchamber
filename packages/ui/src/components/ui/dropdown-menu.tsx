@@ -38,7 +38,8 @@ function renderFromAsChild(asChild: boolean | undefined, children: React.ReactNo
   return { children };
 }
 
-type DropdownMenuProps = React.ComponentProps<typeof BaseMenu.Root> & {
+// The wrapper owns `actionsRef` to close the menu on window blur.
+type DropdownMenuProps = Omit<React.ComponentProps<typeof BaseMenu.Root>, "actionsRef"> & {
   disableGlobalShortcuts?: boolean;
 };
 

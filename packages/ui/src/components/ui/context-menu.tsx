@@ -11,7 +11,8 @@ import { GlassRedrawGuard } from "./glass-redraw-guard"
 import { handleDropdownNavigationKey } from "./dropdown-navigation";
 import { useMenuWindowDismiss } from "./menu-window-dismiss";
 
-function ContextMenu({ open, defaultOpen, onOpenChange, ...props }: React.ComponentProps<typeof BaseContextMenu.Root>) {
+// The wrapper owns `actionsRef` to close the menu on window blur.
+function ContextMenu({ open, defaultOpen, onOpenChange, ...props }: Omit<React.ComponentProps<typeof BaseContextMenu.Root>, "actionsRef">) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
   const actionsRef = useMenuWindowDismiss(open ?? uncontrolledOpen);
 

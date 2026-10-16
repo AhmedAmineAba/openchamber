@@ -29,6 +29,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const loadMenus = async () => ({
   ...(await import('@/components/ui/context-menu')),
   ...(await import('@/components/ui/dropdown-menu')),
+  ...(await import('@/components/session/sidebar/sessions/useSessionRowMenuState')),
 });
 type Menus = Awaited<ReturnType<typeof loadMenus>>;
 let menus: Menus;
@@ -39,6 +40,29 @@ const ControlledContextMenu = ({ onOpenChange }: { onOpenChange: (open: boolean)
   return (
     <ContextMenu open={open} onOpenChange={(next) => { setOpen(next); onOpenChange(next); }}>
       <ContextMenuTrigger><div>file row</div></ContextMenuTrigger>
+      <ContextMenuContent><ContextMenuItem>Rename</ContextMenuItem></ContextMenuContent>
+    </ContextMenu>
+  );
+};
+
+const SessionRowContextMenu = ({ pendingRename, completed }: { pendingRename: { current: boolean }; completed: string[] }) => {
+  const { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, useSessionRowMenuState } = menus;
+  const [openKey, setOpenKey] = React.useState<string | null>('session-context:a');
+  const menu = useSessionRowMenuState({
+    menuInstanceKey: 'session-menu:a',
+    contextMenuInstanceKey: 'session-context:a',
+    openSidebarMenuKey: openKey,
+    setOpenSidebarMenuKey: setOpenKey,
+    hasDeferredCloseWork: () => pendingRename.current,
+    onCloseComplete: () => {
+      if (!pendingRename.current) return;
+      pendingRename.current = false;
+      completed.push('rename');
+    },
+  });
+  return (
+    <ContextMenu open={menu.isContextMenuOpen} onOpenChange={menu.handleContextMenuOpenChange} onOpenChangeComplete={menu.handleMenuOpenChangeComplete}>
+      <ContextMenuTrigger><div data-open-key={openKey ?? ''}>session row</div></ContextMenuTrigger>
       <ContextMenuContent><ContextMenuItem>Rename</ContextMenuItem></ContextMenuContent>
     </ContextMenu>
   );
@@ -79,6 +103,19 @@ describe('menus when the window loses focus', () => {
     expect(document.documentElement.classList.contains('oc-menu-open')).toBe(false);
   });
 
+  test('a session row menu with a pending rename closes and still runs the rename', async () => {
+    const pendingRename = { current: true };
+    const completed: string[] = [];
+    await act(async () => root.render(<SessionRowContextMenu pendingRename={pendingRename} completed={completed} />));
+    expect(menuOpen()).toBe(true);
+
+    await blurWindow();
+    await act(async () => { await wait(200); });
+    expect(menuOpen()).toBe(false);
+    expect(completed).toEqual(['rename']);
+    expect(document.querySelector('[data-open-key]')?.getAttribute('data-open-key')).toBe('');
+  });
+
   test('an uncontrolled dropdown menu closes', async () => {
     const { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } = menus;
     await act(async () => root.render(
@@ -112,6 +149,7 @@ describe('menus when the window loses focus', () => {
 
     // The second menu is pinned open by its owner, so the class stays.
     await blurWindow();
+    expect(document.querySelectorAll('[role="menu"]').length).toBe(1);
     expect(document.documentElement.classList.contains('oc-menu-open')).toBe(true);
   });
 });
