@@ -231,7 +231,7 @@ const phaseDotClass = (phase?: string): string => {
  */
 const StatusDot: React.FC<{ className: string; waiting?: boolean }> = ({ className, waiting = false }) => {
   const blink = useWaitingBlink(waiting);
-  return <span className={cn('rounded-full', className, blink)} />;
+  return <span className={cn('size-1.5 shrink-0 rounded-full', className, blink)} />;
 };
 
 const buildForwardLabel = (forward: DesktopSshPortForward): string => {
@@ -1129,7 +1129,7 @@ export const RemoteInstancesPage: React.FC = () => {
 
   const status = selectedId ? statusesById[selectedId] : null;
   // Ages the status line once a second, on the shared 1 s tick.
-  const clockMs = useDurationTickerNow(Boolean(status), 1_000);
+  const clockMs = useDurationTickerNow(Boolean(status));
   const statusPhase = status?.phase;
   const isReady = statusPhase === 'ready';
   const isReconnecting = statusPhase === 'degraded';
@@ -1590,7 +1590,7 @@ export const RemoteInstancesPage: React.FC = () => {
                       <div key={`pending-${pending.id}`} className="flex items-center justify-between gap-3 py-1.5">
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <StatusDot className="h-2 w-2 shrink-0 bg-[var(--status-warning)]" waiting />
+                            <StatusDot className="bg-[var(--status-warning)]" waiting />
                             <p className="typography-ui-label text-foreground truncate">{pending.label || t('settings.remoteInstances.clientAuth.field.labelPlaceholder')}</p>
                             {pending.usesRelay ? (
                               <span className="typography-micro text-muted-foreground oc-tile-inset px-1 rounded shrink-0 leading-none pb-px">{t('settings.remoteInstances.clientAuth.state.viaRelay')}</span>
@@ -1633,7 +1633,7 @@ export const RemoteInstancesPage: React.FC = () => {
                           <div className="min-w-0">
                             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
                               <span className={cn(
-                                'h-2 w-2 shrink-0 rounded-full',
+                                'size-1.5 shrink-0 rounded-full',
                                 client.revokedAt ? 'bg-muted-foreground/20' : isOnline ? 'bg-[var(--status-success)]' : 'bg-muted-foreground/30',
                               )} />
                               <p className="typography-ui-label text-foreground truncate">{client.label}</p>
@@ -1713,7 +1713,6 @@ export const RemoteInstancesPage: React.FC = () => {
                         <div className="flex min-w-0 items-center gap-2">
                           <StatusDot
                             className={cn(
-                              'h-2 w-2 shrink-0',
                               !probe ? 'bg-muted-foreground/30' : isOnline ? 'bg-[var(--status-success)]' : 'bg-[var(--status-error)]',
                             )}
                             waiting={!probe}
@@ -1993,7 +1992,7 @@ export const RemoteInstancesPage: React.FC = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 space-y-0.5">
                       <div className="flex min-w-0 items-center gap-2">
-                        <StatusDot className={cn('h-2 w-2', phaseDotClass(phase))} waiting={isConnectingPhase(phase)} />
+                        <StatusDot className={phaseDotClass(phase)} waiting={isConnectingPhase(phase)} />
                         <p className="typography-ui-label text-foreground truncate">{title}</p>
                       </div>
                       <p className="typography-micro text-muted-foreground truncate">
@@ -2166,7 +2165,7 @@ export const RemoteInstancesPage: React.FC = () => {
       <div className="mb-6 px-1">
         <h1 className={`${SETTINGS_PAGE_TITLE_CLASS} truncate`}>{instanceTitle}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 typography-meta text-muted-foreground">
-          <StatusDot className={cn('h-2.5 w-2.5', phaseDotClass(statusPhase))} waiting={isConnectingPhase(statusPhase)} />
+          <StatusDot className={phaseDotClass(statusPhase)} waiting={isConnectingPhase(statusPhase)} />
           <span className="text-foreground">{t(instanceStateLabelKey(currentState))}</span>
           {currentState === 'connecting' ? <span>{t(phaseLabelKey(statusPhase))}</span> : null}
           {status?.localUrl ? <span className="font-mono text-foreground/80">{status.localUrl}</span> : null}

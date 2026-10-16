@@ -91,18 +91,21 @@ Animate only `transform` and `opacity`. Use `transform: rotate(...)`, not the in
 
 Motion that can stay on screen for minutes follows the state it shows:
 
-- **Steady state stands still**: connected, failed, degraded, a project action running for hours, a session row that is busy. Show a static icon in the state's color.
-- **A wait blinks**: connecting, agent working, setup or review running, a pairing waiting for the phone. Apply `useWaitingBlink(active)` (`hooks/useDurationTicker.ts`); every indicator toggles bright and dim on one shared 1 s tick. Live elapsed counters use the same tick (`useDurationTickerNow(active, 1000)`).
-- **A loading spinner** that lasts seconds keeps `animate-spin`.
+- **Steady state stands still**: connected, failed, degraded, "Unavailable", the provider logo while the agent works, read-aloud playing (its icon turns `--primary-text`). Show a static icon in the state's color.
+- **A wait that can last spins on the shared clock**: a running project action, worktree setup or removal, a space being made, CI checks, loading sessions or models, walkthrough generation, an OpenCode update. Render `Spinner` (`components/ui/spinner.tsx`): eight bars, four steps a second.
+- **A wait that cannot spin blinks**: a status dot (6 px, `size-1.5`), the recording dot, a loading skeleton, the splash logo's glow. Apply `useWaitingBlink(active)`; it dims every other second.
+- **Waiting text gets dots**: "Thinking", "Waiting for approval". Put `BusyDots` (`components/ui/busy-dots.tsx`) after the label; drop any "…" from the string.
+- **A spinner that lasts seconds** (a button after a click, a quick load, refresh) keeps `animate-spin`.
+- **Hidden stops.** A surface kept mounted while hidden wraps its content in `PauseClock` (`components/ui/pause-clock.tsx`); the context panel's zones already do. An `inert` subtree pauses its CSS animations (`index.css`).
 
-The cost behind these rules is in `performance-engineering`, "Motion That Stays On Screen".
+`Spinner`, `useWaitingBlink`, `BusyDots` and live counters (`useDurationTickerNow`) share one clock (`hooks/useDurationTicker.ts`): a page draws four frames a second while a spinner shows and one otherwise, however many indicators are on screen. `lib/infiniteAnimations.test.ts` fails on any new infinite CSS animation outside the short ones it lists. The cost behind these rules is in `performance-engineering`, "Motion That Stays On Screen".
 
 For any other technique, load `performance-engineering` and `scripts/perf/DOCUMENTATION.md`, measure it with `bun run profile:animation`, and add a fixture variant when needed. This skill owns animation styling; `performance-engineering` owns performance evidence.
 
 ## Completion Criteria
 
 - Animations are limited to `transform` and `opacity`, or their cost was measured and accepted.
-- Nothing that can stay on screen for minutes runs an infinite CSS animation: steady states stand still, waits use `useWaitingBlink`.
+- Nothing that can stay on screen for minutes runs an infinite CSS animation: steady states stand still, waits use `Spinner`, `useWaitingBlink` or `BusyDots`.
 - No hardcoded/palette colors were introduced.
 - Buttons use shared variants and sizes.
 - Menus and pickers satisfy the keyboard navigation contract without caller-specific key handling for standard shared components.

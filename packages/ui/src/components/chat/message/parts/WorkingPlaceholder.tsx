@@ -2,8 +2,6 @@ import React from 'react';
 import { useI18n } from '@/lib/i18n';
 import { useProviderLogo } from '@/hooks/useProviderLogo';
 import { useThemeSystem } from '@/contexts/useThemeSystem';
-import { useWaitingBlink } from '@/hooks/useDurationTicker';
-import { cn } from '@/lib/utils';
 
 interface WorkingPlaceholderProps {
   isWorking: boolean;
@@ -71,7 +69,6 @@ export function WorkingPlaceholder({
   const { src: providerLogoSrc, onError: handleProviderLogoError, hasLogo: hasProviderLogo } = useProviderLogo(providerId ?? null);
   const { currentTheme } = useThemeSystem();
   const isDarkTheme = currentTheme?.metadata.variant === 'dark';
-  const providerLogoBlink = useWaitingBlink(isWorking && hasProviderLogo);
   const [displayedText, setDisplayedText] = React.useState<string | null>(null);
   const [displayedPermission, setDisplayedPermission] = React.useState<boolean>(false);
   const displayedTextRef = React.useRef(displayedText);
@@ -208,7 +205,7 @@ export function WorkingPlaceholder({
       // 16px box like the scroll pill's arrow icon. The padding normalizes
       // the mark to the arrow glyph's geometry (~10.4px wide, ~2.8px inset),
       // so equal boxes and equal paddings also mean equal visible edges.
-      className={cn('h-4 w-4 shrink-0 p-[1.3px] me-1.5', providerLogoBlink)}
+      className="h-4 w-4 shrink-0 p-[1.3px] me-1.5"
       style={{
         filter: isDarkTheme ? 'brightness(0.9) contrast(1.1) invert(1)' : 'brightness(0.9) contrast(1.1)',
       }}

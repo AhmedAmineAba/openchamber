@@ -35,9 +35,9 @@ const computeTitle = (counts) => {
   return '';
 };
 
-// Which icon variant to show. Busy work toggles outline and fill once a
-// second; unread (with nothing active) holds a static filled cube until the
-// state clears; otherwise the plain outline.
+// Which icon variant to show. Busy work animates a "breathing" fill; unread
+// (with nothing active) holds a static filled cube until the state clears;
+// otherwise the plain outline.
 const computeIconState = (counts) => {
   if (counts.busy > 0) return 'busy';
   if (counts.unseen > 0) return 'unseen';
@@ -55,12 +55,11 @@ const computeTooltip = (counts, sessionCount) => {
   return `OpenChamber — ${sessionCount} session${sessionCount === 1 ? '' : 's'}${suffix}`;
 };
 
-// While a session works, the icon toggles between the outline and the filled
-// cube once a second. A busy state can last hours: the 16-frame breath it
-// replaced called setImage 13 times a second, which cost the main process 7.5
-// to 8.6% of a core and macOS's WindowServer about 8% more (measured on an
-// M-series Mac, against 0.5 to 0.8% at rest).
-const BUSY_TOGGLE_MS = 1000;
+// Frame cadence for the "breathing" busy animation: five images a second.
+// A busy state can last hours, and every setImage costs the main process and
+// macOS's WindowServer; at thirteen a second (75 ms) the main process alone
+// used 2.5% of a core on an M-series Mac, against 0.2% for one a second.
+const ANIM_INTERVAL_MS = 200;
 
 const toTemplateImage = (p) => {
   let image = nativeImage.createFromPath(p);
@@ -80,9 +79,9 @@ const toTemplateImage = (p) => {
 };
 
 // idleIconPath: plain outline (calm state). unseenIconPath: statically filled
-// (a finished session left unread). Busy alternates the two; where both are the
-// same image (Windows and Linux use the app icon) busy stands still.
-export const createTrayController = ({ idleIconPath, unseenIconPath, statusIconPaths, onAction }) => {
+// (a finished session left unread). breathIconPaths: eased outline→fill frames
+// the busy state ping-pongs through.
+export const createTrayController = ({ idleIconPath, unseenIconPath, breathIconPaths, statusIconPaths, onAction }) => {
   let tray = null;
   let lastTitle = null;
   let lastTooltip = null;
@@ -92,7 +91,7 @@ export const createTrayController = ({ idleIconPath, unseenIconPath, statusIconP
   // Windows uses the regular app icon and ignores template tinting.
   const idleFrame = toTemplateImage(idleIconPath);
   const unseenFrame = toTemplateImage(unseenIconPath);
-  const busyToggles = idleIconPath !== unseenIconPath;
+  const breathFrames = breathIconPaths.map(toTemplateImage);
   // Per-row status icons (template images, tinted + vertically centred by macOS).
   const statusIcons = {};
   for (const [key, p] of Object.entries(statusIconPaths || {})) {
@@ -101,6 +100,8 @@ export const createTrayController = ({ idleIconPath, unseenIconPath, statusIconP
 
   let iconState = null;
   let animTimer = null;
+  let animIndex = 0;
+  let animDir = 1;
 
   const stopAnim = () => {
     if (animTimer) {
@@ -111,13 +112,17 @@ export const createTrayController = ({ idleIconPath, unseenIconPath, statusIconP
 
   const startAnim = () => {
     if (animTimer || !tray || tray.isDestroyed?.()) return;
-    let filled = true;
-    tray.setImage(unseenFrame);
+    if (breathFrames.length < 2) return;
+    animIndex = 0;
+    animDir = 1;
     animTimer = setInterval(() => {
       if (!tray || tray.isDestroyed?.()) return;
-      filled = !filled;
-      tray.setImage(filled ? unseenFrame : idleFrame);
-    }, BUSY_TOGGLE_MS);
+      tray.setImage(breathFrames[animIndex] || idleFrame);
+      // Ping-pong for a seamless, infinite in-and-out breath.
+      animIndex += animDir;
+      if (animIndex >= breathFrames.length - 1) { animIndex = breathFrames.length - 1; animDir = -1; }
+      else if (animIndex <= 0) { animIndex = 0; animDir = 1; }
+    }, ANIM_INTERVAL_MS);
   };
 
   const applyIconState = (nextState) => {
@@ -125,8 +130,8 @@ export const createTrayController = ({ idleIconPath, unseenIconPath, statusIconP
     iconState = nextState;
     if (!tray || tray.isDestroyed?.()) return;
     if (nextState === 'busy') {
-      if (busyToggles) startAnim();
-      else tray.setImage(idleFrame);
+      if (breathFrames.length > 1) startAnim();
+      else tray.setImage(breathFrames[0] || idleFrame);
     } else if (nextState === 'unseen') {
       stopAnim();
       tray.setImage(unseenFrame);

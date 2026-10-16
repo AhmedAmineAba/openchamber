@@ -270,7 +270,7 @@ describe('TerminalView project action tab indicator', () => {
     expect(useTerminalStore.getState().getDirectoryState('/repo')!.tabs).toHaveLength(2);
   });
 
-  test('shows a running project action as its own still icon and spins only while it starts or stops', async () => {
+  test('shows the shared spinner while a project action starts, runs or stops, and its own icon otherwise', async () => {
     await act(async () => {
       root.render(React.createElement(TerminalView, { visible: false }));
     });
@@ -278,26 +278,19 @@ describe('TerminalView project action tab indicator', () => {
     const tabs = Array.from(host.querySelectorAll('[data-tab-id]'));
     expect(tabs).toHaveLength(3);
 
-    const tabIcon = (label: string) => tabs
-      .find((tab) => tab.querySelector('[data-tab-label]')?.textContent === label)
-      ?.querySelector('[data-icon]');
+    const tab = (label: string) => tabs.find((entry) => entry.querySelector('[data-tab-label]')?.textContent === label);
 
-    expect(tabIcon('Interactive')?.getAttribute('data-icon')).toBe('terminal');
-    expect(tabIcon('Build')?.getAttribute('data-icon')).toBe('hammer');
-    expect(tabIcon('Build')?.className).toContain('text-[var(--status-warning)]');
-    expect(tabIcon('Build')?.className).not.toContain('animate-spin');
-    expect(tabIcon('Deploy')?.getAttribute('data-icon')).toBe('play');
+    expect(tab('Interactive')?.querySelector('[data-icon]')?.getAttribute('data-icon')).toBe('terminal');
+    expect(tab('Build')?.querySelector('[data-spinner]')).not.toBeNull();
+    expect(tab('Deploy')?.querySelector('[data-icon]')?.getAttribute('data-icon')).toBe('play');
     expect(host.querySelectorAll('.animate-spin').length).toBe(0);
 
-    const buildTabId = useTerminalStore.getState().getDirectoryState('/repo')!.tabs.find((tab) => tab.label === 'Build')!.id;
+    const buildTabId = useTerminalStore.getState().getDirectoryState('/repo')!.tabs.find((entry) => entry.label === 'Build')!.id;
     await act(async () => {
       useTerminalStore.getState().setTabLifecycle('/repo', buildTabId, 'stopping');
     });
 
-    const stoppingIcon = host.querySelector('[data-icon="loader-4"]');
-    expect(stoppingIcon?.className).toContain('animate-spin');
-    expect(stoppingIcon?.className).toContain('motion-reduce:animate-none');
-    expect(host.querySelectorAll('[data-icon="loader-4"]').length).toBe(1);
+    expect(host.querySelectorAll('[data-spinner]').length).toBe(1);
   });
 
   test('uses the explicit terminal directory for terminal tabs and session creation while preview ownership stays on the host directory', async () => {

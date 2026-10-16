@@ -274,15 +274,23 @@ costs 7 to 8% against 1% for a still page.
   (`lib/codemirror/caretBlink.ts`).
 - **Layer promotion changes nothing.** `will-change`, `translateZ(0)` and
   `contain` measured no different.
-- **Steady states stand still; waits blink on one shared 1 s JS tick**
-  (`useWaitingBlink`). Indicators on the same tick share one frame a second,
-  which costs about the same as a still page. The styling rules live in
-  `theme-system`, "Animation Contract".
+- **Cost follows changes per second.** Driven from a JS timer, each change
+  is one drawn frame: measured headed on an M-series Mac, Chrome renderer plus
+  GPU, one indicator: still page 0.3%, 1 change a second 1.0%, 2 1.7%, 4
+  2.7%, 8 4.2%, a smooth spinner 8.6 to 9%, a smooth pulse 6.5%.
+- **One clock for every indicator** (`hooks/useDurationTicker.ts`): spinners
+  step four times a second, blinks, dots and counters once, on the same
+  beats, so the page pays for the fastest indicator on screen, not the sum.
+  The styling rules live in `theme-system`, "Animation Contract".
+- **Native images count too.** The macOS menu bar icon's breath called
+  `setImage` 13 times a second: 6.9 to 7.3% of the Electron main process,
+  against 2.6 to 3.1% at five a second (`tray.mjs`).
 - **Hidden surfaces stop.** A closed panel, a background tab or an element
   under `opacity: 0` or `inert` neither animates nor polls. Gate on the
-  surface's own visibility prop: desktop windows run with
-  `backgroundThrottling: false`, so `document.visibilityState` stays
-  `visible` there, and macOS keeps drawing a minimized window at full cost.
+  surface's own visibility prop (`PauseClock` for clock-driven indicators):
+  desktop windows run with `backgroundThrottling: false`, so
+  `document.visibilityState` stays `visible` there, and macOS keeps drawing a
+  minimized window at full cost.
 - **Measure motion with frames and process CPU, headed, with an ablation.**
   `profile:animation` isolates one technique; `profile:idle` reports frames
   drawn per second and fails `--budget-frames` (its positive control is

@@ -3,7 +3,7 @@ import { Window } from 'happy-dom';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 
-import { useDurationTickerNow, useWaitingBlink } from './useDurationTicker';
+import { useDurationTickerNow, useSpinnerPhase, useWaitingBlink } from './useDurationTicker';
 
 let root: Root | null = null;
 let host: HTMLElement;
@@ -13,7 +13,9 @@ const Indicator: React.FC<{ id: string; active?: boolean }> = ({ id, active = tr
   <span data-id={id} className={useWaitingBlink(active)} />
 );
 
-const Counter: React.FC = () => <span data-id="counter">{useDurationTickerNow(true, 1000)}</span>;
+const Counter: React.FC = () => <span data-id="counter">{useDurationTickerNow(true)}</span>;
+
+const SpinnerProbe: React.FC = () => <span data-id="spinner">{useSpinnerPhase(true, 8)}</span>;
 
 const classOf = (id: string) => host.querySelector(`[data-id="${id}"]`)?.className ?? null;
 
@@ -74,6 +76,35 @@ test('an indicator that is not waiting stays bright and keeps no timer', async (
 
   await advance(3000);
   expect(classOf('still')).toBe('');
+});
+
+test('a spinner steps four times a second and blinks change on its fourth step, from one timer', async () => {
+  const setInterval = spyOn(window, 'setInterval');
+  await render(<><SpinnerProbe /><Indicator id="blink" /></>);
+  const spinner = () => host.querySelector('[data-id="spinner"]')?.textContent;
+  expect(spinner()).toBe('0');
+
+  await advance(750);
+  expect(spinner()).toBe('3');
+  expect(classOf('blink')).toBe('');
+
+  await advance(250);
+  expect(spinner()).toBe('4');
+  expect(classOf('blink')).toBe('waiting-dim');
+  expect(setInterval.mock.calls.map((call) => call[1])).toEqual([250]);
+  setInterval.mockRestore();
+});
+
+test('a blink keeps its 1 s rhythm after the last spinner leaves mid-second', async () => {
+  await render(<><SpinnerProbe /><Indicator id="blink" /></>);
+  await advance(500);
+  await render(<Indicator id="blink" />);
+  expect(classOf('blink')).toBe('');
+
+  await advance(1000);
+  expect(classOf('blink')).toBe('waiting-dim');
+  await advance(1000);
+  expect(classOf('blink')).toBe('');
 });
 
 test('waiting indicators and live counters share one 1 s timer', async () => {

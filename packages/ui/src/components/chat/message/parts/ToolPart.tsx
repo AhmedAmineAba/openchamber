@@ -140,7 +140,7 @@ const formatDuration = (start: number, end?: number, now: number = Date.now()) =
 };
 
 const LiveDuration: React.FC<{ start: number; end?: number; active: boolean }> = ({ start, end, active }) => {
-    const now = useDurationTickerNow(active, 1000);
+    const now = useDurationTickerNow(active);
 
     return <>{formatDuration(start, end, now)}</>;
 };

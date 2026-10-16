@@ -1026,7 +1026,7 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory, tab
         ) : null}
         {isLoading ? (
           <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden">
-            <div className="h-full w-1/3 animate-[browser-progress_1.1s_ease-in-out_infinite] bg-[var(--primary)]" />
+            <div className="h-full w-1/3 bg-[var(--primary)]" />
           </div>
         ) : null}
       </div>

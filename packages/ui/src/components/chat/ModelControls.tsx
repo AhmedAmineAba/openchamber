@@ -20,6 +20,7 @@ import { ProviderLogo } from '@/components/ui/ProviderLogo';
 import { ScrollableOverlay } from '@/components/ui/ScrollableOverlay';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from "@/components/icon/Icon";
+import { Spinner } from "@/components/ui/spinner";
 import { ArrowsMerge } from '@/components/icons/ArrowsMerge';
 import type { IconName } from "@/components/icon/icons";
 import { ModelPickerList, type ModelPickerEntry } from '@/components/model-picker/ModelPickerList';
@@ -367,6 +368,11 @@ type ModelControlsProps = {
     }
 );
 
+/** Beside "Loading" the shared spinner; beside "Unavailable", an error, a still warning. */
+const ReadinessMark: React.FC<{ unavailable: boolean; className: string }> = ({ unavailable, className }) => (
+    unavailable ? <Icon name="error-warning" className={className} /> : <Spinner className={className} />
+);
+
 export const ModelControls: React.FC<ModelControlsProps> = ({
     className,
     mobilePanel,
@@ -381,9 +387,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
     const { isReady, isUnavailable } = useOpenCodeReadiness();
     const { isReady: canSelectAgent } = useOpenCodeReadiness('agents');
     const readinessLabel = isUnavailable ? t('common.unavailable') : t('common.loading');
-    // Unavailable is an error state, so its mark stands still; loading spins.
-    const readinessIcon = isUnavailable ? 'error-warning' : 'loader-4';
-    const readinessIconMotion = isUnavailable ? undefined : 'animate-spin';
     const providers = useConfigStore((state) => state.providers);
     const getAgentColor = useAgentColors();
     const favoriteAgents = useUIStore((state) => state.favoriteAgents);
@@ -2632,7 +2635,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                                 >
                                     {!modelSelectionReady ? (
                                         <>
-                                            <Icon name={readinessIcon} className={cn(controlIconSize, readinessIconMotion, 'text-muted-foreground flex-shrink-0')} />
+                                            <ReadinessMark unavailable={isUnavailable} className={cn(controlIconSize, 'text-muted-foreground flex-shrink-0')} />
                                             <span className={cn(
                                                 'model-controls__model-label',
                                                 controlTextSize,
@@ -2768,7 +2771,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                     >
                         {!modelSelectionReady ? (
                             <>
-                                <Icon name={readinessIcon} className={cn(controlIconSize, readinessIconMotion, 'text-muted-foreground flex-shrink-0')} />
+                                <ReadinessMark unavailable={isUnavailable} className={cn(controlIconSize, 'text-muted-foreground flex-shrink-0')} />
                                 <span className="typography-micro font-medium text-muted-foreground min-w-0">
                                     {readinessLabel}
                                 </span>
@@ -3044,10 +3047,9 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                                     )}>
                                         {!agentSelectionReady ? (
                                             <>
-                                                <Icon name={readinessIcon}
+                                                <ReadinessMark unavailable={isUnavailable}
                                                     className={cn(
                                                         controlIconSize,
-                                                        readinessIconMotion,
                                                         'flex-shrink-0 text-muted-foreground'
                                                     )}
                                                 />
@@ -3169,10 +3171,9 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             >
                 {!agentSelectionReady ? (
                     <>
-                        <Icon name={readinessIcon}
+                        <ReadinessMark unavailable={isUnavailable}
                             className={cn(
                                 controlIconSize,
-                                readinessIconMotion,
                                 'flex-shrink-0 text-muted-foreground'
                             )}
                         />

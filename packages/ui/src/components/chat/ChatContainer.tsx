@@ -677,15 +677,15 @@ const HydrationSkeleton: React.FC<{ waiting: boolean }> = ({ waiting }) => {
                             <div className="space-y-1.5">
                                 {item.toolRows.map((row) => (
                                     <div key={`${item.id}-${row.id}`} className="flex items-center gap-2">
-                                        <Skeleton className="h-3.5 w-3.5 shrink-0 rounded-full animate-none" />
-                                        <Skeleton className={cn('h-4 rounded-md animate-none', row.titleWidth)} />
-                                        <Skeleton className={cn('h-4 rounded-md animate-none', row.detailWidth)} />
+                                        <Skeleton className="h-3.5 w-3.5 shrink-0 rounded-full" />
+                                        <Skeleton className={cn('h-4 rounded-md', row.titleWidth)} />
+                                        <Skeleton className={cn('h-4 rounded-md', row.detailWidth)} />
                                     </div>
                                 ))}
                             </div>
                             <div className="space-y-1.5 pt-1">
                                 {item.textWidths.map((width, index) => (
-                                    <Skeleton key={`${item.id}-text-${index}`} className={cn('h-4 rounded-md animate-none', width)} />
+                                    <Skeleton key={`${item.id}-text-${index}`} className={cn('h-4 rounded-md', width)} />
                                 ))}
                             </div>
                         </div>

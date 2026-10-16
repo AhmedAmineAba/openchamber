@@ -338,7 +338,7 @@ function SwitcherRow({ session, depth, variant, secondaryMeta, hasChildren, isEx
         <span className="flex h-3 w-3 flex-shrink-0 items-center justify-center self-center">
           <SessionActivityIndicator
             state={turnActivity ?? 'unread'}
-            runningClassName={runningBlink}
+            runningClassName={cn('h-2 w-2', runningBlink)}
           />
         </span>
       ) : null}
