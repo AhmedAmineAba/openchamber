@@ -76,6 +76,13 @@ Using a control must not shift anything the user did not touch.
   matches what it stands in for; hover actions fade in over reserved space.
 - **Collapse and expand** move only what is below them; the clicked header
   stays under the pointer.
+- **Popups open where they fit.** A dropdown, select or picker opens toward
+  the side with room for its options, never into a two-row sliver: a trigger
+  near the window's bottom (Mini Chat, a bottom composer) opens upward. Pick the
+  side once per open and keep it while open; a search field stays on the
+  trigger's edge. `choosePickerPopupSide` in the composer's draft pickers is
+  the reference. Check every popup in the smallest window that shows it,
+  Mini Chat included.
 
 ## Vertical space: content gets the height
 
@@ -160,7 +167,8 @@ A UI change is done when each holds on the changed screens:
 
 - every surface follows the depth rule, with no box inside a box and no line
   without a meaning;
-- interacting with each control moves nothing it did not touch;
+- interacting with each control moves nothing it did not touch, and each
+  popup opens toward the room in the smallest window that shows it;
 - no surface stacks a header, tabs, toolbar and search as separate rows, and
   no toolbar wraps;
 - controls hug their content; only form fields and canvases fill;
