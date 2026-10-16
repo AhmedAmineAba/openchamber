@@ -82,8 +82,9 @@ Using a control must not shift anything the user did not touch.
   the roomier side by default; keep that. A popup that must hold its side
   while open (a search field that stays put while results filter) turns flips
   off and takes its side from `usePopupSideOnOpen` (`components/ui/popup-side.ts`),
-  with its search field on the trigger's edge. Check every popup in the
-  smallest window that shows it.
+  with its search field on the trigger's edge. The composer's model and agent
+  menus are a known exception: their search stays at the top when they open
+  upward. Check every popup in the smallest window that shows it.
 
 ## Vertical space: content gets the height
 
