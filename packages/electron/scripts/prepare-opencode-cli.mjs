@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveTargetArchitecture } from './target-architecture.mjs';
 import { parseOpenCodeCliVersion, readPinnedOpenCodeCliVersion } from './opencode-cli-version.mjs';
+import { readPeArchitecture } from './windows-executable.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const electronRoot = path.resolve(__dirname, '..');
@@ -124,11 +125,14 @@ const main = async () => {
   const targetArchitecture = resolveTargetArchitecture();
   const artifact = artifactForPlatform(process.platform, targetArchitecture);
   const outputBinary = outputBinaryPath(artifact.binary);
-  // A Windows arm64 build runs on an x64 runner, which cannot start an arm64
-  // executable; there the package manifest vouches for the version.
+  // A Windows build for another architecture is not run here: an x64 runner
+  // cannot start an arm64 executable, so the package manifest vouches for the version.
   const runsOnHost = !(process.platform === 'win32' && targetArchitecture.node !== process.arch);
   const existingVersion = runsOnHost ? readBinaryVersion(outputBinary) : null;
-  if (existingVersion === version) {
+  // Windows on arm64 also runs an x64 binary left from an earlier build.
+  const existingMatchesTarget = process.platform !== 'win32'
+    || (existingVersion !== null && readPeArchitecture(outputBinary) === targetArchitecture.node);
+  if (existingVersion === version && existingMatchesTarget) {
     console.log(`[electron] bundled OpenCode CLI already prepared: ${outputBinary} (${version})`);
     return;
   }
