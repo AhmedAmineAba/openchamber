@@ -3607,14 +3607,17 @@ export function useSessionBlockingRequests(
   const getSnapshot = React.useCallback(() => {
     let hasPermission = false
     let hasForm = false
-    // Pages that wait for the user's answer are only in the cross-directory
-    // index; they count as a form.
+    // The stores are never bootstrapped here, so a directory this client has
+    // not opened only learns of live forms. The cross-directory index also
+    // holds the forms the host seed found waiting at load, and pages that
+    // wait for the user's answer, which count as a form.
     const indexed = useGlobalBlockingRequestsStore.getState().bySession
     for (const { sessionIDs, store } of scopedStores) {
       const { permission: permissions, form: forms } = store.getState()
       for (const sessionID of sessionIDs) {
+        const pending = indexed.get(sessionID)
         hasPermission ||= Boolean(permissions[sessionID]?.length)
-        hasForm ||= Boolean(forms[sessionID]?.length) || Boolean(indexed.get(sessionID)?.pages.length)
+        hasForm ||= Boolean(forms[sessionID]?.length) || Boolean(pending?.forms.length || pending?.pages.length)
       }
     }
     const previous = snapshotRef.current
