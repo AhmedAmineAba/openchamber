@@ -361,9 +361,20 @@ export const accountUsableByIdentity = (
   account: Pick<SourceControlAuthAccount, 'source' | 'current'>,
 ): boolean => account.source !== 'cli' || (identity.provider === 'github' && account.current);
 
-/** Whether a stored account reference names the gh CLI login, `github.com#cli:<user id>`. */
-export const isGitHubCliAccountReference = (account: SourceControlIdentity & { accountId: string }): boolean =>
-  account.provider === 'github' && account.accountId.startsWith('github.com#cli:');
+/**
+ * Why an identity's account cannot be used, for its Git Settings row: it names
+ * the gh CLI login (`github.com#cli:<user id>`) while no gh account is in use,
+ * so switching to it in Integrations fixes it; otherwise the account is gone.
+ * A gh login in use as another person is gone too, since switching cannot help.
+ */
+export const unavailableAccountReason = (
+  account: SourceControlIdentity & { accountId: string },
+  listedAccounts: Pick<SourceControlAuthAccount, 'source' | 'current'>[] | null,
+): 'cli-not-in-use' | 'gone' => account.provider === 'github'
+  && account.accountId.startsWith('github.com#cli:')
+  && !listedAccounts?.some((listed) => listed.source === 'cli' && listed.current)
+  ? 'cli-not-in-use'
+  : 'gone';
 
 /**
  * Selectable managed HTTPS credential accounts: one per person and source.

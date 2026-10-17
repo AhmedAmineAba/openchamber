@@ -15,7 +15,7 @@ import {
   identityAccountConnected,
   buildManagedAccountOptions,
   accountUsableByIdentity,
-  isGitHubCliAccountReference,
+  unavailableAccountReason,
   activeIdentityFor,
   remoteTraits,
   instanceHost,
@@ -372,9 +372,21 @@ describe('accountUsableByIdentity', () => {
     expect(accountUsableByIdentity({ provider: 'gitlab', instance: 'https://gitlab.com' }, { source: 'cli', current: true })).toBe(false);
   });
 
-  test('tells a gh account reference from a stored one', () => {
-    expect(isGitHubCliAccountReference({ provider: 'github', instance: 'github.com', accountId: 'github.com#cli:9' })).toBe(true);
-    expect(isGitHubCliAccountReference({ provider: 'github', instance: 'github.com', accountId: 'occred:v1:github:oauth:r1' })).toBe(false);
+});
+
+describe('unavailableAccountReason', () => {
+  const ghBound = { provider: 'github', instance: 'github.com', accountId: 'github.com#cli:9' } as const;
+
+  test('a gh-bound identity points to switching only while no gh account is in use', () => {
+    expect(unavailableAccountReason(ghBound, [{ source: 'oauth', current: true }, { source: 'cli', current: false }])).toBe('cli-not-in-use');
+    // Disabled or signed out: gh is not listed at all.
+    expect(unavailableAccountReason(ghBound, [{ source: 'oauth', current: true }])).toBe('cli-not-in-use');
+    // gh is in use, as another person: switching in Integrations cannot help.
+    expect(unavailableAccountReason(ghBound, [{ source: 'cli', current: true }])).toBe('gone');
+  });
+
+  test('any other account is gone', () => {
+    expect(unavailableAccountReason({ ...ghBound, accountId: 'occred:v1:github:oauth:r1' }, [])).toBe('gone');
   });
 });
 
