@@ -1,5 +1,5 @@
 import { isCompleteIdentity } from '@/lib/api/git-identity';
-import { identityAccountConnected, identityDisplayName } from '@/lib/source-control/identity';
+import { identityAccountConnected, identityDisplayName, isGitHubCliAccountReference } from '@/lib/source-control/identity';
 import React from 'react';
 import { toast } from '@/components/ui';
 import {
@@ -234,12 +234,15 @@ const IdentityRow: React.FC<IdentityRowProps> = ({
   const connectedAccountIds = useConnectedAccountIds();
   const [contextMenuOpen, setContextMenuOpen] = React.useState(false);
   const iconName = ICON_MAP[profile.icon || 'branch'] || 'git-branch';
-  // What keeps this identity from being chosen: a missing key, or an account
-  // that was disconnected.
+  // What keeps this identity from being chosen: a missing key, an account
+  // that was disconnected, or the gh CLI login while it is not the active
+  // GitHub account.
   const noteKey = !isCompleteIdentity(profile)
     ? 'settings.gitIdentities.page.incomplete' as const
     : !identityAccountConnected(profile, connectedAccountIds)
-      ? 'settings.gitIdentities.page.accountGone' as const
+      ? profile.account && isGitHubCliAccountReference(profile.account)
+        ? 'settings.gitIdentities.page.cliAccountInactive' as const
+        : 'settings.gitIdentities.page.accountGone' as const
       : null;
   const noteIsWarning = noteKey !== null;
   const iconColor = COLOR_MAP[profile.color || ''];

@@ -177,6 +177,16 @@ menu re-reads the accounts when it opens, the Git Settings row says why the
 identity cannot be used, and nothing binds a repository to a credential that
 is gone.
 
+`accountUsableByIdentity` decides which listed accounts count. The server uses
+the gh CLI login only while it is the active GitHub account in Integrations, so
+the identity editor offers it, and an identity naming it counts as connected,
+only while the gh account is current. The OAuth account and the gh account of
+the same person are separate options told apart by their source label. An
+identity that names the gh account while gh is not in use, disabled or signed
+out is not offered, and its Git Settings row says to switch to the GitHub CLI
+account in Integrations (`cliAccountInactive`). The glab login is never offered:
+Git transport reads only GitLab credentials OpenChamber stores.
+
 An identity is complete when it has a signature and a way to push:
 `isCompleteIdentity` accepts `account` with an account, a managed SSH key,
 anonymous HTTPS, or `system` (this machine's Git). The account is optional

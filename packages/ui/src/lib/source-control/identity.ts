@@ -349,25 +349,45 @@ type ManagedAccountOption = {
 };
 
 /**
- * Selectable managed HTTPS credential accounts: one per person.
+ * Whether an identity can answer with this account.
+ *
+ * The server uses the gh CLI login only while it is the active GitHub account
+ * in Integrations, so a gh account counts only while it is current. The glab
+ * login never does: Git transport reads only GitLab credentials OpenChamber
+ * stores.
+ */
+export const accountUsableByIdentity = (
+  identity: SourceControlIdentity,
+  account: Pick<SourceControlAuthAccount, 'source' | 'current'>,
+): boolean => account.source !== 'cli' || (identity.provider === 'github' && account.current);
+
+/** Whether a stored account reference names the gh CLI login, `github.com#cli:<user id>`. */
+export const isGitHubCliAccountReference = (account: SourceControlIdentity & { accountId: string }): boolean =>
+  account.provider === 'github' && account.accountId.startsWith('github.com#cli:');
+
+/**
+ * Selectable managed HTTPS credential accounts: one per person and source.
  *
  * Re-authenticating keeps the credential it replaces, so one account can hold
  * several. Offering each of them separately asks a question nobody can answer
  * — they carry the same name — so the current credential represents the
  * person, and the others stay valid for identities that already name them.
+ * The gh CLI login of the same person is a different credential with its own
+ * source label, so it stays a separate option.
  */
 export const buildManagedAccountOptions = (
   identity: SourceControlIdentity,
   accounts: SourceControlAuthAccount[],
   sourceLabel: (account: SourceControlAuthAccount) => string,
 ): ManagedAccountOption[] => {
-  const byProviderUser = new Map<string, SourceControlAuthAccount>();
+  const byPerson = new Map<string, SourceControlAuthAccount>();
   for (const account of accounts) {
-    if (account.status !== 'valid' || account.source === 'cli') continue;
-    const existing = byProviderUser.get(account.providerUserId);
-    if (!existing || (account.current && !existing.current)) byProviderUser.set(account.providerUserId, account);
+    if (account.status !== 'valid' || !accountUsableByIdentity(identity, account)) continue;
+    const key = `${account.source === 'cli' ? 'cli' : 'stored'}:${account.providerUserId}`;
+    const existing = byPerson.get(key);
+    if (!existing || (account.current && !existing.current)) byPerson.set(key, account);
   }
-  return [...byProviderUser.values()].map((account) => ({
+  return [...byPerson.values()].map((account) => ({
     key: JSON.stringify([identity.provider, identity.instance, account.id]),
     reference: { ...identity, accountId: account.id },
     label: formatSourceControlAccountLabel(identity, account, sourceLabel(account)),
