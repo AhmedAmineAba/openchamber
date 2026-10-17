@@ -27,6 +27,8 @@ const settingFile = () => {
 const runtimeInside = (filePath) => {
   let settings = { permissionAutoAccept: { sessions: {} } };
   let eventHandler;
+  // Each read of the file, so a test waits for the runtime to have read it rather than for a guessed time.
+  const reads = [];
   const runtime = createPermissionAutoAcceptRuntime({
     globalEventHub: {
       subscribeEvent(handler) { eventHandler = handler; return () => {}; },
@@ -38,48 +40,57 @@ const runtimeInside = (filePath) => {
     persistSettings: async (changes) => { settings = { ...settings, ...changes }; },
     fetchImpl: vi.fn(async () => new Response('[]')),
     retryDelaysMs: [0],
-    readDefaultMode: () => readSpacePermissionDefault(filePath),
+    readDefaultMode: async () => {
+      const mode = await readSpacePermissionDefault(filePath);
+      reads.push(mode);
+      return mode;
+    },
   });
   runtime.start();
-  const created = async (id, parentID) => {
+  /** Announces a new chat; for one that reads the file, `reads`, resolves once the runtime has read it. */
+  const created = async (id, { parentID, reads: readsFile = !parentID } = {}) => {
+    const before = reads.length;
     const payload = { type: 'session.created', properties: { info: { id, parentID } } };
     eventHandler({ payload, directory: '/spaces/0123456789ab/project', translated: () => [payload] });
-    for (let index = 0; index < 20; index += 1) await new Promise((resolve) => { setImmediate(resolve); });
+    if (readsFile) await vi.waitFor(() => expect(reads.length).toBe(before + 1));
   };
-  return { runtime, created };
+  // A mode the runtime read is written after the read, so a test that expects a write waits for it.
+  const modesBecome = (expected) => vi.waitFor(async () => expect((await runtime.load()).modes).toEqual(expected));
+  return { runtime, created, modesBecome };
 };
 
 describe('the default permission mode inside a space', () => {
   it('starts every new top-level chat in the mode the host wrote, however the chat was made', async () => {
     const filePath = settingFile();
     fs.writeFileSync(filePath, JSON.stringify({ mode: 'auto' }));
-    const { runtime, created } = runtimeInside(filePath);
+    const { runtime, created, modesBecome } = runtimeInside(filePath);
     await created('from-the-draft');
     await created('from-a-review');
-    await created('a-subagent', 'from-a-review');
-    expect((await runtime.load()).modes).toEqual({ 'from-the-draft': 'auto', 'from-a-review': 'auto' });
+    await created('a-subagent', { parentID: 'from-a-review' });
+    await modesBecome({ 'from-the-draft': 'auto', 'from-a-review': 'auto' });
     await expect(runtime.resolveSessionMode('a-subagent', '/spaces/0123456789ab/project')).resolves.toBe('auto');
   });
 
   it('takes a changed mode for the next chat and leaves older chats as they are', async () => {
     const filePath = settingFile();
     fs.writeFileSync(filePath, JSON.stringify({ mode: 'auto' }));
-    const { runtime, created } = runtimeInside(filePath);
+    const { created, modesBecome } = runtimeInside(filePath);
     await created('older');
     fs.writeFileSync(filePath, JSON.stringify({ mode: 'safety' }));
     await created('newer');
     fs.writeFileSync(filePath, JSON.stringify({ mode: 'ask' }));
     await created('newest');
-    expect((await runtime.load()).modes).toEqual({ older: 'auto', newer: 'safety' });
+    await modesBecome({ older: 'auto', newer: 'safety' });
   });
 
   it('keeps a mode the creating flow already set over the file', async () => {
     const filePath = settingFile();
     fs.writeFileSync(filePath, JSON.stringify({ mode: 'auto' }));
-    const { runtime, created } = runtimeInside(filePath);
+    const { runtime, created, modesBecome } = runtimeInside(filePath);
     await runtime.setSessionPolicy('picked', 'ask');
-    await created('picked');
-    expect((await runtime.load()).modes).toEqual({ picked: 'ask' });
+    await created('fresh');
+    await created('picked', { reads: false });
+    await modesBecome({ picked: 'ask', fresh: 'auto' });
   });
 
   it.each([
