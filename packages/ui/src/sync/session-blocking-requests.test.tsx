@@ -164,4 +164,27 @@ describe('useSessionBlockingRequests', () => {
       resetGlobalBlockingRequests()
     }
   })
+
+  test('a store whose bootstrap completed outranks a form the index still holds', async () => {
+    resetGlobalBlockingRequests()
+    try {
+      await withProbe(true, async () => {
+        // The index kept a form whose `form.settled` event was lost.
+        await act(async () => seedGlobalBlockingRequests([
+          { sessionId: 'child', directory: CHILD_DIR, permissions: [], forms: [{ id: 'answered-form', sessionID: 'child', title: 'Answer' }] },
+        ]))
+        expect(rendered?.hasForm).toBe(true)
+
+        // The directory's own bootstrap read its pending forms and found none.
+        await act(async () => stores!.child.setState({ status: 'complete' }))
+        expect(rendered?.hasForm).toBe(false)
+
+        // A form the complete store holds still shows.
+        await act(async () => stores!.child.setState({ form: { child: [form('live-form', 'child')] } }))
+        expect(rendered?.hasForm).toBe(true)
+      })
+    } finally {
+      resetGlobalBlockingRequests()
+    }
+  })
 })
