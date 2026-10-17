@@ -24,6 +24,7 @@ import { recordSendFailure } from "./send-failure-log"
 import { draftFromContextPayload, readContextPart, type ContextCarrierPart } from "@/lib/messages/contextParts"
 import { useInlineCommentDraftStore, type InlineCommentDraftTarget } from "@/stores/useInlineCommentDraftStore"
 import { materializeSessionSnapshots } from "./materialization"
+import { closeInterruptedTurn } from "./interrupted-turn"
 import { sessionEvents } from "@/lib/sessionEvents"
 import { fileTreeChanges } from "@/lib/fileTreeChanges"
 import {
@@ -2257,9 +2258,14 @@ export async function abortCurrentOperation(sessionId: string): Promise<void> {
   // sent to the wrong instance cancels nothing while still returning 200 true
   // (the "stop button does nothing" report — sessions in another project/
   // worktree than the UI's current directory could never be aborted).
-  const { directory } = dirStoreForSession(sessionId)
+  const { store, directory } = dirStoreForSession(sessionId)
   try {
-    await opencodeClient.abortSession(sessionId, directory)
+    // OpenCode answers that nothing was running when the process that ran the
+    // turn is gone (a crash, a force quit, every quit on Windows): its
+    // unfinished answer would otherwise read as running with nothing to stop.
+    if (!(await opencodeClient.abortSession(sessionId, directory))) {
+      closeInterruptedTurn(store, sessionId)
+    }
   } catch (error) {
     console.error("[session-actions] abort failed", error)
   }

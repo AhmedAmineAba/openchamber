@@ -7,7 +7,7 @@
  */
 import { describe, expect, test } from "bun:test"
 import type { Message, Part, ToolPart } from "@/lib/opencode/model"
-import { interruptedTurnToolParts } from "../sync-context"
+import { interruptedTurnToolParts } from "../interrupted-turn"
 import type { DirectoryStore } from "../child-store"
 import { INITIAL_STATE } from "../types"
 

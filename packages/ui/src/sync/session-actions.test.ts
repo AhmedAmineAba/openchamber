@@ -10,6 +10,8 @@ const registeredSessionDirectories: Array<{ sessionID: string; directory: string
 let formReplyError: unknown | null = null
 let formCancelError: unknown | null = null
 let permissionReplyError: unknown | null = null
+// What OpenCode answers a Stop: whether it had a running turn to interrupt.
+let abortInterrupted = true
 const sessionMessageRecords = new Map<string, Array<{ info: Message; parts: Part[] }>>()
 // Optional cursor pages for getSessionMessages: the request's cursor selects
 // the page by index, so a paged lookup can be pinned without the flat records.
@@ -101,7 +103,7 @@ mock.module("@/lib/opencode/client", () => ({
     }),
     abortSession: mock(async (sessionId: string, directory?: string | null) => {
       replyCalls.push({ method: "session.abort", params: { sessionID: sessionId, directory } })
-      return true
+      return abortInterrupted
     }),
     stageRevert: mock(async (sessionId: string, messageId: string, options?: { directory?: string | null }) => {
       replyCalls.push({
@@ -521,6 +523,75 @@ describe("moveSessionToDirectory", () => {
     expect(destination.getState().sessionTotal).toBe(1)
     expect(destination.getState().message["session-a"]?.[0]?.id).toBe("message-a")
     expect((globalUpsertedSessions.at(-1) as Session).title).toBe("Renamed")
+  })
+})
+
+describe("abortCurrentOperation", () => {
+  const assistant = (completed?: number): Message => ({
+    id: "msg_a", sessionID: "session-a", role: "assistant", modelID: "model", providerID: "provider", agent: "build",
+    time: { created: 10, completed },
+  })
+  const runningQuestion: Part = {
+    id: "part_q", messageID: "msg_a", sessionID: "session-a", type: "tool", callID: "call_q", tool: "question",
+    state: { status: "running", time: { start: 20 }, input: {} },
+  }
+
+  beforeEach(() => {
+    replyCalls.length = 0
+    abortInterrupted = true
+  })
+
+  afterEach(() => {
+    abortInterrupted = true
+  })
+
+  test("closes a turn OpenCode is not running, so the chat stops reading as working", async () => {
+    // After a crash or a Windows quit the answer stays unfinished on disk and
+    // no process will ever finish it; OpenCode says there is nothing to stop.
+    abortInterrupted = false
+    const source = createStore({}, {
+      message: { "session-a": [assistant()] },
+      part: { msg_a: [runningQuestion] },
+    })
+    const { abortCurrentOperation, setActionRefs } = await import("./session-actions")
+    setActionRefs(createChildStores([["/test/project", source]]), () => "/test/project")
+
+    await abortCurrentOperation("session-a")
+
+    expect(replyCalls.map((call) => call.method)).toEqual(["session.abort"])
+    const message = source.getState().message["session-a"]?.[0]
+    expect(message?.role === "assistant" ? message.time.completed ?? 0 : 0).toBeGreaterThan(0)
+    expect(message?.role === "assistant" ? message.error?.type : undefined).toBe("aborted")
+    const part = source.getState().part.msg_a?.[0]
+    expect(part?.type === "tool" ? part.state.status : undefined).toBe("error")
+  })
+
+  test("leaves a turn OpenCode interrupted to its own events", async () => {
+    const source = createStore({}, {
+      message: { "session-a": [assistant()] },
+      part: { msg_a: [runningQuestion] },
+    })
+    const { abortCurrentOperation, setActionRefs } = await import("./session-actions")
+    setActionRefs(createChildStores([["/test/project", source]]), () => "/test/project")
+
+    await abortCurrentOperation("session-a")
+
+    const message = source.getState().message["session-a"]?.[0]
+    expect(message?.role === "assistant" ? message.time.completed : "not an answer").toBeUndefined()
+    const part = source.getState().part.msg_a?.[0]
+    expect(part?.type === "tool" ? part.state.status : undefined).toBe("running")
+  })
+
+  test("leaves a finished turn alone when there was nothing to stop", async () => {
+    abortInterrupted = false
+    const finished = assistant(30)
+    const source = createStore({}, { message: { "session-a": [finished] } })
+    const { abortCurrentOperation, setActionRefs } = await import("./session-actions")
+    setActionRefs(createChildStores([["/test/project", source]]), () => "/test/project")
+
+    await abortCurrentOperation("session-a")
+
+    expect(source.getState().message["session-a"]?.[0]).toBe(finished)
   })
 })
 
