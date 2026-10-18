@@ -920,6 +920,12 @@ describe('connectHost', () => {
     stop();
     frame.dispatch(new MessageEvent('message', { data: supporting }));
     expect(listens()).toBe(2);
+    // The host may still push after the last listener left; the answer waits for the next one.
+    frame.dispatch(new MessageEvent('message', { data: { channel: OPENCHAMBER_SDK_CHANNEL, v: 1, type: 'generate-late', payload: late } }));
+    expect(results).toHaveLength(2);
+    const later: unknown[] = [];
+    host.onLateGenerateResult((result) => later.push(result));
+    expect(later).toEqual([late]);
     host.dispose();
   });
 
