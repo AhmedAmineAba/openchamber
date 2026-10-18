@@ -13,6 +13,16 @@ export const isCapacitorMobileApp = (): boolean => {
   return window.location.protocol === 'capacitor:';
 };
 
+/**
+ * True on Android 14 and older, where the app (targetSdk 35) is not forced edge-to-edge
+ * and StatusBar.setOverlaysWebView({ overlay: false }) really moves the WebView below the
+ * status bar. Android WebView keeps the OS version in its user agent.
+ */
+export const isAndroidBeforeEdgeToEdge = (userAgent = navigator.userAgent): boolean => {
+  const major = Number(/\bAndroid (\d+)/.exec(userAgent)?.[1]);
+  return Number.isInteger(major) && major < 15;
+};
+
 export const useNativeMobileChrome = (): void => {
   React.useEffect(() => {
     if (!isCapacitorMobileApp()) return;
@@ -28,6 +38,11 @@ export const useNativeMobileChrome = (): void => {
     const capacitorPlatform = (window as typeof window & { Capacitor?: { getPlatform?: () => string } }).Capacitor?.getPlatform?.();
     if (capacitorPlatform === 'android') {
       root.classList.add('oc-platform-android');
+      // Before Android 15 the overlay:false call below lays the WebView out under the
+      // status bar natively, so the page itself must not reserve that strip again.
+      if (isAndroidBeforeEdgeToEdge()) {
+        root.classList.add('oc-android-below-status-bar');
+      }
     }
 
     // iOS reports hardware keyboards natively (GCKeyboard); adopting that
@@ -371,7 +386,7 @@ export const useNativeMobileChrome = (): void => {
       disposed = true;
       cleanup.forEach((remove) => remove());
       resetHardwareKeyboardDetection();
-      root.classList.remove('oc-capacitor-app', 'oc-keyboard-open', 'oc-kb-animating', 'oc-kb-hide', 'oc-kb-caret-hold', 'oc-platform-android');
+      root.classList.remove('oc-capacitor-app', 'oc-keyboard-open', 'oc-kb-animating', 'oc-kb-hide', 'oc-kb-caret-hold', 'oc-platform-android', 'oc-android-below-status-bar');
       root.style.removeProperty('--oc-keyboard-inset');
       root.style.removeProperty('--oc-kb-shift');
       root.style.removeProperty('--oc-kb-layout');
