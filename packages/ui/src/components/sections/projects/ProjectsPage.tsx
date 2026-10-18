@@ -6,7 +6,6 @@ import { ProjectSettingsPanel } from '@/components/sections/projects/ProjectSett
 import { useProjectSettingsTabStore } from '@/components/sections/projects/projectSettingsTabs';
 import type { ProjectIdentitySaveData } from '@/components/sections/projects/useProjectIdentityForm';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
-import { isVSCodeRuntime } from '@/lib/desktop';
 import { useDeviceInfo } from '@/lib/device';
 import { useI18n } from '@/lib/i18n';
 
@@ -63,9 +62,8 @@ export const ProjectsPage: React.FC = () => {
     };
   }, [isMobile, selectedProjectId, setSettingsDialogOpen, setWorktreesPageProjectId]);
 
-  // VS Code's projects are its open workspace folders, which only VS Code closes.
   const handleCloseProject = React.useMemo(() => {
-    if (isVSCodeRuntime() || !selectedProject) return undefined;
+    if (!selectedProject) return undefined;
     const { id, label, path } = selectedProject;
     const name = label?.trim() || path.split(/[\\/]/).pop() || path;
     return () => {

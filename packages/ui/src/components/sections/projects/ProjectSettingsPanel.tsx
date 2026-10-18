@@ -29,7 +29,7 @@ type ProjectSettingsPanelProps = {
   frame: 'page' | 'dialog';
   /** Opens the project's worktrees page; absent where that page is not reachable. */
   onOpenWorktrees?: () => void;
-  /** Closes the project, as the sidebar's "Close project" does; absent where a project cannot be closed. */
+  /** Closes the project, as the sidebar's "Close project" does; shown only in the page frame. */
   onCloseProject?: () => void;
 };
 

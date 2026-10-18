@@ -263,8 +263,8 @@ The Settings page also carries Close project in its header. It calls the same
 `removeProject` as the sidebar's Close project, after a confirm dialog like the
 other removals in Settings: a header button is easier to hit by accident than a
 menu item. The edit dialog leaves it out, because the menu that opens the dialog
-already holds Close project, and VS Code leaves it out, because its projects are
-the workspace folders VS Code has open and `removeProject` does nothing there.
+already holds Close project. VS Code shows no Projects page in Settings: its
+projects are the workspace folders VS Code has open.
 
 A project's setup lives in two files: the team's `.openchamber/project.json` in
 the repo and the user's own config (`packages/web/server/lib/projects`). The page

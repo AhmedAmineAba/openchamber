@@ -100,6 +100,7 @@ describe('ProjectsPage', () => {
     const [cancel] = buttonsLabelled('Cancel');
     if (!cancel) throw new Error('Missing Cancel button');
     await act(async () => { cancel.click(); });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(closed).toEqual([]);
   });
 
