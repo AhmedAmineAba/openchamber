@@ -38,11 +38,6 @@ export const useNativeMobileChrome = (): void => {
     const capacitorPlatform = (window as typeof window & { Capacitor?: { getPlatform?: () => string } }).Capacitor?.getPlatform?.();
     if (capacitorPlatform === 'android') {
       root.classList.add('oc-platform-android');
-      // Before Android 15 the overlay:false call below lays the WebView out under the
-      // status bar natively, so the page itself must not reserve that strip again.
-      if (isAndroidBeforeEdgeToEdge()) {
-        root.classList.add('oc-android-below-status-bar');
-      }
     }
 
     // iOS reports hardware keyboards natively (GCKeyboard); adopting that
@@ -70,7 +65,13 @@ export const useNativeMobileChrome = (): void => {
           const themeBg =
             (isDark ? localStorage.getItem('splashBgDark') : localStorage.getItem('splashBgLight')) ||
             (isDark ? '#171515' : '#fffdf4');
-          await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => undefined);
+          const overlayOff = await StatusBar.setOverlaysWebView({ overlay: false }).then(() => true, () => false);
+          // Before Android 15 that call moves the WebView below the status bar natively, so
+          // the page must not reserve the strip again. Marked only once the call succeeded:
+          // until then the WebView still sits under the bar and needs the injected inset.
+          if (overlayOff && isAndroidBeforeEdgeToEdge()) {
+            root.classList.add('oc-android-below-status-bar');
+          }
           await StatusBar.setBackgroundColor({ color: themeBg }).catch(() => undefined);
           // Capacitor Style is named for the CONTENT: Style.Light = dark text (light bg),
           // Style.Dark = light text (dark bg). So dark theme → Style.Dark, light theme → Style.Light.
