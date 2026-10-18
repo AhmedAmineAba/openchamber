@@ -81,6 +81,13 @@ interface McpStore {
    * would make OpenCode start it, MCP servers included.
    */
   refreshIfHeld: (directory: string) => Promise<void>;
+  /**
+   * OpenCode stopped this directory's servers. The held status describes
+   * servers that are gone, and keeping it would make the shutdown's own
+   * announcements re-read the directory, which starts it again. A surface that
+   * shows the directory later reads it afresh.
+   */
+  forgetDirectory: (directory: string) => void;
   connect: (name: string, directory?: string | null) => Promise<void>;
   disconnect: (name: string, directory?: string | null) => Promise<void>;
   testConnection: (name: string, directory?: string | null) => Promise<TestConnectionResult>;
@@ -183,6 +190,23 @@ export const useMcpStore = create<McpStore>()(
       const normalized = normalizeDirectory(directory);
       if (!normalized || !get().byDirectory[toKey(normalized)]) return;
       await get().refresh({ directory: normalized, silent: true });
+    },
+
+    forgetDirectory: (directory) => {
+      const normalized = normalizeDirectory(directory);
+      if (!normalized) return;
+      const key = toKey(normalized);
+      if (!(key in get().byDirectory)) return;
+      const without = <T>(record: Record<string, T>) => {
+        const next = { ...record };
+        delete next[key];
+        return next;
+      };
+      set((state) => ({
+        byDirectory: without(state.byDirectory),
+        diagnosticsByDirectory: without(state.diagnosticsByDirectory),
+        refreshedAtKeys: without(state.refreshedAtKeys),
+      }));
     },
 
     connect: async (name, directory) => {
