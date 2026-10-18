@@ -109,6 +109,7 @@ import {
   isWorktreeDirectory,
   type LocationRelease,
 } from "./location-release"
+import { applySessionAssistEvent, subscribeSessionAssistSettled } from "./pending-session-assists"
 import { isChatDirectoryPath } from "@/lib/chatDirectories"
 import type { State } from "./types"
 import {
@@ -1924,6 +1925,12 @@ export function handleEvent(
     return
   }
 
+  if (payload.type === "openchamber.session-assist") {
+    if (expectedRuntimeKey !== getRuntimeKey()) return
+    applySessionAssistEvent(payload.properties, resolveCachedSessionDirectory)
+    return
+  }
+
   if (payload.type === "openchamber.permission-auto-accept") {
     usePermissionStore.getState().applySnapshot(policySnapshotFromWire(payload.properties), expectedRuntimeKey, payload.properties.spaceId ?? "")
     return
@@ -2698,7 +2705,11 @@ export function SyncProvider(props: {
       },
     })
     locationReleaseRef.current = release
+    // A left chat waiting for its recap is released as soon as the server
+    // has written it, not at its next busy re-check.
+    const unsubscribeAssistSettled = subscribeSessionAssistSettled((isSettledDirectory) => release.recheck(isSettledDirectory))
     return () => {
+      unsubscribeAssistSettled()
       release.dispose()
       if (locationReleaseRef.current === release) locationReleaseRef.current = null
     }

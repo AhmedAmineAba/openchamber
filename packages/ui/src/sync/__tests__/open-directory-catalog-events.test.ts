@@ -214,6 +214,28 @@ describe("MCP status when a location shuts down", () => {
     expect(statusReads).toEqual([])
   })
 
+  test("a status read still in flight at the shutdown does not hold the status again", async () => {
+    let answer = (): void => {}
+    opencodeClient.listMcpServers = async (directory) => {
+      statusReads.push(directory)
+      await new Promise<void>((resolve) => { answer = resolve })
+      return [{ name: "linear", status: { status: "connected" } }]
+    }
+    const routing = createEventRoutingIndex()
+    handleEvent("/left-chat", mcpStatusChanged, childStores, routing, getRuntimeKey())
+    await new Promise((resolve) => setTimeout(resolve, CATALOG_SETTLE_MS))
+    expect(statusReads).toEqual(["/left-chat"])
+
+    handleEvent("/left-chat", shutdown, childStores, routing, getRuntimeKey())
+    answer()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(useMcpStore.getState().byDirectory["/left-chat"]).toBeUndefined()
+
+    handleEvent("/left-chat", mcpStatusChanged, childStores, routing, getRuntimeKey())
+    await new Promise((resolve) => setTimeout(resolve, CATALOG_SETTLE_MS))
+    expect(statusReads).toEqual(["/left-chat"])
+  })
+
   test("returning to the directory reads its status afresh", async () => {
     handleEvent("/left-chat", shutdown, childStores, createEventRoutingIndex(), getRuntimeKey())
 
