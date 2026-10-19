@@ -492,10 +492,7 @@
     "largeTextPasteBehavior": {
       "scope": "profile"
     },
-    "saveImagesForTextOnlyModels": {
-      "scope": "profile"
-    },
-    "saveImagesForVisionModels": {
+    "savePastedImagesAsFiles": {
       "scope": "profile"
     },
     "followUpBehavior": {

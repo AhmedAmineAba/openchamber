@@ -2804,12 +2804,8 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
         insertTextAtSelection(insertionText, getFileMentionInputSourceForInsertedText(insertionText));
     }, [insertTextAtSelection]);
 
-    const saveImagesForTextOnlyModels = useUIStore((state) => state.saveImagesForTextOnlyModels);
-    const saveImagesForVisionModels = useUIStore((state) => state.saveImagesForVisionModels);
-    const imageSaveMode = imageSaveModeForModel(
-        { saveForTextOnlyModels: saveImagesForTextOnlyModels, saveForVisionModels: saveImagesForVisionModels },
-        currentModelMetadata?.modalities?.input,
-    );
+    const savePastedImagesAsFiles = useUIStore((state) => state.savePastedImagesAsFiles);
+    const imageSaveMode = imageSaveModeForModel(savePastedImagesAsFiles, currentModelMetadata?.modalities?.input);
     const currentModelName = currentModelMetadata?.name ?? currentModelId ?? '';
     const currentModelKey = `${currentProviderId ?? ''}/${currentModelId ?? ''}`;
 
@@ -2910,12 +2906,12 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
             insertCitationAtSelection(filenames.length > 0 ? buildAttachmentCitationText(filenames) : '', text);
         };
 
-        // With the setting on, links to saved images keep their names too, so a
-        // later attachment (vision model, failed save) never repeats one.
+        // With the setting on, links to saved images keep their names too, so an
+        // attachment after a failed save never repeats one.
         const usedNames = () => [
             ...useInputStore.getState().attachedFiles.map((file) => file.filename),
             ...pendingPastedAttachmentFilenamesRef.current,
-            ...(saveImagesForTextOnlyModels ? findImagePathCitationNames(composerRef.current?.getValue() ?? messageRef.current) : []),
+            ...(savePastedImagesAsFiles ? findImagePathCitationNames(composerRef.current?.getValue() ?? messageRef.current) : []),
         ];
 
         let savedAny = false;
@@ -2983,7 +2979,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({
         if (files.length > 0 && !attached && !savedAny) {
             toast.error(t('chat.chatInput.toast.attachFileFailed'));
         }
-    }, [addAttachedFile, imageSaveMode, insertCitationAtSelection, saveImagesForTextOnlyModels, saveImagesWithPathCitation, t]);
+    }, [addAttachedFile, imageSaveMode, insertCitationAtSelection, savePastedImagesAsFiles, saveImagesWithPathCitation, t]);
 
     const handlePaste = React.useCallback(async (event: ClipboardEvent) => {
         const clipboardData = event.clipboardData;

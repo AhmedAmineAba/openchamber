@@ -192,22 +192,22 @@ export const buildImagePathCitationText = (images: Array<{ filename: string; pat
 );
 
 /**
- * What the composer does with an image for this model. `instead`: a model
- * without image input gets a saved copy linked by path and no attachment
- * (#5087). `alongside`: the model gets the attachment and the message also
- * links a saved copy, for tools that need the file (#5218); the second setting
- * only extends the first. `attach`: the attachment alone. Unknown model
+ * What the composer does with an image while the "save pasted images as files"
+ * setting is on (`attach` while it is off). `instead`: a model without image
+ * input gets the saved file linked by path and no attachment, which it could
+ * not read (#5087). `alongside`: the model gets the attachment and the message
+ * also links the saved file, for tools that need it (#5218). Unknown model
  * metadata counts as a model that takes the attachment.
  */
 export const imageSaveModeForModel = (
-    settings: { saveForTextOnlyModels: boolean; saveForVisionModels: boolean },
+    savePastedImagesAsFiles: boolean,
     inputModalities: string[] | undefined,
 ): 'instead' | 'alongside' | 'attach' => {
-    if (!settings.saveForTextOnlyModels) return 'attach';
+    if (!savePastedImagesAsFiles) return 'attach';
     if (inputModalities && getUnsupportedAttachmentInputs([{ mimeType: 'image/png' }], inputModalities).length > 0) {
         return 'instead';
     }
-    return settings.saveForVisionModels ? 'alongside' : 'attach';
+    return 'alongside';
 };
 
 /** Names of the markdown links already in the text, so a new paste picks a free one. */
