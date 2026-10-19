@@ -16,8 +16,8 @@ import { opencodeClient, type SyntheticContextInput } from "@/lib/opencode/clien
 import { toJsonRecord } from "@/lib/opencode/json"
 import { ascendingId } from "@/lib/opencode/ids"
 import { mergeSessionDirectoryMetadata, resolveGlobalSessionDirectory, useGlobalSessionsStore } from "@/stores/useGlobalSessionsStore"
-import { isRestorableOnItsOwn } from "./session-restore-rule"
 import { readGlobalSessionLineage } from "@/stores/sessionLineage"
+import { isRestorableOnItsOwn } from "./session-restore-rule"
 import { useConfigStore } from "@/stores/useConfigStore"
 import { waitForOpenCodeStartup } from "./opencode-startup-gate"
 import { registerSessionDirectory } from "./sync-refs"
@@ -1895,8 +1895,8 @@ export type UnarchiveSessionsOptions = {
   expectedRuntimeKey?: string
   /**
    * Undo of an archive that just happened: put back exactly the sessions it
-   * moved, subsessions included. Without it a subsession is only restored
-   * with its parent.
+   * moved, subsessions included. Without it a subsession is restored on its
+   * own only while its parent is active (`isRestorableOnItsOwn`).
    */
   undo?: boolean
 }
