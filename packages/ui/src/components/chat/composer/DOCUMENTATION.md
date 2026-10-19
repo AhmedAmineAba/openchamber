@@ -307,7 +307,15 @@ them into a new folder under OpenCode's own temp folder
 agents may read that folder without asking. The modality toast says where the
 images went. An image that could not be saved attaches as before, with an error
 toast. With the setting off, unknown model metadata, or a vision model, nothing
-changes. The browser annotation screenshot and comment-field image pastes keep
+changes, unless the nested setting `saveImagesForVisionModels` is on too: then
+every image that attaches (vision model or unknown metadata) is also saved the
+same way, the draft gets the `[name](path)` link in place of the `[name]`
+citation, and the image attaches under that name, so the model sees it and its
+tools can open, forward or edit the file (#5218). It nests under the first
+setting and does nothing without it: together they mean "save every image",
+and an image a model cannot read is no use as a plain attachment. A failed save there leaves the
+plain attachment and citation, with an error toast. `imageSaveModeForModel`
+decides between the three cases. The browser annotation screenshot and comment-field image pastes keep
 attaching. The bytes go through the active runtime's OpenCode route (the
 OpenChamber server's proxy, the VS Code bridge, the relay for a phone), so the
 file lands on the machine OpenCode runs on, which may not be the user's. Why

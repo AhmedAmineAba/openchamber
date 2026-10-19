@@ -2355,6 +2355,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': 'サブエージェントセッションへのプロンプトを許可',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': '画像を読み取れないモデル向けに画像を保存',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': '貼り付けまたは添付した画像を OpenCode が動作するマシンに保存し、そのパスをメッセージに入れます。モデルやサブエージェントがそこから開けます。',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': '画像を読み取れるモデルでも画像を保存',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': 'モデルにはこれまでどおり画像が渡されます。メッセージ内のパスを使って、ツールがファイルを開いたり送信・編集したりできます。',
   'settings.openchamber.visual.field.draftStartersVisible': '新規セッション画面にスターターを表示',
   'settings.openchamber.visual.field.draftStartersVisibleAria': '新規セッション画面にスターターを表示',
   'settings.openchamber.visual.field.showToolFileIconsAria': 'ツールファイルアイコンを表示',

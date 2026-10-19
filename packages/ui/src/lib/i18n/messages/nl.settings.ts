@@ -2353,6 +2353,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': 'Prompten van subagentsessies toestaan',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': 'Afbeeldingen opslaan voor modellen die ze niet kunnen lezen',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': 'Een geplakte of bijgevoegde afbeelding wordt opgeslagen op de machine waar OpenCode draait, en het pad komt in het bericht, zodat het model of een subagent hem kan openen.',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': 'Afbeeldingen ook opslaan voor modellen die ze kunnen zien',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': 'Het model krijgt de afbeelding nog steeds. Met het pad in het bericht kunnen tools het bestand openen, versturen of bewerken.',
   'settings.openchamber.visual.field.draftStartersVisible': 'Starters tonen op het scherm voor een nieuwe sessie',
   'settings.openchamber.visual.field.draftStartersVisibleAria': 'Toon starters op het scherm voor een nieuwe sessie',
   'settings.openchamber.visual.field.showToolFileIconsAria': 'Toon bestandspictogrammen van tools',

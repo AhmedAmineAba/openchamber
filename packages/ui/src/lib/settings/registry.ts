@@ -464,6 +464,7 @@ export const SETTINGS_REGISTRY = {
   persistChatDraft: field({ scope: 'profile', parse: parseBoolean, ui: uiStore('persistChatDraft', (v) => useUIStore.getState().setPersistChatDraft(v)) }),
   largeTextPasteBehavior: field({ scope: 'profile', parse: parseLargeTextPasteBehavior, ui: uiStore('largeTextPasteBehavior', (v) => useUIStore.getState().setLargeTextPasteBehavior(v)) }),
   saveImagesForTextOnlyModels: field({ scope: 'profile', parse: parseBoolean, ui: uiStore('saveImagesForTextOnlyModels', (v) => useUIStore.getState().setSaveImagesForTextOnlyModels(v)) }),
+  saveImagesForVisionModels: field({ scope: 'profile', parse: parseBoolean, ui: uiStore('saveImagesForVisionModels', (v) => useUIStore.getState().setSaveImagesForVisionModels(v)) }),
   followUpBehavior: field({
     scope: 'profile',
     parse: parseFollowUpBehavior,

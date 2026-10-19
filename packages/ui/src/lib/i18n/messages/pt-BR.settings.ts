@@ -2322,6 +2322,8 @@ export const settingsDict = {
   "settings.openchamber.visual.field.allowPromptingSubagentSessions": "Permitir prompts em sessões de subagentes",
   "settings.openchamber.visual.field.saveImagesForTextOnlyModels": "Salvar imagens para modelos que não conseguem lê-las",
   "settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo": "Uma imagem colada ou anexada é salva na máquina onde o OpenCode roda, e o caminho dela vai para a mensagem, para que o modelo ou um subagente possa abri-la.",
+  "settings.openchamber.visual.field.saveImagesForVisionModels": "Salvar imagens também para modelos que conseguem vê-las",
+  "settings.openchamber.visual.field.saveImagesForVisionModelsInfo": "O modelo continua recebendo a imagem. O caminho dela na mensagem permite que as ferramentas abram, enviem ou editem o arquivo.",
   "settings.openchamber.visual.field.draftStartersVisible": "Mostrar atalhos na tela de nova sessão",
   "settings.openchamber.visual.field.draftStartersVisibleAria": "Mostrar atalhos na tela de nova sessão",
   "settings.openchamber.visual.field.showToolFileIconsAria": "Mostrar ícones de arquivos de ferramentas",

@@ -1155,6 +1155,7 @@ interface UIStore {
   showSplitAssistantMessageActions: boolean;
   allowPromptingSubagentSessions: boolean;
   saveImagesForTextOnlyModels: boolean;
+  saveImagesForVisionModels: boolean;
   isExpandedInput: boolean;
   reportUsage: boolean;
   shortcutOverrides: Record<string, ShortcutCombo>;
@@ -1416,6 +1417,7 @@ interface UIStore {
   setShowSplitAssistantMessageActions: (value: boolean) => void;
   setAllowPromptingSubagentSessions: (value: boolean) => void;
   setSaveImagesForTextOnlyModels: (value: boolean) => void;
+  setSaveImagesForVisionModels: (value: boolean) => void;
   viewPagerPage: 'left' | 'center' | 'right';
   setViewPagerPage: (page: 'left' | 'center' | 'right') => void;
   toggleExpandedInput: () => void;
@@ -1646,6 +1648,7 @@ export const useUIStore = create<UIStore>()(
         showSplitAssistantMessageActions: false,
         allowPromptingSubagentSessions: false,
         saveImagesForTextOnlyModels: false,
+        saveImagesForVisionModels: false,
         draftStartersVisible: true,
         isExpandedInput: false,
         reportUsage: true,
@@ -3335,6 +3338,9 @@ export const useUIStore = create<UIStore>()(
         setSaveImagesForTextOnlyModels: (value) => {
           set({ saveImagesForTextOnlyModels: value });
         },
+        setSaveImagesForVisionModels: (value) => {
+          set({ saveImagesForVisionModels: value });
+        },
         setReportUsage: (value) => {
           set({ reportUsage: value });
         },
@@ -3785,6 +3791,7 @@ export const useUIStore = create<UIStore>()(
           showSplitAssistantMessageActions: state.showSplitAssistantMessageActions,
           allowPromptingSubagentSessions: state.allowPromptingSubagentSessions,
           saveImagesForTextOnlyModels: state.saveImagesForTextOnlyModels,
+          saveImagesForVisionModels: state.saveImagesForVisionModels,
           draftStartersVisible: state.draftStartersVisible,
           shortcutOverrides: state.shortcutOverrides,
           fileEditorKeymap: state.fileEditorKeymap,

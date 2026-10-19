@@ -2265,6 +2265,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': 'Erlaube Prompting von Subagent-Sitzungen',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': 'Bilder für Modelle speichern, die sie nicht lesen können',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': 'Ein eingefügtes oder angehängtes Bild wird auf dem Rechner gespeichert, auf dem OpenCode läuft, und sein Pfad kommt in die Nachricht, damit das Modell oder ein Subagent es öffnen kann.',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': 'Bilder auch für Modelle speichern, die sie sehen können',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': 'Das Modell bekommt das Bild weiterhin. Über den Pfad in der Nachricht können Tools die Datei öffnen, senden oder bearbeiten.',
   'settings.openchamber.visual.field.showToolFileIconsAria': 'Tool-Datei-Symbole anzeigen',
   'settings.openchamber.visual.field.showToolFileIcons': 'Tool-Datei-Symbole anzeigen',
   'settings.openchamber.visual.field.showTurnChangedFilesAria': 'Geänderte Dateien für abgeschlossene Züge anzeigen',

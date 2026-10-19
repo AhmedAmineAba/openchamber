@@ -346,6 +346,8 @@ const ComposerTab: React.FC = () => {
   const setAllowPromptingSubagentSessions = useUIStore((state) => state.setAllowPromptingSubagentSessions);
   const saveImagesForTextOnlyModels = useUIStore((state) => state.saveImagesForTextOnlyModels);
   const setSaveImagesForTextOnlyModels = useUIStore((state) => state.setSaveImagesForTextOnlyModels);
+  const saveImagesForVisionModels = useUIStore((state) => state.saveImagesForVisionModels);
+  const setSaveImagesForVisionModels = useUIStore((state) => state.setSaveImagesForVisionModels);
   const persistChatDraft = useUIStore((state) => state.persistChatDraft);
   const setPersistChatDraft = useUIStore((state) => state.setPersistChatDraft);
   const inputSpellcheckEnabled = useUIStore((state) => state.inputSpellcheckEnabled);
@@ -440,6 +442,16 @@ const ComposerTab: React.FC = () => {
             info={t('settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo')}
             settingsItem="chat.save-images-for-text-models"
           />
+          {saveImagesForTextOnlyModels ? (
+            <SettingsCheckboxRow
+              checked={saveImagesForVisionModels}
+              onChange={setSaveImagesForVisionModels}
+              label={t('settings.openchamber.visual.field.saveImagesForVisionModels')}
+              ariaLabel={t('settings.openchamber.visual.field.saveImagesForVisionModels')}
+              info={t('settings.openchamber.visual.field.saveImagesForVisionModelsInfo')}
+              className={NESTED_OPTION_CLASS}
+            />
+          ) : null}
         </div>
       </SettingsSection>
 

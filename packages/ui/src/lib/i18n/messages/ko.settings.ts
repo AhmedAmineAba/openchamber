@@ -2322,6 +2322,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': '하위 에이전트 세션에 프롬프트 허용',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': '이미지를 읽지 못하는 모델용으로 이미지 저장',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': '붙여넣거나 첨부한 이미지를 OpenCode가 실행되는 컴퓨터에 저장하고 메시지에 경로를 넣어, 모델이나 하위 에이전트가 열 수 있게 합니다.',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': '이미지를 볼 수 있는 모델에서도 이미지 저장',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': '모델은 그대로 이미지를 받습니다. 메시지의 경로로 도구가 파일을 열고, 보내고, 편집할 수 있습니다.',
   'settings.openchamber.visual.field.draftStartersVisible': '새 세션 화면에 시작 항목 표시',
   'settings.openchamber.visual.field.draftStartersVisibleAria': '새 세션 화면에 시작 항목 표시',
   'settings.openchamber.visual.field.showToolFileIconsAria': '도구 파일 아이콘 표시',

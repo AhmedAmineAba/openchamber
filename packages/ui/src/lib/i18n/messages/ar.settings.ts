@@ -2337,6 +2337,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': 'السماح بإرسال طلبات إلى جلسات الوكلاء الفرعيين',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': 'حفظ الصور للنماذج التي لا تستطيع قراءتها',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': 'تُحفظ الصورة الملصقة أو المرفقة على الجهاز الذي يعمل عليه OpenCode، ويُضاف مسارها إلى الرسالة ليتمكن النموذج أو وكيل فرعي من فتحها.',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': 'حفظ الصور أيضًا للنماذج التي تستطيع رؤيتها',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': 'يظل النموذج يتلقى الصورة. ومسارها في الرسالة يتيح للأدوات فتح الملف أو إرساله أو تعديله.',
   'settings.openchamber.visual.field.draftStartersVisible': 'إظهار المقترحات الافتتاحية في شاشة الجلسة الجديدة',
   'settings.openchamber.visual.field.draftStartersVisibleAria': 'إظهار المقترحات الافتتاحية في شاشة الجلسة الجديدة',
   'settings.openchamber.visual.field.showToolFileIconsAria': 'إظهار أيقونات الملفات في الأدوات',

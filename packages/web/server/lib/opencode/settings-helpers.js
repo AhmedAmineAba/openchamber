@@ -495,6 +495,9 @@ export const createSettingsHelpers = (dependencies) => {
     if (candidate.saveImagesForTextOnlyModels === true || candidate.saveImagesForTextOnlyModels === false) {
       result.saveImagesForTextOnlyModels = candidate.saveImagesForTextOnlyModels;
     }
+    if (candidate.saveImagesForVisionModels === true || candidate.saveImagesForVisionModels === false) {
+      result.saveImagesForVisionModels = candidate.saveImagesForVisionModels;
+    }
     if (typeof candidate.showOpenCodeRestartConfirm === 'boolean') {
       result.showOpenCodeRestartConfirm = candidate.showOpenCodeRestartConfirm;
     }

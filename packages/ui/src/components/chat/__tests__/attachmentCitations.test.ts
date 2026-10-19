@@ -6,6 +6,7 @@ import {
     buildImagePathCitationText,
     findAttachmentCitationRanges,
     findImagePathCitationNames,
+    imageSaveModeForModel,
     isGenericImageFilename,
     nextPastedContextFilename,
 } from '../attachmentCitations';
@@ -80,5 +81,34 @@ describe('attachment citations', () => {
         expect(findImagePathCitationNames(draft)).toEqual(['image-1.png', 'shot.png']);
         expect(assignImageAttachmentFilenames([{ name: 'image.png', type: 'image/png' }], findImagePathCitationNames(draft)))
             .toEqual(['image-2.png']);
+    });
+});
+
+describe('image save mode', () => {
+    const textOnly = ['text'];
+    const vision = ['text', 'image'];
+    const both = { saveForTextOnlyModels: true, saveForVisionModels: true };
+
+    test('attaches only while the first setting is off, whatever the second says', () => {
+        const settings = { saveForTextOnlyModels: false, saveForVisionModels: true };
+        expect(imageSaveModeForModel(settings, textOnly)).toBe('attach');
+        expect(imageSaveModeForModel(settings, vision)).toBe('attach');
+        expect(imageSaveModeForModel(settings, undefined)).toBe('attach');
+    });
+
+    test('a model without image input gets the saved copy in place of the attachment', () => {
+        expect(imageSaveModeForModel({ saveForTextOnlyModels: true, saveForVisionModels: false }, textOnly)).toBe('instead');
+        expect(imageSaveModeForModel(both, textOnly)).toBe('instead');
+    });
+
+    test('a model that takes images keeps the attachment and gets the copy only with the second setting', () => {
+        expect(imageSaveModeForModel({ saveForTextOnlyModels: true, saveForVisionModels: false }, vision)).toBe('attach');
+        expect(imageSaveModeForModel(both, vision)).toBe('alongside');
+        expect(imageSaveModeForModel(both, ['TEXT', 'IMAGE'])).toBe('alongside');
+    });
+
+    test('unknown model metadata counts as a model that takes the attachment', () => {
+        expect(imageSaveModeForModel({ saveForTextOnlyModels: true, saveForVisionModels: false }, undefined)).toBe('attach');
+        expect(imageSaveModeForModel(both, undefined)).toBe('alongside');
     });
 });

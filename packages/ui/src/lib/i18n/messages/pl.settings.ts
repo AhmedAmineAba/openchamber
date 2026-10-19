@@ -1271,6 +1271,8 @@ export const settingsDict = {
   'settings.openchamber.visual.field.allowPromptingSubagentSessions': 'Zezwalaj na prompty w sesjach podagentów',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModels': 'Zapisuj obrazy dla modeli, które ich nie odczytują',
   'settings.openchamber.visual.field.saveImagesForTextOnlyModelsInfo': 'Wklejony lub załączony obraz jest zapisywany na komputerze, na którym działa OpenCode, a jego ścieżka trafia do wiadomości, więc model lub podagent może go otworzyć.',
+  'settings.openchamber.visual.field.saveImagesForVisionModels': 'Zapisuj obrazy także dla modeli, które je widzą',
+  'settings.openchamber.visual.field.saveImagesForVisionModelsInfo': 'Model nadal dostaje obraz. Ścieżka w wiadomości pozwala narzędziom otworzyć, wysłać lub edytować plik.',
   'settings.openchamber.visual.field.draftStartersVisible': 'Pokazuj startery na ekranie nowej sesji',
   'settings.openchamber.visual.field.draftStartersVisibleAria': 'Pokazuj startery na ekranie nowej sesji',
   'settings.openchamber.visual.field.showToolFileIcons': 'Pokaż ikony plików narzędzi',

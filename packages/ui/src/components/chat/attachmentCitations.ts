@@ -1,3 +1,5 @@
+import { getUnsupportedAttachmentInputs } from '@/sync/attachment-files';
+
 interface ImageAttachmentCandidate {
     name: string;
     type?: string;
@@ -188,6 +190,25 @@ export const buildImagePathCitationText = (images: Array<{ filename: string; pat
         return `[${filename}](${/[\s()]/.test(target) ? `<${target}>` : target})`;
     }).join(' ')
 );
+
+/**
+ * What the composer does with an image for this model. `instead`: a model
+ * without image input gets a saved copy linked by path and no attachment
+ * (#5087). `alongside`: the model gets the attachment and the message also
+ * links a saved copy, for tools that need the file (#5218); the second setting
+ * only extends the first. `attach`: the attachment alone. Unknown model
+ * metadata counts as a model that takes the attachment.
+ */
+export const imageSaveModeForModel = (
+    settings: { saveForTextOnlyModels: boolean; saveForVisionModels: boolean },
+    inputModalities: string[] | undefined,
+): 'instead' | 'alongside' | 'attach' => {
+    if (!settings.saveForTextOnlyModels) return 'attach';
+    if (inputModalities && getUnsupportedAttachmentInputs([{ mimeType: 'image/png' }], inputModalities).length > 0) {
+        return 'instead';
+    }
+    return settings.saveForVisionModels ? 'alongside' : 'attach';
+};
 
 /** Names of the markdown links already in the text, so a new paste picks a free one. */
 export const findImagePathCitationNames = (text: string): string[] => (
