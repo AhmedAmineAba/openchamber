@@ -246,6 +246,7 @@ Examples:
 - `useProjectContextStore.ts`
 - `messageQueueStore.ts`
 - `useRoutingStore.ts`
+- `useSessionWarmingStore.ts`
 
 These stores coordinate persistent project/session metadata across multiple views.
 
@@ -258,6 +259,14 @@ model may be offered, the config Settings → Routing edits, the last decision
 per session, permissions the safety net is holding). Nothing is persisted; a
 failed read keeps what was known and records `loadError` instead of reading as
 "routing is off". See `packages/web/server/lib/routing/DOCUMENTATION.md`.
+
+`useSessionWarmingStore.ts` projects which sessions the server keeps warm and
+until when (`packages/web/server/lib/session-warming/DOCUMENTATION.md`).
+Nothing is persisted. `sync/session-warming-sync.ts` reads the snapshot on
+subscribe and whenever the control stream reconnects, and applies the whole
+snapshot each broadcast carries; an older revision is ignored, and a runtime
+switch resets the store first. VS Code keeps it empty: it has no OpenChamber
+server and offers only OpenCode's global warming.
 
 `messageQueueStore.ts` has two owners, decided by `isServerOwnedMessageQueue()`.
 The VS Code foreground delivery gate holds an idle parent while a live busy or
@@ -316,6 +325,12 @@ A queued message is captured whole, so whoever delivers it sends exactly what th
 In the local (VS Code) mode the store keeps a queued message until its own send resolves, so between dispatch and resolution the entry is still visible to every reader. Dispatchers must therefore mark the send (`markSending`/`clearSending`) and read `getSendableQueue()` — or filter `sendingIds` themselves — instead of dispatching straight from `queuedMessages`; otherwise a composer submit merges a message the auto-send hook is already delivering and it is sent twice (the window is seconds over a relay). `clearQueue()` retains in-flight entries for the same reason. `sendingIds` is deliberately not persisted: a restart has no in-flight sends, and a stale flag would strand a queued message; in the server-owned mode it mirrors the server's in-flight item. Desktop queues use the configured host id as runtime identity, not the current API URL, because an SSH reconnect allocates a new local forwarding port while the remote host remains the same.
 
 `useGlobalSessionsStore.ts` owns cold/global active and archived session coverage. Its entity map and active root, parent/child, and directory indexes are maintained in the same transaction as the compatibility arrays and `sessionsByDirectory`. Full authoritative snapshots may rebuild those indexes once; direct create, update, move, archive, and delete mutations update only affected hierarchy and directory buckets. Metadata-only updates preserve the structure reference. It is complementary to directory child stores: it is not the source of live busy/retry status or session messages.
+
+`sessionLineage.ts` answers which sessions sit below a session for an action. Every action that reaches a session's descendants (archive, delete, restore, move to a worktree or project, export, restore relocation, the tray's activity rollup) asks it, with the policy the action needs: `active` stops at an archived session (move, export, tray), `activeThroughArchived` reaches active sessions under an archived intermediate (archive), `all` takes everything (delete), `archived` stops at an active session (restore). `readGlobalSessionLineage` reads the global active-plus-archived cache when the user acts; `createSessionLineage` indexes a given list once for a pass over many roots. Invariant: for the same root, runtime state and policy, the answer does not depend on which surface asked. A sidebar row may render its session with no children (In work, Pinned, the List view), so no action takes its descendants from the rendered row. Presentation-only walks (which rows a sidebar section groups, badge scopes, search) keep their own topology and stay outside this module.
+
+### Why one lineage module and not a walk per action
+
+Each action used to walk the parent links itself: some over the rendered row, some over active sessions only, one over the active-plus-archived cache. A flat row then silently changed what Move and Export reached (#4837, #4842), and "Archive all" reached no subagents at all. With one module the policies differ by name and the graph they walk is the same.
 
 User-visible session ordering is also not owned by the global cache array order. `sync/session-ordering.ts` combines lifecycle rank with timestamp fallbacks, and session surfaces must use that shared comparator instead of independently sorting global sessions by `time.updated`.
 

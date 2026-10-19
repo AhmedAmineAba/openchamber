@@ -10,8 +10,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -142,8 +144,10 @@ export const dict = {
   ...fileArtifactsI18n.de,
   ...fileContentSearchI18n.de,
   ...htmlRenderI18n.de,
+  ...sessionNoticesI18n.de,
   ...usageStatsI18n.de,
   ...webSearchI18n.de,
+  ...sessionWarmingI18n.de,
   ...isolatedSpacesI18n.de,
   ...sourceBoardI18n.de,
   ...projectActionsI18n.de,
@@ -3212,6 +3216,7 @@ export const dict = {
   'terminalView.actions.copy': 'Kopieren',
   'terminalView.actions.paste': 'Einfügen',
   'terminalView.toast.pasteFailed': 'Die Zwischenablage konnte nicht gelesen werden. Verwende die Tastenkombination zum Einfügen.',
+  'terminalView.toast.pasteFailedTouch': 'Die Zwischenablage konnte nicht gelesen werden.',
   'terminalView.actions.restart': 'Terminal neu starten',
   'chat.message.terminalContext': '{terminal}, Zeilen {start}-{end}',
   'chat.message.context.codeComment': 'Kommentar zu {file}, Zeilen {start}-{end}',

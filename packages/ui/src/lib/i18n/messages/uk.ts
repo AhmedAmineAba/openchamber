@@ -11,8 +11,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -153,8 +155,10 @@ export const dict: Record<I18nKey, string> = {
   ...fileArtifactsI18n.uk,
   ...fileContentSearchI18n.uk,
   ...htmlRenderI18n.uk,
+  ...sessionNoticesI18n.uk,
   ...usageStatsI18n.uk,
   ...webSearchI18n.uk,
+  ...sessionWarmingI18n.uk,
   ...isolatedSpacesI18n.uk,
   ...sourceBoardI18n.uk,
   ...projectActionsI18n.uk,
@@ -172,6 +176,7 @@ export const dict: Record<I18nKey, string> = {
   'terminalView.actions.copy': 'Копіювати',
   'terminalView.actions.paste': 'Вставити',
   'terminalView.toast.pasteFailed': 'Не вдалося прочитати буфер обміну. Скористайтеся комбінацією клавіш для вставлення.',
+  'terminalView.toast.pasteFailedTouch': 'Не вдалося прочитати буфер обміну.',
   'terminalView.actions.restart': 'Перезапустити термінал',
   'chat.message.terminalContext': '{terminal}, рядки {start}-{end}',
   'chat.message.context.codeComment': 'Коментар до {file}, рядки {start}-{end}',

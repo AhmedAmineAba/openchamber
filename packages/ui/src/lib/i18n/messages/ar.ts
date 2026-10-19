@@ -10,8 +10,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -135,6 +137,7 @@ export const dict = {
   'terminalView.actions.copy': 'نسخ',
   'terminalView.actions.paste': 'لصق',
   'terminalView.toast.pasteFailed': 'تعذّرت قراءة الحافظة. استخدم اختصار لوحة المفاتيح للصق.',
+  'terminalView.toast.pasteFailedTouch': 'تعذّرت قراءة الحافظة.',
   'terminalView.actions.restart': 'إعادة تشغيل الطرفية',
   'chat.message.terminalContext': '{terminal}، الأسطر {start}-{end}',
   'chat.message.context.codeComment': 'تعليق على {file}، الأسطر {start}-{end}',
@@ -3803,8 +3806,10 @@ export const dict = {
   ...fileArtifactsI18n.ar,
   ...fileContentSearchI18n.ar,
   ...htmlRenderI18n.ar,
+  ...sessionNoticesI18n.ar,
   ...usageStatsI18n.ar,
   ...webSearchI18n.ar,
+  ...sessionWarmingI18n.ar,
   ...isolatedSpacesI18n.ar,
   ...sourceBoardI18n.ar,
   ...projectActionsI18n.ar,

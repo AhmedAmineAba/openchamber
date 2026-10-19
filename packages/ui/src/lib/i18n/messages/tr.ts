@@ -10,8 +10,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -81,8 +83,10 @@ export const dict = {
   ...fileArtifactsI18n.tr,
   ...fileContentSearchI18n.tr,
   ...htmlRenderI18n.tr,
+  ...sessionNoticesI18n.tr,
   ...usageStatsI18n.tr,
   ...webSearchI18n.tr,
+  ...sessionWarmingI18n.tr,
   ...isolatedSpacesI18n.tr,
   ...sourceBoardI18n.tr,
   ...projectActionsI18n.tr,
@@ -100,6 +104,7 @@ export const dict = {
   'terminalView.actions.copy': 'Kopyala',
   'terminalView.actions.paste': 'Yapıştır',
   'terminalView.toast.pasteFailed': 'Pano okunamadı. Yapıştırmak için klavye kısayolunu kullanın.',
+  'terminalView.toast.pasteFailedTouch': 'Pano okunamadı.',
   'terminalView.actions.restart': 'Terminali yeniden başlat',
   'chat.message.terminalContext': '{terminal}, {start}-{end}. satırlar',
   'chat.chatInput.terminalContext': '{terminal}, {start}-{end}. satırlar',

@@ -10,8 +10,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -135,6 +137,7 @@ export const dict = {
   'terminalView.actions.copy': 'העתק',
   'terminalView.actions.paste': 'הדבק',
   'terminalView.toast.pasteFailed': 'לא ניתן היה לקרוא את הלוח. יש להשתמש בקיצור המקשים להדבקה.',
+  'terminalView.toast.pasteFailedTouch': 'לא ניתן היה לקרוא את הלוח.',
   'terminalView.actions.restart': 'הפעל מחדש את המסוף',
   'chat.message.terminalContext': '{terminal}, שורות {start}-{end}',
   'chat.message.context.codeComment': 'הערה על {file}, שורות {start}-{end}',
@@ -3803,8 +3806,10 @@ export const dict = {
   ...fileArtifactsI18n.he,
   ...fileContentSearchI18n.he,
   ...htmlRenderI18n.he,
+  ...sessionNoticesI18n.he,
   ...usageStatsI18n.he,
   ...webSearchI18n.he,
+  ...sessionWarmingI18n.he,
   ...isolatedSpacesI18n.he,
   ...sourceBoardI18n.he,
   ...projectActionsI18n.he,

@@ -11,8 +11,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -153,8 +155,10 @@ export const dict: Record<I18nKey, string> = {
   ...fileArtifactsI18n['pt-BR'],
   ...fileContentSearchI18n['pt-BR'],
   ...htmlRenderI18n['pt-BR'],
+  ...sessionNoticesI18n['pt-BR'],
   ...usageStatsI18n['pt-BR'],
   ...webSearchI18n['pt-BR'],
+  ...sessionWarmingI18n['pt-BR'],
   ...isolatedSpacesI18n['pt-BR'],
   ...sourceBoardI18n['pt-BR'],
   ...projectActionsI18n['pt-BR'],
@@ -172,6 +176,7 @@ export const dict: Record<I18nKey, string> = {
   'terminalView.actions.copy': 'Copiar',
   'terminalView.actions.paste': 'Colar',
   'terminalView.toast.pasteFailed': 'Não foi possível ler a área de transferência. Use o atalho de teclado para colar.',
+  'terminalView.toast.pasteFailedTouch': 'Não foi possível ler a área de transferência.',
   'terminalView.actions.restart': 'Reiniciar terminal',
   'chat.message.terminalContext': '{terminal}, linhas {start}-{end}',
   'chat.message.context.codeComment': 'Comentário em {file}, linhas {start}-{end}',

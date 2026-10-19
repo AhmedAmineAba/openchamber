@@ -10,8 +10,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -142,8 +144,10 @@ export const dict = {
   ...fileArtifactsI18n.en,
   ...fileContentSearchI18n.en,
   ...htmlRenderI18n.en,
+  ...sessionNoticesI18n.en,
   ...usageStatsI18n.en,
   ...webSearchI18n.en,
+  ...sessionWarmingI18n.en,
   ...isolatedSpacesI18n.en,
   ...sourceBoardI18n.en,
   ...projectActionsI18n.en,
@@ -161,6 +165,7 @@ export const dict = {
   'terminalView.actions.copy': 'Copy',
   'terminalView.actions.paste': 'Paste',
   'terminalView.toast.pasteFailed': 'Could not read the clipboard. Use the paste keyboard shortcut.',
+  'terminalView.toast.pasteFailedTouch': 'Could not read the clipboard.',
   'terminalView.actions.restart': 'Restart terminal',
   'chat.message.terminalContext': '{terminal}, lines {start}-{end}',
   'chat.message.context.codeComment': 'Comment on {file}, lines {start}-{end}',

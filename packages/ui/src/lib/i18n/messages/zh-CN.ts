@@ -11,8 +11,10 @@ import { surfacePanelI18n } from './surface-panel.i18n';
 import { fileArtifactsI18n } from './file-artifacts.i18n';
 import { fileContentSearchI18n } from './file-content-search.i18n';
 import { htmlRenderI18n } from './html-render.i18n';
+import { sessionNoticesI18n } from './session-notices.i18n';
 import { usageStatsI18n } from './usage-stats.i18n';
 import { webSearchI18n } from './websearch.i18n';
+import { sessionWarmingI18n } from './session-warming.i18n';
 import { isolatedSpacesI18n } from './isolated-spaces.i18n';
 import { sourceBoardI18n } from './source-board.i18n';
 import { projectActionsI18n } from './project-actions.i18n';
@@ -143,8 +145,10 @@ export const dict: Record<I18nKey, string> = {
   ...fileArtifactsI18n['zh-CN'],
   ...fileContentSearchI18n['zh-CN'],
   ...htmlRenderI18n['zh-CN'],
+  ...sessionNoticesI18n['zh-CN'],
   ...usageStatsI18n['zh-CN'],
   ...webSearchI18n['zh-CN'],
+  ...sessionWarmingI18n['zh-CN'],
   ...isolatedSpacesI18n['zh-CN'],
   ...sourceBoardI18n['zh-CN'],
   ...projectActionsI18n['zh-CN'],
@@ -162,6 +166,7 @@ export const dict: Record<I18nKey, string> = {
   'terminalView.actions.copy': '复制',
   'terminalView.actions.paste': '粘贴',
   'terminalView.toast.pasteFailed': '无法读取剪贴板。请使用粘贴快捷键。',
+  'terminalView.toast.pasteFailedTouch': '无法读取剪贴板。',
   'terminalView.actions.restart': '重启终端',
   'chat.message.terminalContext': '{terminal}，第 {start}-{end} 行',
   'chat.message.context.codeComment': '对 {file} 第 {start}-{end} 行的评论',
