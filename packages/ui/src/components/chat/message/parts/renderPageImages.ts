@@ -78,12 +78,14 @@ async function loadRenderPageImages({ sources, sessionId, messageId, callId, dir
         }
         return images;
     }
-    // A server from before the weight budget refuses the whole request when the
-    // page names more than 12 images; the page then gets its first 12, as it did
-    // from that server before.
+    // A server from before the weight budget refuses the whole request with a
+    // 400 when the page names more than 12 images; the page then gets its first
+    // 12, as it did from that server before. Any other failure stays a failure:
+    // a request without the page's call id gets no weight budget.
     const prepared = await prepareLocalMarkdownImages({ sources, directory, sessionId, messageId, callId, signal })
         .catch((error) => {
-            if (sources.length <= OLDER_SERVER_MAX_IMAGES || signal.aborted) throw error;
+            const olderServer = error instanceof ImageGrantRequestError && error.status === 400;
+            if (!olderServer || sources.length <= OLDER_SERVER_MAX_IMAGES || signal.aborted) throw error;
             return prepareLocalMarkdownImages({ sources: sources.slice(0, OLDER_SERVER_MAX_IMAGES), directory, sessionId, messageId, signal });
         });
     await Promise.all(sources.map((source) => {
