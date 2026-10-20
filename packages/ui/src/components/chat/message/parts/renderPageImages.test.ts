@@ -24,9 +24,9 @@ describe('renderPageImageSources', () => {
         ]);
     });
 
-    test('stops at twelve images, the most one grant request prepares', () => {
-        const page = Array.from({ length: 15 }, (_, index) => `<img src="/tmp/${index}.png">`).join('');
-        expect(renderPageImageSources(page)).toHaveLength(12);
+    test('lists every image a page names, past twelve: the server decides what fits by weight', () => {
+        const page = Array.from({ length: 19 }, (_, index) => `<img src="/tmp/${index}.png">`).join('');
+        expect(renderPageImageSources(page)).toHaveLength(19);
     });
 });
 
