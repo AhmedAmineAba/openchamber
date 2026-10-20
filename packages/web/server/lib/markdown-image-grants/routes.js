@@ -179,6 +179,8 @@ const renderPages = (message) => {
     if (part?.type !== 'tool' || part.name !== 'openchamber_render') continue;
     const input = part.state?.input;
     const html = input?.parameters?.html ?? input?.html;
+    // A stored tool item's `id` is its call id: the chat's `callID` is this
+    // field (projectToolPart in packages/ui/src/lib/opencode/projection.ts).
     if (isString(html)) pages.set(part.id, html);
   }
   return pages;

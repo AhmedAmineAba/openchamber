@@ -46,6 +46,27 @@ export function inlineRenderPageImages(html: string, images: ReadonlyMap<string,
     });
 }
 
+type PrepareImages = typeof prepareLocalMarkdownImages;
+
+/**
+ * Asks the image grant route for a page's images. A server from before the
+ * weight budget refuses the whole request with a 400 when the page names more
+ * than 12 images; the page then gets its first 12, as it did from that server
+ * before. Any other failure stays a failure: a request without the page's call
+ * id gets no weight budget.
+ */
+export function prepareRenderPageImages(
+    request: Parameters<PrepareImages>[0] & { callId: string },
+    prepare: PrepareImages = prepareLocalMarkdownImages,
+): ReturnType<PrepareImages> {
+    const { sources, directory, sessionId, messageId, signal } = request;
+    return prepare(request).catch((error) => {
+        const olderServer = error instanceof ImageGrantRequestError && error.status === 400;
+        if (!olderServer || sources.length <= OLDER_SERVER_MAX_IMAGES || signal.aborted) throw error;
+        return prepare({ sources: sources.slice(0, OLDER_SERVER_MAX_IMAGES), directory, sessionId, messageId, signal });
+    });
+}
+
 /**
  * Loads the images a page names as data URLs. The page runs in an opaque
  * origin and cannot read files, so the chat reads them for it: through the
@@ -78,16 +99,7 @@ async function loadRenderPageImages({ sources, sessionId, messageId, callId, dir
         }
         return images;
     }
-    // A server from before the weight budget refuses the whole request with a
-    // 400 when the page names more than 12 images; the page then gets its first
-    // 12, as it did from that server before. Any other failure stays a failure:
-    // a request without the page's call id gets no weight budget.
-    const prepared = await prepareLocalMarkdownImages({ sources, directory, sessionId, messageId, callId, signal })
-        .catch((error) => {
-            const olderServer = error instanceof ImageGrantRequestError && error.status === 400;
-            if (!olderServer || sources.length <= OLDER_SERVER_MAX_IMAGES || signal.aborted) throw error;
-            return prepareLocalMarkdownImages({ sources: sources.slice(0, OLDER_SERVER_MAX_IMAGES), directory, sessionId, messageId, signal });
-        });
+    const prepared = await prepareRenderPageImages({ sources, directory, sessionId, messageId, callId, signal });
     await Promise.all(sources.map((source) => {
         const image = prepared.get(source);
         if (image?.status !== 'ready') return undefined;
