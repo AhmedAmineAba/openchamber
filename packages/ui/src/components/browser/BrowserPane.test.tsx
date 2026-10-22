@@ -7,9 +7,9 @@ const browserPaneSource = readFileSync(new URL('./BrowserPane.tsx', import.meta.
 
 describe('BrowserPane webview', () => {
   test('emits the Electron popup presence attribute as an empty string', () => {
-    const webview = browserPaneSource.match(/<webview\b[\s\S]*?\/>/)?.[0];
-    expect(webview !== undefined).toBe(true);
-    expect(webview?.includes("allowpopups={'' as unknown as boolean}")).toBe(true);
-    expect(renderToStaticMarkup(<webview allowpopups={'' as unknown as boolean} />)).toContain('allowpopups=""');
+    expect(/allowpopups:\s*''/.test(browserPaneSource)).toBe(true);
+
+    const markup = renderToStaticMarkup(React.createElement('webview', { allowpopups: '' }));
+    expect(markup).toContain('allowpopups=""');
   });
 });
