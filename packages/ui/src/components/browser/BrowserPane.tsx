@@ -998,7 +998,9 @@ const WebviewBrowser: React.FC<BrowserPaneProps> = ({ initialUrl, directory: tab
             ref={attachWebview}
             src={initialSrc}
             partition={browserPartitionOf(directory)}
-            allowpopups
+            // React's webview typings only accept a boolean, but a string is needed
+            // here so React emits the Electron-only attribute on the DOM element.
+            allowpopups={'' as unknown as boolean}
             style={layout
               ? {
                 // Laid out at the chosen size and scaled visually: the page must
