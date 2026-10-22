@@ -40,7 +40,7 @@ declare global {
           partition?: string;
           preload?: string;
           nodeintegration?: string;
-          allowpopups?: boolean;
+          allowpopups?: string;
           ref?: React.Ref<WebviewElement>;
         },
         WebviewElement
